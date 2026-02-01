@@ -5,6 +5,13 @@ import { registerChatRoutes } from "./replit_integrations/chat";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import {
+  calculateLeadScore,
+  generatePersonalizedContent,
+  executeAgentTask,
+  analyzeConversation,
+  identifyStaleLeads,
+} from "./services/ai-sales";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -287,6 +294,8 @@ export async function registerRoutes(
     const closedWon = opportunitiesList.filter(o => o.stage === 'closed-won').length;
     const conversionRate = opportunitiesList.length > 0 ? Math.round((closedWon / opportunitiesList.length) * 100) : 0;
 
+    const staleLeads = await identifyStaleLeads(leadsList);
+
     res.json({
       totalLeads: leadsList.length,
       totalClients: clientsList.length,
@@ -295,12 +304,225 @@ export async function registerRoutes(
       activeAgents,
       healthyClients,
       conversionRate,
+      staleLeadsCount: staleLeads.length,
+      staleLeads: staleLeads.slice(0, 5),
       recentActivity: [
         { type: 'lead', message: 'New lead captured from LinkedIn', timestamp: new Date().toISOString() },
         { type: 'campaign', message: 'Email campaign sent successfully', timestamp: new Date().toISOString() },
         { type: 'agent', message: 'AI agent completed market analysis', timestamp: new Date().toISOString() },
       ],
     });
+  });
+
+  // Business Profile / Onboarding
+  app.get("/api/business-profile", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const profile = await storage.getBusinessProfile(userId);
+    res.json(profile || null);
+  });
+
+  app.post("/api/business-profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const existing = await storage.getBusinessProfile(userId);
+      if (existing) {
+        const updated = await storage.updateBusinessProfile(userId, req.body);
+        return res.json(updated);
+      }
+      const profile = await storage.createBusinessProfile(userId, req.body);
+      res.status(201).json(profile);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  // Lead Activities
+  app.get("/api/leads/:id/activities", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const leadId = parseInt(req.params.id);
+    const activities = await storage.getLeadActivities(userId, leadId);
+    res.json(activities);
+  });
+
+  app.post("/api/leads/:id/activities", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leadId = parseInt(req.params.id);
+      const activity = await storage.createLeadActivity(userId, { ...req.body, leadId });
+      res.status(201).json(activity);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  // AI Lead Scoring
+  app.post("/api/leads/:id/score", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leadId = parseInt(req.params.id);
+      const leads = await storage.getLeads(userId);
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+      const activities = await storage.getLeadActivities(userId, leadId);
+      const businessProfile = await storage.getBusinessProfile(userId);
+      const scoreResult = await calculateLeadScore(lead, activities, businessProfile);
+      
+      await storage.updateLeadScore(leadId, userId, scoreResult.score);
+      res.json(scoreResult);
+    } catch (err) {
+      console.error("Score error:", err);
+      res.status(500).json({ message: "Scoring failed" });
+    }
+  });
+
+  // AI Content Generation
+  app.post("/api/leads/:id/generate-content", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leadId = parseInt(req.params.id);
+      const { contentType } = req.body;
+      
+      const leads = await storage.getLeads(userId);
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+      const businessProfile = await storage.getBusinessProfile(userId);
+      if (!businessProfile) {
+        return res.status(400).json({ message: "Please complete business onboarding first" });
+      }
+
+      const content = await generatePersonalizedContent(lead, businessProfile, contentType || "cold_email");
+      
+      await storage.saveAiContent(userId, {
+        leadId,
+        type: contentType || "cold_email",
+        content: JSON.stringify(content),
+        metadata: { generatedAt: new Date().toISOString() },
+      });
+
+      res.json(content);
+    } catch (err) {
+      console.error("Content generation error:", err);
+      res.status(500).json({ message: "Content generation failed" });
+    }
+  });
+
+  // Execute Agent Task
+  app.post("/api/agentic-tasks/:id/execute", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const taskId = parseInt(req.params.id);
+      const tasks = await storage.getAgenticTasks(userId);
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return res.status(404).json({ message: "Task not found" });
+
+      const businessProfile = await storage.getBusinessProfile(userId);
+      const leads = await storage.getLeads(userId);
+
+      await storage.updateAgenticTaskResult(taskId, userId, null, 10);
+      
+      const result = await executeAgentTask(task, businessProfile || undefined, leads);
+      
+      await storage.updateAgenticTaskResult(taskId, userId, result.data, 100);
+
+      res.json(result);
+    } catch (err) {
+      console.error("Agent execution error:", err);
+      res.status(500).json({ message: "Agent execution failed" });
+    }
+  });
+
+  // Stale Leads Detection
+  app.get("/api/leads/stale", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const days = parseInt(req.query.days as string) || 14;
+    const leads = await storage.getLeads(userId);
+    const staleLeads = await identifyStaleLeads(leads, days);
+    res.json(staleLeads);
+  });
+
+  // Conversation Analysis
+  app.post("/api/analyze-conversation", isAuthenticated, async (req: any, res) => {
+    try {
+      const { notes, context } = req.body;
+      const analysis = await analyzeConversation(notes, context || "sales call");
+      res.json(analysis);
+    } catch (err) {
+      res.status(500).json({ message: "Analysis failed" });
+    }
+  });
+
+  // Email Sequences
+  app.get("/api/email-sequences", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const sequences = await storage.getEmailSequences(userId);
+    res.json(sequences);
+  });
+
+  app.post("/api/email-sequences", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const sequence = await storage.createEmailSequence(userId, req.body);
+      res.status(201).json(sequence);
+    } catch (err) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.put("/api/email-sequences/:id", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const id = parseInt(req.params.id);
+    const sequence = await storage.updateEmailSequence(id, userId, req.body);
+    if (!sequence) return res.status(404).json({ message: "Sequence not found" });
+    res.json(sequence);
+  });
+
+  app.delete("/api/email-sequences/:id", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const id = parseInt(req.params.id);
+    await storage.deleteEmailSequence(id, userId);
+    res.status(204).send();
+  });
+
+  // Enroll lead in sequence
+  app.post("/api/email-sequences/:id/enroll", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const sequenceId = parseInt(req.params.id);
+      const { leadId } = req.body;
+      const enrollment = await storage.enrollLeadInSequence(userId, {
+        sequenceId,
+        leadId,
+        currentStep: 0,
+        status: "active",
+      });
+      res.status(201).json(enrollment);
+    } catch (err) {
+      res.status(400).json({ message: "Enrollment failed" });
+    }
+  });
+
+  // Score all leads
+  app.post("/api/leads/score-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leads = await storage.getLeads(userId);
+      const businessProfile = await storage.getBusinessProfile(userId);
+      
+      const results = [];
+      for (const lead of leads.slice(0, 10)) {
+        const activities = await storage.getLeadActivities(userId, lead.id);
+        const scoreResult = await calculateLeadScore(lead, activities, businessProfile);
+        await storage.updateLeadScore(lead.id, userId, scoreResult.score);
+        results.push({ leadId: lead.id, ...scoreResult });
+      }
+      
+      res.json({ scored: results.length, results });
+    } catch (err) {
+      console.error("Bulk scoring error:", err);
+      res.status(500).json({ message: "Bulk scoring failed" });
+    }
   });
 
   await seedDatabase();

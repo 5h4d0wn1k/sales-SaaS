@@ -1,13 +1,17 @@
 import { db } from "./db";
 import {
   leads, opportunities, clients, campaigns, emailTemplates, customerSuccess,
-  subscriptions, agenticTasks, analytics,
+  subscriptions, agenticTasks, analytics, leadActivities, businessProfiles,
+  emailSequences, sequenceEnrollments, aiGeneratedContent,
   type InsertLead, type InsertOpportunity, type InsertClient, type InsertCampaign,
   type InsertEmailTemplate, type InsertCustomerSuccessTask, type InsertAgenticTask,
   type Lead, type Opportunity, type Client, type Campaign, type EmailTemplate,
-  type CustomerSuccessTask, type Subscription, type AgenticTask
+  type CustomerSuccessTask, type Subscription, type AgenticTask, type LeadActivity,
+  type InsertLeadActivity, type BusinessProfile, type InsertBusinessProfile,
+  type EmailSequence, type InsertEmailSequence, type SequenceEnrollment,
+  type InsertSequenceEnrollment, type AiGeneratedContent, type InsertAiGeneratedContent
 } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, lt, sql } from "drizzle-orm";
 
 export interface IStorage {
   getLeads(userId: string): Promise<Lead[]>;
@@ -185,7 +189,97 @@ export class DatabaseStorage implements IStorage {
   async toggleAgenticTask(id: number, userId: string): Promise<AgenticTask | undefined> {
     const [task] = await db.select().from(agenticTasks).where(and(eq(agenticTasks.id, id), eq(agenticTasks.userId, userId)));
     if (!task) return undefined;
-    const [updated] = await db.update(agenticTasks).set({ isActive: !task.isActive }).where(eq(agenticTasks.id, id)).returning();
+    const [updated] = await db.update(agenticTasks).set({ isActive: !task.isActive, lastRunAt: new Date() }).where(eq(agenticTasks.id, id)).returning();
+    return updated;
+  }
+
+  async updateAgenticTaskResult(id: number, userId: string, result: any, progress: number): Promise<AgenticTask | undefined> {
+    const [updated] = await db.update(agenticTasks)
+      .set({ result, progress, lastRunAt: new Date(), status: progress >= 100 ? "completed" : "running" })
+      .where(and(eq(agenticTasks.id, id), eq(agenticTasks.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async getLeadActivities(userId: string, leadId: number): Promise<LeadActivity[]> {
+    return await db.select().from(leadActivities)
+      .where(and(eq(leadActivities.userId, userId), eq(leadActivities.leadId, leadId)))
+      .orderBy(desc(leadActivities.createdAt));
+  }
+
+  async createLeadActivity(userId: string, activity: InsertLeadActivity): Promise<LeadActivity> {
+    const [newActivity] = await db.insert(leadActivities).values({ ...activity, userId }).returning();
+    await db.update(leads).set({ lastContactedAt: new Date() }).where(eq(leads.id, activity.leadId));
+    return newActivity;
+  }
+
+  async getBusinessProfile(userId: string): Promise<BusinessProfile | undefined> {
+    const [profile] = await db.select().from(businessProfiles).where(eq(businessProfiles.userId, userId));
+    return profile;
+  }
+
+  async createBusinessProfile(userId: string, profile: InsertBusinessProfile): Promise<BusinessProfile> {
+    const [newProfile] = await db.insert(businessProfiles).values({ ...profile, userId, isOnboarded: true }).returning();
+    return newProfile;
+  }
+
+  async updateBusinessProfile(userId: string, updates: Partial<InsertBusinessProfile>): Promise<BusinessProfile | undefined> {
+    const [updated] = await db.update(businessProfiles).set(updates).where(eq(businessProfiles.userId, userId)).returning();
+    return updated;
+  }
+
+  async getEmailSequences(userId: string): Promise<EmailSequence[]> {
+    return await db.select().from(emailSequences).where(eq(emailSequences.userId, userId)).orderBy(desc(emailSequences.createdAt));
+  }
+
+  async createEmailSequence(userId: string, sequence: InsertEmailSequence): Promise<EmailSequence> {
+    const [newSequence] = await db.insert(emailSequences).values({ ...sequence, userId }).returning();
+    return newSequence;
+  }
+
+  async updateEmailSequence(id: number, userId: string, updates: Partial<InsertEmailSequence>): Promise<EmailSequence | undefined> {
+    const [updated] = await db.update(emailSequences).set(updates).where(and(eq(emailSequences.id, id), eq(emailSequences.userId, userId))).returning();
+    return updated;
+  }
+
+  async deleteEmailSequence(id: number, userId: string): Promise<void> {
+    await db.delete(emailSequences).where(and(eq(emailSequences.id, id), eq(emailSequences.userId, userId)));
+  }
+
+  async getSequenceEnrollments(userId: string, sequenceId?: number): Promise<SequenceEnrollment[]> {
+    if (sequenceId) {
+      return await db.select().from(sequenceEnrollments)
+        .where(and(eq(sequenceEnrollments.userId, userId), eq(sequenceEnrollments.sequenceId, sequenceId)));
+    }
+    return await db.select().from(sequenceEnrollments).where(eq(sequenceEnrollments.userId, userId));
+  }
+
+  async enrollLeadInSequence(userId: string, enrollment: InsertSequenceEnrollment): Promise<SequenceEnrollment> {
+    const [newEnrollment] = await db.insert(sequenceEnrollments).values({ ...enrollment, userId }).returning();
+    await db.update(emailSequences)
+      .set({ enrolledCount: sql`${emailSequences.enrolledCount} + 1` })
+      .where(eq(emailSequences.id, enrollment.sequenceId));
+    return newEnrollment;
+  }
+
+  async saveAiContent(userId: string, content: InsertAiGeneratedContent): Promise<AiGeneratedContent> {
+    const [saved] = await db.insert(aiGeneratedContent).values({ ...content, userId }).returning();
+    return saved;
+  }
+
+  async getAiContent(userId: string, leadId?: number): Promise<AiGeneratedContent[]> {
+    if (leadId) {
+      return await db.select().from(aiGeneratedContent)
+        .where(and(eq(aiGeneratedContent.userId, userId), eq(aiGeneratedContent.leadId, leadId)))
+        .orderBy(desc(aiGeneratedContent.createdAt));
+    }
+    return await db.select().from(aiGeneratedContent)
+      .where(eq(aiGeneratedContent.userId, userId))
+      .orderBy(desc(aiGeneratedContent.createdAt));
+  }
+
+  async updateLeadScore(id: number, userId: string, score: number): Promise<Lead | undefined> {
+    const [updated] = await db.update(leads).set({ score }).where(and(eq(leads.id, id), eq(leads.userId, userId))).returning();
     return updated;
   }
 

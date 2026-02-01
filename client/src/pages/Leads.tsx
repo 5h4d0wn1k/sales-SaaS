@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useLeads, useDeleteLead } from "@/hooks/use-leads";
+import { useScoreAllLeads, useStaleLeads } from "@/hooks/use-ai-features";
 import { LeadModal } from "@/components/LeadModal";
+import { LeadDetailPanel } from "@/components/LeadDetailPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -11,22 +14,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, MoreVertical, Trash2, Edit } from "lucide-react";
+import { Plus, Search, MoreVertical, Trash2, Edit, Brain, AlertTriangle, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Lead } from "@shared/schema";
 import { format } from "date-fns";
 
 export default function Leads() {
   const { data: leads, isLoading } = useLeads();
   const deleteMutation = useDeleteLead();
+  const scoreAllMutation = useScoreAllLeads();
+  const { data: staleLeads } = useStaleLeads(14);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>(undefined);
+  const [selectedLead, setSelectedLead] = useState<Lead | undefined>(undefined);
   const [search, setSearch] = useState("");
+
+  const staleLeadIds = new Set(staleLeads?.map(s => s.leadId) || []);
 
   const filteredLeads = leads?.filter(lead => 
     lead.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -66,10 +75,30 @@ export default function Leads() {
           <h2 className="text-3xl font-display font-bold tracking-tight">Leads</h2>
           <p className="text-muted-foreground">Manage and track your potential customers.</p>
         </div>
-        <Button onClick={handleCreate} className="gap-2 shadow-lg shadow-primary/20">
-          <Plus className="w-4 h-4" /> Add Lead
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => scoreAllMutation.mutate()} 
+            disabled={scoreAllMutation.isPending}
+            className="gap-2"
+          >
+            <Brain className="w-4 h-4" /> 
+            {scoreAllMutation.isPending ? "Scoring..." : "AI Score All"}
+          </Button>
+          <Button onClick={handleCreate} className="gap-2 shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4" /> Add Lead
+          </Button>
+        </div>
       </div>
+
+      {staleLeads && staleLeads.length > 0 && (
+        <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {staleLeads.length} lead{staleLeads.length > 1 ? 's' : ''} need attention - no activity in 14+ days
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex items-center gap-2 bg-card p-2 rounded-xl border border-border">
         <Search className="w-5 h-5 text-muted-foreground ml-2" />
@@ -87,6 +116,7 @@ export default function Leads() {
             <TableRow className="hover:bg-transparent border-border">
               <TableHead>Name</TableHead>
               <TableHead>Company</TableHead>
+              <TableHead>Score</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -107,12 +137,29 @@ export default function Leads() {
               </TableRow>
             ) : (
               filteredLeads?.map((lead) => (
-                <TableRow key={lead.id} className="hover:bg-muted/50 border-border">
+                <TableRow 
+                  key={lead.id} 
+                  className={`hover:bg-muted/50 border-border cursor-pointer ${staleLeadIds.has(lead.id) ? 'bg-destructive/5' : ''}`}
+                  onClick={() => setSelectedLead(lead)}
+                >
                   <TableCell className="font-medium">
-                    <div>{lead.name}</div>
+                    <div className="flex items-center gap-2">
+                      {lead.name}
+                      {staleLeadIds.has(lead.id) && (
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground">{lead.email}</div>
                   </TableCell>
                   <TableCell>{lead.company || "-"}</TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      (lead.score || 0) >= 70 ? "default" :
+                      (lead.score || 0) >= 40 ? "secondary" : "outline"
+                    }>
+                      {lead.score || 0}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(lead.status || 'new')}`}>
                       {(lead.status || 'new').charAt(0).toUpperCase() + (lead.status || 'new').slice(1)}
@@ -123,16 +170,19 @@ export default function Leads() {
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="icon" className="h-8 w-8 p-0 hover:bg-muted">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-card border-border">
-                        <DropdownMenuItem onClick={() => handleEdit(lead)} className="cursor-pointer">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }} className="cursor-pointer">
+                          <Eye className="mr-2 h-4 w-4" /> View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(lead); }} className="cursor-pointer">
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(lead.id)} className="text-destructive cursor-pointer">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }} className="text-destructive cursor-pointer">
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -150,6 +200,14 @@ export default function Leads() {
         onOpenChange={setIsModalOpen} 
         lead={editingLead} 
       />
+
+      {selectedLead && (
+        <LeadDetailPanel 
+          lead={selectedLead} 
+          open={!!selectedLead} 
+          onClose={() => setSelectedLead(undefined)} 
+        />
+      )}
     </div>
   );
 }

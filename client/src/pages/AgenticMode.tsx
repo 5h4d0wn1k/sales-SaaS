@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAgenticTasks, useCreateAgenticTask, useToggleAgenticTask } from "@/hooks/use-agentic-tasks";
+import { useExecuteAgent } from "@/hooks/use-ai-features";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
-import { Bot, Plus, Zap, Brain, TrendingUp, Users, Mail, Search, Globe, Play, Pause, Settings } from "lucide-react";
-import type { InsertAgenticTask } from "@shared/schema";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Bot, Plus, Zap, Brain, TrendingUp, Users, Mail, Search, Globe, Play, Pause, Settings, Sparkles, CheckCircle, X } from "lucide-react";
+import type { InsertAgenticTask, AgenticTask } from "@shared/schema";
 
 const agentTypes = [
   { id: "lead_scraper", name: "Lead Scraper", icon: Search, description: "Automatically scrape leads from LinkedIn, Instagram, Google, and freelance platforms" },
@@ -26,7 +28,11 @@ export default function AgenticMode() {
   const { data: tasks, isLoading } = useAgenticTasks();
   const createTask = useCreateAgenticTask();
   const toggleTask = useToggleAgenticTask();
+  const executeAgent = useExecuteAgent();
   const [isOpen, setIsOpen] = useState(false);
+  const [executingId, setExecutingId] = useState<number | null>(null);
+  const [executionResult, setExecutionResult] = useState<any>(null);
+  const [selectedTask, setSelectedTask] = useState<AgenticTask | null>(null);
 
   const [formData, setFormData] = useState<InsertAgenticTask>({
     userId: "",
@@ -34,6 +40,17 @@ export default function AgenticMode() {
     name: "",
     description: "",
   });
+
+  const handleExecute = async (taskId: number) => {
+    setExecutingId(taskId);
+    try {
+      const result = await executeAgent.mutateAsync(taskId);
+      setExecutionResult(result);
+      setSelectedTask(tasks?.find(t => t.id === taskId) || null);
+    } finally {
+      setExecutingId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,7 +232,25 @@ export default function AgenticMode() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleExecute(task.id)}
+                          disabled={executingId === task.id}
+                          className="gap-2"
+                        >
+                          {executingId === task.id ? (
+                            <>
+                              <Sparkles className="w-4 h-4 animate-pulse" />
+                              Running...
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4" />
+                              Execute
+                            </>
+                          )}
+                        </Button>
                         <Switch
                           checked={task.isActive || false}
                           onCheckedChange={() => toggleTask.mutate(task.id)}
@@ -223,6 +258,13 @@ export default function AgenticMode() {
                         />
                       </div>
                     </CardContent>
+                    {task.result && (
+                      <div className="px-6 pb-4">
+                        <Button variant="outline" size="sm" onClick={() => { setSelectedTask(task); setExecutionResult({ success: true, data: task.result, summary: "Previous execution results" }); }}>
+                          View Last Results
+                        </Button>
+                      </div>
+                    )}
                   </Card>
                 );
               })}
@@ -263,6 +305,53 @@ export default function AgenticMode() {
           )}
         </div>
       )}
+
+      <Dialog open={!!executionResult} onOpenChange={() => setExecutionResult(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {executionResult?.success ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <X className="h-5 w-5 text-red-500" />
+              )}
+              {selectedTask?.name} - Execution Results
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            {executionResult && (
+              <div className="space-y-4">
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="font-medium mb-1">Summary</p>
+                  <p className="text-sm text-muted-foreground">{executionResult.summary}</p>
+                </div>
+
+                {executionResult.nextActions?.length > 0 && (
+                  <div>
+                    <p className="font-medium mb-2">Next Actions</p>
+                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                      {executionResult.nextActions.map((action: string, i: number) => (
+                        <li key={i}>{action}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {executionResult.data && (
+                  <div>
+                    <p className="font-medium mb-2">Details</p>
+                    <div className="bg-card border rounded-lg p-4 overflow-auto">
+                      <pre className="text-xs whitespace-pre-wrap">
+                        {JSON.stringify(executionResult.data, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -7,27 +7,34 @@ SalesGenetics is a comprehensive, production-ready sales automation platform des
 
 ### Core Sales Tools
 - **Lead Management**: Import, track, and score leads from multiple sources (LinkedIn, Instagram, Google, freelance platforms, referrals)
+- **AI Lead Scoring**: Predictive scoring with multi-factor analysis (engagement, company size, behavior, source quality)
+- **Lead Activity Timeline**: Track all interactions (emails, calls, notes, meetings) with timestamps
+- **Stale Lead Detection**: Automatic alerts when leads go cold (no activity in 14+ days)
 - **Opportunity Pipeline**: Visual pipeline management with stages (Prospecting → Qualified → Proposal → Negotiation → Closed)
 - **Client Management**: Full CRM with health scores, lifetime value tracking, and tiered client classification
 
 ### Automation & AI
-- **Agentic Mode**: Deploy AI agents that run 24/7:
-  - Lead Scraper - Automatically find leads from LinkedIn, Instagram, Google, freelance platforms
-  - Email Outreach - Personalized automated email sequences
+- **Business Onboarding Wizard**: First-time setup captures business type, industry, target market, ideal customer profile, and value proposition to configure AI agents
+- **AI Content Generation**: Generate personalized emails, proposals, and talking points for each prospect
+- **Agentic Mode with Execution**: Deploy and actually run AI agents that work 24/7:
+  - Lead Scraper - Automatically find leads matching your ideal customer profile
+  - Email Outreach - Generate personalized email sequences based on your value proposition
   - Market Analysis - Identify growth opportunities and market trends
-  - Competitor Monitor - Track competitor activities
-  - Customer Insights - Predict churn and analyze behavior
+  - Competitor Monitor - Track competitor activities and pricing changes
+  - Customer Insights - Predict churn and analyze behavior patterns
   - Sales Optimizer - Optimize pipeline and suggest improvements
+- **Conversation Intelligence**: AI analysis of sales notes with coaching suggestions
 
 ### Growth Tools
 - **Email Campaigns**: Create, schedule, and track multi-channel outreach campaigns
+- **Email Sequences**: Multi-step automated follow-up sequences with lead enrollment
 - **Customer Success**: Monitor client health scores, identify at-risk accounts, prevent churn
-- **Analytics Dashboard**: Comprehensive metrics, lead sources breakdown, pipeline visualization
+- **Analytics Dashboard**: Comprehensive metrics, stale leads alerts, pipeline visualization
 
 ### Business Features
 - **5 Subscription Tiers**: Free, Basic ($29), Pro ($79), Business ($199), Enterprise ($999)
 - **User Authentication**: Secure login via Replit Auth (Google, GitHub, email)
-- **Production Ready**: Fully deployable to Cloudflare
+- **Production Ready**: Fully deployable via Replit Publishing
 
 ## Tech Stack
 - **Frontend**: React 18 + TypeScript + Vite

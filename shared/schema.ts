@@ -132,6 +132,69 @@ export const analytics = pgTable("analytics", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const leadActivities = pgTable("lead_activities", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  leadId: integer("lead_id").references(() => leads.id, { onDelete: "cascade" }).notNull(),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const businessProfiles = pgTable("business_profiles", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  businessName: text("business_name").notNull(),
+  industry: text("industry").notNull(),
+  businessType: text("business_type").notNull(),
+  targetMarket: text("target_market"),
+  companySize: text("company_size"),
+  website: text("website"),
+  description: text("description"),
+  idealCustomer: text("ideal_customer"),
+  valueProposition: text("value_proposition"),
+  competitors: text("competitors").array(),
+  isOnboarded: boolean("is_onboarded").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const emailSequences = pgTable("email_sequences", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").default("draft"),
+  triggerType: text("trigger_type").default("manual"),
+  steps: jsonb("steps"),
+  enrolledCount: integer("enrolled_count").default(0),
+  completedCount: integer("completed_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sequenceEnrollments = pgTable("sequence_enrollments", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  sequenceId: integer("sequence_id").references(() => emailSequences.id, { onDelete: "cascade" }).notNull(),
+  leadId: integer("lead_id").references(() => leads.id, { onDelete: "cascade" }).notNull(),
+  currentStep: integer("current_step").default(0),
+  status: text("status").default("active"),
+  nextSendAt: timestamp("next_send_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const aiGeneratedContent = pgTable("ai_generated_content", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  leadId: integer("lead_id").references(() => leads.id),
+  type: text("type").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertLeadSchema = createInsertSchema(leads).omit({ id: true, createdAt: true });
 export const insertOpportunitySchema = createInsertSchema(opportunities).omit({ id: true, createdAt: true });
 export const insertClientSchema = createInsertSchema(clients).omit({ id: true, createdAt: true });
@@ -141,6 +204,11 @@ export const insertCustomerSuccessSchema = createInsertSchema(customerSuccess).o
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ id: true, updatedAt: true });
 export const insertAgenticTaskSchema = createInsertSchema(agenticTasks).omit({ id: true, createdAt: true, status: true, result: true, progress: true, lastRunAt: true });
 export const insertAnalyticsSchema = createInsertSchema(analytics).omit({ id: true, createdAt: true });
+export const insertLeadActivitySchema = createInsertSchema(leadActivities).omit({ id: true, createdAt: true });
+export const insertBusinessProfileSchema = createInsertSchema(businessProfiles).omit({ id: true, createdAt: true, isOnboarded: true });
+export const insertEmailSequenceSchema = createInsertSchema(emailSequences).omit({ id: true, createdAt: true, enrolledCount: true, completedCount: true });
+export const insertSequenceEnrollmentSchema = createInsertSchema(sequenceEnrollments).omit({ id: true, createdAt: true, completedAt: true });
+export const insertAiGeneratedContentSchema = createInsertSchema(aiGeneratedContent).omit({ id: true, createdAt: true });
 
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
@@ -159,6 +227,16 @@ export type AgenticTask = typeof agenticTasks.$inferSelect;
 export type InsertAgenticTask = z.infer<typeof insertAgenticTaskSchema>;
 export type Analytics = typeof analytics.$inferSelect;
 export type InsertAnalytics = z.infer<typeof insertAnalyticsSchema>;
+export type LeadActivity = typeof leadActivities.$inferSelect;
+export type InsertLeadActivity = z.infer<typeof insertLeadActivitySchema>;
+export type BusinessProfile = typeof businessProfiles.$inferSelect;
+export type InsertBusinessProfile = z.infer<typeof insertBusinessProfileSchema>;
+export type EmailSequence = typeof emailSequences.$inferSelect;
+export type InsertEmailSequence = z.infer<typeof insertEmailSequenceSchema>;
+export type SequenceEnrollment = typeof sequenceEnrollments.$inferSelect;
+export type InsertSequenceEnrollment = z.infer<typeof insertSequenceEnrollmentSchema>;
+export type AiGeneratedContent = typeof aiGeneratedContent.$inferSelect;
+export type InsertAiGeneratedContent = z.infer<typeof insertAiGeneratedContentSchema>;
 
 export const geneticTasks = agenticTasks;
 export type GeneticTask = AgenticTask;
