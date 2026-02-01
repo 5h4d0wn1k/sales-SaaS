@@ -12,6 +12,20 @@ import {
   analyzeConversation,
   identifyStaleLeads,
 } from "./services/ai-sales";
+import { executeAutonomousAgent, type AgentContext } from "./services/autonomous-agents";
+import { emailService } from "./services/email-service";
+import { 
+  analyzeConversation as analyzeConversationIntelligence, 
+  generateMeetingPrep, 
+  provideSalesCoaching 
+} from "./services/conversation-intelligence";
+import { 
+  determineOptimalChannel, 
+  generateOutreachSequence, 
+  calculateOptimalTiming,
+  generateChannelContent,
+  scheduleOutreach 
+} from "./services/multi-channel";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -522,6 +536,427 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Bulk scoring error:", err);
       res.status(500).json({ message: "Bulk scoring failed" });
+    }
+  });
+
+  // Email Tracking Endpoints
+  app.get("/api/email-tracking/open/:emailId", async (req, res) => {
+    try {
+      const { emailId } = req.params;
+      await storage.updateEmailTrackingOpen(emailId);
+      const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+      res.set("Content-Type", "image/gif");
+      res.send(pixel);
+    } catch (error) {
+      res.status(200).send();
+    }
+  });
+
+  app.get("/api/email-tracking/click/:emailId", async (req, res) => {
+    try {
+      const { emailId } = req.params;
+      const { url } = req.query;
+      await storage.updateEmailTrackingClick(emailId);
+      res.redirect(decodeURIComponent(url as string) || "/");
+    } catch (error) {
+      res.redirect("/");
+    }
+  });
+
+  app.get("/api/email-tracking/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = req.query.campaignId ? parseInt(req.query.campaignId as string) : undefined;
+      const stats = await storage.getEmailTrackingStats(userId, campaignId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get stats" });
+    }
+  });
+
+  app.get("/api/email-tracking", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const campaignId = req.query.campaignId ? parseInt(req.query.campaignId as string) : undefined;
+    const tracking = await storage.getEmailTracking(userId, campaignId);
+    res.json(tracking);
+  });
+
+  // Autonomous Agent Execution
+  app.post("/api/agentic-tasks/:id/execute-autonomous", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const taskId = parseInt(req.params.id);
+      const tasks = await storage.getAgenticTasks(userId);
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return res.status(404).json({ message: "Task not found" });
+
+      const [businessProfile, leads, opportunities, clients] = await Promise.all([
+        storage.getBusinessProfile(userId),
+        storage.getLeads(userId),
+        storage.getOpportunities(userId),
+        storage.getClients(userId),
+      ]);
+
+      const context: AgentContext = {
+        businessProfile: businessProfile || undefined,
+        leads,
+        opportunities,
+        clients,
+      };
+
+      await storage.updateAgenticTaskResult(taskId, userId, null, 10);
+      const result = await executeAutonomousAgent(task, context);
+      await storage.updateAgenticTaskResult(taskId, userId, result, 100);
+
+      res.json(result);
+    } catch (error) {
+      console.error("Autonomous agent error:", error);
+      res.status(500).json({ message: "Agent execution failed" });
+    }
+  });
+
+  // Multi-Channel Outreach
+  app.post("/api/leads/:id/optimal-channel", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leadId = parseInt(req.params.id);
+      const leads = await storage.getLeads(userId);
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+      const businessProfile = await storage.getBusinessProfile(userId);
+      const recommendations = await determineOptimalChannel(lead, businessProfile || undefined);
+      res.json(recommendations);
+    } catch (error) {
+      res.status(500).json({ message: "Channel optimization failed" });
+    }
+  });
+
+  app.post("/api/leads/:id/outreach-sequence", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leadId = parseInt(req.params.id);
+      const { goal } = req.body;
+      
+      const leads = await storage.getLeads(userId);
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+      const businessProfile = await storage.getBusinessProfile(userId);
+      const sequence = await generateOutreachSequence(lead, businessProfile || undefined, goal || "cold_outreach");
+      
+      const scheduledItems = scheduleOutreach(lead, sequence);
+      for (const item of scheduledItems) {
+        await storage.createScheduledOutreach(userId, item);
+      }
+
+      res.json({ sequence, scheduledCount: scheduledItems.length });
+    } catch (error) {
+      res.status(500).json({ message: "Sequence generation failed" });
+    }
+  });
+
+  app.post("/api/leads/:id/generate-channel-content", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leadId = parseInt(req.params.id);
+      const { channel, messageType } = req.body;
+      
+      const leads = await storage.getLeads(userId);
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+      const businessProfile = await storage.getBusinessProfile(userId);
+      const content = await generateChannelContent(lead, channel, messageType, businessProfile || undefined);
+      res.json(content);
+    } catch (error) {
+      res.status(500).json({ message: "Content generation failed" });
+    }
+  });
+
+  // Scheduled Outreach Management
+  app.get("/api/scheduled-outreach", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const status = req.query.status as string | undefined;
+    const outreach = await storage.getScheduledOutreach(userId, status);
+    res.json(outreach);
+  });
+
+  app.get("/api/scheduled-outreach/pending", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const pending = await storage.getPendingOutreach(userId);
+    res.json(pending);
+  });
+
+  app.post("/api/scheduled-outreach/:id/execute", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      
+      const outreachItems = await storage.getScheduledOutreach(userId);
+      const item = outreachItems.find(o => o.id === id);
+      if (!item) return res.status(404).json({ message: "Outreach not found" });
+
+      const leads = await storage.getLeads(userId);
+      const lead = leads.find(l => l.id === item.leadId);
+      
+      let result: any = { success: false };
+      
+      if (item.channel === "email" && lead) {
+        const emailResult = await emailService.sendEmail({
+          to: lead.email,
+          subject: item.subject || "Message from us",
+          html: item.content,
+        });
+        
+        await storage.createEmailTracking(userId, {
+          leadId: lead.id,
+          emailId: emailResult.emailId,
+          subject: item.subject || "Message",
+          recipient: lead.email,
+          status: emailResult.success ? "sent" : "failed",
+        });
+        
+        result = emailResult;
+      } else {
+        result = { success: true, message: `${item.channel} outreach simulated` };
+      }
+
+      const updated = await storage.executeScheduledOutreach(id, userId, result);
+      
+      if (lead) {
+        await storage.createLeadActivity(userId, {
+          leadId: lead.id,
+          type: item.channel,
+          title: `${item.type} via ${item.channel}`,
+          description: item.subject || item.content.slice(0, 100),
+        });
+      }
+
+      res.json({ outreach: updated, result });
+    } catch (error) {
+      res.status(500).json({ message: "Execution failed" });
+    }
+  });
+
+  // Meeting Scheduling
+  app.get("/api/meetings", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const meetings = await storage.getMeetingSchedules(userId);
+    res.json(meetings);
+  });
+
+  app.post("/api/meetings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const meeting = await storage.createMeetingSchedule(userId, req.body);
+      res.status(201).json(meeting);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.post("/api/meetings/:id/prep", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const meetingId = parseInt(req.params.id);
+      const meetings = await storage.getMeetingSchedules(userId);
+      const meeting = meetings.find(m => m.id === meetingId);
+      if (!meeting) return res.status(404).json({ message: "Meeting not found" });
+
+      const leads = await storage.getLeads(userId);
+      const opportunities = await storage.getOpportunities(userId);
+      const businessProfile = await storage.getBusinessProfile(userId);
+
+      const lead = meeting.leadId ? leads.find(l => l.id === meeting.leadId) : undefined;
+      const opportunity = lead ? opportunities.find(o => o.leadId === lead.id) : undefined;
+
+      if (!lead) return res.status(400).json({ message: "No lead associated with meeting" });
+
+      const prep = await generateMeetingPrep(
+        lead,
+        opportunity,
+        businessProfile || undefined,
+        meeting.meetingType || "call",
+        meeting.notes || undefined
+      );
+
+      await storage.updateMeetingSchedule(meetingId, userId, { notes: JSON.stringify(prep) });
+      res.json(prep);
+    } catch (error) {
+      res.status(500).json({ message: "Meeting prep failed" });
+    }
+  });
+
+  // Conversation Intelligence
+  app.post("/api/conversation-intelligence/analyze", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { transcript, leadId, opportunityId, meetingType } = req.body;
+      
+      const leads = await storage.getLeads(userId);
+      const opportunities = await storage.getOpportunities(userId);
+      const businessProfile = await storage.getBusinessProfile(userId);
+
+      const lead = leadId ? leads.find(l => l.id === leadId) : undefined;
+      const opportunity = opportunityId ? opportunities.find(o => o.id === opportunityId) : undefined;
+
+      const analysis = await analyzeConversationIntelligence(transcript, {
+        lead,
+        opportunity,
+        businessProfile: businessProfile || undefined,
+        meetingType,
+      });
+
+      await storage.createSalesCoaching(userId, {
+        leadId,
+        opportunityId,
+        sessionType: meetingType || "call",
+        transcript,
+        summary: analysis.summary,
+        insights: analysis.keyTopics as any,
+        coachingPoints: analysis.coachingPoints as any,
+        sentimentScore: analysis.sentimentScore,
+        winProbability: analysis.winProbability,
+        nextBestActions: analysis.nextBestActions as any,
+      });
+
+      res.json(analysis);
+    } catch (error) {
+      res.status(500).json({ message: "Analysis failed" });
+    }
+  });
+
+  app.get("/api/sales-coaching", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const coaching = await storage.getSalesCoaching(userId);
+    res.json(coaching);
+  });
+
+  app.post("/api/sales-coaching/insights", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const coaching = await storage.getSalesCoaching(userId);
+      const conversations = coaching.map(c => c.transcript || "").filter(Boolean);
+      
+      const opportunities = await storage.getOpportunities(userId);
+      const closedWon = opportunities.filter(o => o.stage === "closed-won").length;
+      const closedLost = opportunities.filter(o => o.stage === "closed-lost").length;
+      
+      const insights = await provideSalesCoaching(conversations, {
+        closedDeals: closedWon,
+        lostDeals: closedLost,
+        avgDealCycle: 30,
+        responseTime: 4,
+      });
+
+      res.json(insights);
+    } catch (error) {
+      res.status(500).json({ message: "Coaching failed" });
+    }
+  });
+
+  // Automation Rules
+  app.get("/api/automation-rules", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const rules = await storage.getAutomationRules(userId);
+    res.json(rules);
+  });
+
+  app.post("/api/automation-rules", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const rule = await storage.createAutomationRule(userId, req.body);
+      res.status(201).json(rule);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.post("/api/automation-rules/:id/toggle", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const id = parseInt(req.params.id);
+    const rule = await storage.toggleAutomationRule(id, userId);
+    if (!rule) return res.status(404).json({ message: "Rule not found" });
+    res.json(rule);
+  });
+
+  // Pipeline Forecasting
+  app.get("/api/pipeline-forecast", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const opportunities = await storage.getOpportunities(userId);
+      const forecasts = await storage.getPipelineForecasts(userId);
+
+      const totalPipeline = opportunities.reduce((sum, o) => sum + (o.value || 0), 0);
+      const weightedPipeline = opportunities.reduce((sum, o) => 
+        sum + ((o.value || 0) * (o.probability || 0) / 100), 0
+      );
+
+      const byStage: Record<string, { count: number; value: number }> = {};
+      opportunities.forEach(o => {
+        const stage = o.stage || "unknown";
+        if (!byStage[stage]) byStage[stage] = { count: 0, value: 0 };
+        byStage[stage].count++;
+        byStage[stage].value += o.value || 0;
+      });
+
+      res.json({
+        totalPipeline,
+        weightedPipeline,
+        byStage,
+        historicalForecasts: forecasts.slice(0, 10),
+        recommendations: [
+          "Focus on deals in negotiation stage",
+          "Follow up on stale opportunities",
+          "Increase qualification rate",
+        ],
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Forecast failed" });
+    }
+  });
+
+  // Send Campaign Emails
+  app.post("/api/campaigns/:id/send", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const campaignId = parseInt(req.params.id);
+      const { leadIds } = req.body;
+
+      const campaigns = await storage.getCampaigns(userId);
+      const campaign = campaigns.find(c => c.id === campaignId);
+      if (!campaign) return res.status(404).json({ message: "Campaign not found" });
+
+      const leads = await storage.getLeads(userId);
+      const targetLeads = leadIds 
+        ? leads.filter(l => leadIds.includes(l.id))
+        : leads.filter(l => l.status !== "closed" && l.status !== "lost");
+
+      const results = [];
+      for (const lead of targetLeads.slice(0, 50)) {
+        const result = await emailService.sendCampaignEmail(lead, campaign, campaign.content || "");
+        
+        await storage.createEmailTracking(userId, {
+          campaignId,
+          leadId: lead.id,
+          emailId: result.emailId,
+          subject: campaign.subject || "Campaign",
+          recipient: lead.email,
+          status: result.success ? "sent" : "failed",
+        });
+
+        results.push({ leadId: lead.id, ...result });
+      }
+
+      await storage.updateCampaign(campaignId, userId, {
+        status: "active",
+        sentCount: results.filter(r => r.success).length,
+      });
+
+      res.json({ sent: results.length, results });
+    } catch (error) {
+      res.status(500).json({ message: "Campaign send failed" });
     }
   });
 

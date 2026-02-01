@@ -25,6 +25,18 @@ SalesGenetics is a comprehensive, production-ready sales automation platform des
   - Sales Optimizer - Optimize pipeline and suggest improvements
 - **Conversation Intelligence**: AI analysis of sales notes with coaching suggestions
 
+### Advanced Features (New)
+- **Multi-Channel Orchestration**: AI-determined optimal channel selection (email, LinkedIn, phone, SMS)
+- **Email Tracking**: Real-time tracking of opens, clicks, and replies with pixel tracking
+- **Autonomous Agent Execution**: Agents that can analyze data, suggest actions, and provide strategic insights
+- **Conversation Intelligence**: Deep analysis of sales conversations with sentiment scoring and win probability
+- **Sales Coaching**: AI-powered coaching with performance analysis and improvement suggestions
+- **Meeting Preparation**: AI-generated agendas, talking points, and objection handling
+- **Pipeline Forecasting**: AI-driven revenue forecasts with confidence scoring
+- **Automation Rules**: Create custom automation workflows with triggers and actions
+- **Rate Limiting**: Production-ready rate limiting for API protection
+- **Request Logging**: Comprehensive logging for debugging and analytics
+
 ### Growth Tools
 - **Email Campaigns**: Create, schedule, and track multi-channel outreach campaigns
 - **Email Sequences**: Multi-step automated follow-up sequences with lead enrollment
@@ -63,7 +75,14 @@ SalesGenetics is a comprehensive, production-ready sales automation platform des
 │   │   │   └── Landing.tsx        # Public landing page
 │   │   └── lib/               # Utilities
 ├── server/                    # Backend Express application
+│   ├── middleware/            # Rate limiting & logging
 │   ├── replit_integrations/   # Auth & AI integrations
+│   ├── services/              # AI services
+│   │   ├── ai-sales.ts            # Lead scoring & content generation
+│   │   ├── autonomous-agents.ts   # 6 autonomous AI agents
+│   │   ├── conversation-intelligence.ts  # Call/meeting analysis
+│   │   ├── email-service.ts       # Email sending & tracking
+│   │   └── multi-channel.ts       # Multi-channel orchestration
 │   ├── routes.ts              # All API routes
 │   └── storage.ts             # Database operations
 ├── shared/                    # Shared types and schemas
@@ -75,45 +94,65 @@ SalesGenetics is a comprehensive, production-ready sales automation platform des
 - `users` - User accounts (Replit Auth)
 - `sessions` - Session storage
 - `leads` - Sales leads with source tracking
+- `lead_activities` - Lead interaction timeline
 - `opportunities` - Sales pipeline
 - `clients` - Client CRM data
 - `campaigns` - Email campaigns
 - `email_templates` - Reusable templates
+- `email_sequences` - Multi-step sequences
+- `sequence_enrollments` - Lead-sequence mapping
+- `email_tracking` - Open/click/reply tracking
+- `scheduled_outreach` - Scheduled multi-channel outreach
+- `meeting_schedules` - Meeting management
+- `sales_coaching` - Conversation analysis sessions
+- `automation_rules` - Custom automation workflows
+- `pipeline_forecasts` - AI revenue forecasts
 - `customer_success` - Success tasks
 - `agentic_tasks` - AI agent configurations
+- `business_profiles` - Company onboarding data
 - `subscriptions` - User subscription tiers
-- `analytics` - Performance metrics
+- `ai_generated_content` - Cached AI content
 
 ## API Endpoints
 
-### Leads
-- `GET /api/leads` - List leads
-- `POST /api/leads` - Create lead
-- `PUT /api/leads/:id` - Update lead
-- `DELETE /api/leads/:id` - Delete lead
+### Core CRUD
+- Leads: `GET/POST/PUT/DELETE /api/leads`
+- Opportunities: `GET/POST/PUT/DELETE /api/opportunities`
+- Clients: `GET/POST/PUT/DELETE /api/clients`
+- Campaigns: `GET/POST/PUT/DELETE /api/campaigns`
 
-### Opportunities
-- `GET /api/opportunities` - List opportunities
-- `POST /api/opportunities` - Create opportunity
-- `PUT /api/opportunities/:id` - Update opportunity
-- `DELETE /api/opportunities/:id` - Delete opportunity
+### AI Features
+- `POST /api/leads/:id/score` - AI lead scoring
+- `POST /api/leads/:id/generate-content` - AI content generation
+- `POST /api/leads/score-all` - Bulk scoring
+- `POST /api/agentic-tasks/:id/execute-autonomous` - Run autonomous agent
+- `POST /api/analyze-conversation` - Conversation analysis
 
-### Clients
-- `GET /api/clients` - List clients
-- `POST /api/clients` - Create client
-- `PUT /api/clients/:id` - Update client
-- `DELETE /api/clients/:id` - Delete client
+### Multi-Channel
+- `POST /api/leads/:id/optimal-channel` - Get optimal channel
+- `POST /api/leads/:id/outreach-sequence` - Generate outreach sequence
+- `POST /api/leads/:id/generate-channel-content` - Channel-specific content
+- `GET /api/scheduled-outreach` - List scheduled outreach
+- `POST /api/scheduled-outreach/:id/execute` - Execute outreach
 
-### Campaigns
-- `GET /api/campaigns` - List campaigns
-- `POST /api/campaigns` - Create campaign
-- `PUT /api/campaigns/:id` - Update campaign
-- `DELETE /api/campaigns/:id` - Delete campaign
+### Email Tracking
+- `GET /api/email-tracking` - Get tracking data
+- `GET /api/email-tracking/stats` - Get email stats
+- `GET /api/email-tracking/open/:emailId` - Track opens (pixel)
+- `GET /api/email-tracking/click/:emailId` - Track clicks (redirect)
+- `POST /api/campaigns/:id/send` - Send campaign emails
 
-### Agentic Tasks
-- `GET /api/agentic-tasks` - List AI agents
-- `POST /api/agentic-tasks` - Deploy new agent
-- `POST /api/agentic-tasks/:id/toggle` - Start/stop agent
+### Meetings & Coaching
+- `GET/POST /api/meetings` - Meeting management
+- `POST /api/meetings/:id/prep` - AI meeting prep
+- `POST /api/conversation-intelligence/analyze` - Deep conversation analysis
+- `GET /api/sales-coaching` - Get coaching sessions
+- `POST /api/sales-coaching/insights` - Get coaching insights
+
+### Automation & Forecasting
+- `GET/POST /api/automation-rules` - Automation rules
+- `POST /api/automation-rules/:id/toggle` - Toggle rule
+- `GET /api/pipeline-forecast` - AI pipeline forecast
 
 ### Analytics
 - `GET /api/analytics/dashboard` - Dashboard metrics
@@ -128,3 +167,11 @@ Ready for deployment via Replit's publishing system. All environment variables a
 - Dark mode theme with professional Blues/Teals/Slates color scheme
 - Agentic (not genetic) terminology for AI features
 - Comprehensive features for all business sizes
+
+## Email Integration Note
+Email sending currently works in simulation mode. To enable real email sending:
+1. Upgrade to Replit paid plan
+2. Set up SendGrid or Resend integration
+3. Configure API keys in secrets
+
+The email tracking infrastructure (opens, clicks, replies) is fully functional and ready for production use.

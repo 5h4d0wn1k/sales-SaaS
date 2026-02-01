@@ -3,15 +3,19 @@ import {
   leads, opportunities, clients, campaigns, emailTemplates, customerSuccess,
   subscriptions, agenticTasks, analytics, leadActivities, businessProfiles,
   emailSequences, sequenceEnrollments, aiGeneratedContent,
+  emailTracking, scheduledOutreach, meetingSchedules, salesCoaching, automationRules, pipelineForecasts,
   type InsertLead, type InsertOpportunity, type InsertClient, type InsertCampaign,
   type InsertEmailTemplate, type InsertCustomerSuccessTask, type InsertAgenticTask,
   type Lead, type Opportunity, type Client, type Campaign, type EmailTemplate,
   type CustomerSuccessTask, type Subscription, type AgenticTask, type LeadActivity,
   type InsertLeadActivity, type BusinessProfile, type InsertBusinessProfile,
   type EmailSequence, type InsertEmailSequence, type SequenceEnrollment,
-  type InsertSequenceEnrollment, type AiGeneratedContent, type InsertAiGeneratedContent
+  type InsertSequenceEnrollment, type AiGeneratedContent, type InsertAiGeneratedContent,
+  type EmailTracking, type InsertEmailTracking, type ScheduledOutreach, type InsertScheduledOutreach,
+  type MeetingSchedule, type InsertMeetingSchedule, type SalesCoaching, type InsertSalesCoaching,
+  type AutomationRule, type InsertAutomationRule, type PipelineForecast, type InsertPipelineForecast
 } from "@shared/schema";
-import { eq, desc, and, lt, sql } from "drizzle-orm";
+import { eq, desc, and, lt, sql, lte, gte, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getLeads(userId: string): Promise<Lead[]>;
@@ -289,6 +293,199 @@ export class DatabaseStorage implements IStorage {
 
   async createGeneticTask(userId: string, task: InsertAgenticTask): Promise<AgenticTask> {
     return this.createAgenticTask(userId, task);
+  }
+
+  async createEmailTracking(userId: string, tracking: InsertEmailTracking): Promise<EmailTracking> {
+    const [newTracking] = await db.insert(emailTracking).values({ ...tracking, userId }).returning();
+    return newTracking;
+  }
+
+  async getEmailTracking(userId: string, campaignId?: number): Promise<EmailTracking[]> {
+    if (campaignId) {
+      return await db.select().from(emailTracking)
+        .where(and(eq(emailTracking.userId, userId), eq(emailTracking.campaignId, campaignId)))
+        .orderBy(desc(emailTracking.sentAt));
+    }
+    return await db.select().from(emailTracking)
+      .where(eq(emailTracking.userId, userId))
+      .orderBy(desc(emailTracking.sentAt));
+  }
+
+  async updateEmailTrackingOpen(emailId: string): Promise<void> {
+    await db.update(emailTracking)
+      .set({ 
+        openedAt: new Date(), 
+        openCount: sql`${emailTracking.openCount} + 1`,
+        status: "opened"
+      })
+      .where(eq(emailTracking.emailId, emailId));
+  }
+
+  async updateEmailTrackingClick(emailId: string): Promise<void> {
+    await db.update(emailTracking)
+      .set({ 
+        clickedAt: new Date(), 
+        clickCount: sql`${emailTracking.clickCount} + 1`,
+        status: "clicked"
+      })
+      .where(eq(emailTracking.emailId, emailId));
+  }
+
+  async updateEmailTrackingReply(emailId: string): Promise<void> {
+    await db.update(emailTracking)
+      .set({ repliedAt: new Date(), status: "replied" })
+      .where(eq(emailTracking.emailId, emailId));
+  }
+
+  async getScheduledOutreach(userId: string, status?: string): Promise<ScheduledOutreach[]> {
+    if (status) {
+      return await db.select().from(scheduledOutreach)
+        .where(and(eq(scheduledOutreach.userId, userId), eq(scheduledOutreach.status, status)))
+        .orderBy(scheduledOutreach.scheduledAt);
+    }
+    return await db.select().from(scheduledOutreach)
+      .where(eq(scheduledOutreach.userId, userId))
+      .orderBy(scheduledOutreach.scheduledAt);
+  }
+
+  async createScheduledOutreach(userId: string, outreach: InsertScheduledOutreach): Promise<ScheduledOutreach> {
+    const [newOutreach] = await db.insert(scheduledOutreach).values({ ...outreach, userId }).returning();
+    return newOutreach;
+  }
+
+  async updateScheduledOutreach(id: number, userId: string, updates: Partial<InsertScheduledOutreach>): Promise<ScheduledOutreach | undefined> {
+    const [updated] = await db.update(scheduledOutreach)
+      .set(updates)
+      .where(and(eq(scheduledOutreach.id, id), eq(scheduledOutreach.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async executeScheduledOutreach(id: number, userId: string, result: any): Promise<ScheduledOutreach | undefined> {
+    const [updated] = await db.update(scheduledOutreach)
+      .set({ executedAt: new Date(), status: "executed", result })
+      .where(and(eq(scheduledOutreach.id, id), eq(scheduledOutreach.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async getPendingOutreach(userId: string): Promise<ScheduledOutreach[]> {
+    const now = new Date();
+    return await db.select().from(scheduledOutreach)
+      .where(and(
+        eq(scheduledOutreach.userId, userId),
+        eq(scheduledOutreach.status, "scheduled"),
+        lte(scheduledOutreach.scheduledAt, now)
+      ))
+      .orderBy(scheduledOutreach.scheduledAt);
+  }
+
+  async getMeetingSchedules(userId: string): Promise<MeetingSchedule[]> {
+    return await db.select().from(meetingSchedules)
+      .where(eq(meetingSchedules.userId, userId))
+      .orderBy(meetingSchedules.scheduledAt);
+  }
+
+  async createMeetingSchedule(userId: string, meeting: InsertMeetingSchedule): Promise<MeetingSchedule> {
+    const [newMeeting] = await db.insert(meetingSchedules).values({ ...meeting, userId }).returning();
+    return newMeeting;
+  }
+
+  async updateMeetingSchedule(id: number, userId: string, updates: Partial<InsertMeetingSchedule>): Promise<MeetingSchedule | undefined> {
+    const [updated] = await db.update(meetingSchedules)
+      .set(updates)
+      .where(and(eq(meetingSchedules.id, id), eq(meetingSchedules.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async getSalesCoaching(userId: string): Promise<SalesCoaching[]> {
+    return await db.select().from(salesCoaching)
+      .where(eq(salesCoaching.userId, userId))
+      .orderBy(desc(salesCoaching.createdAt));
+  }
+
+  async createSalesCoaching(userId: string, coaching: InsertSalesCoaching): Promise<SalesCoaching> {
+    const [newCoaching] = await db.insert(salesCoaching).values({ ...coaching, userId }).returning();
+    return newCoaching;
+  }
+
+  async getAutomationRules(userId: string): Promise<AutomationRule[]> {
+    return await db.select().from(automationRules)
+      .where(eq(automationRules.userId, userId))
+      .orderBy(desc(automationRules.createdAt));
+  }
+
+  async createAutomationRule(userId: string, rule: InsertAutomationRule): Promise<AutomationRule> {
+    const [newRule] = await db.insert(automationRules).values({ ...rule, userId }).returning();
+    return newRule;
+  }
+
+  async updateAutomationRule(id: number, userId: string, updates: Partial<InsertAutomationRule>): Promise<AutomationRule | undefined> {
+    const [updated] = await db.update(automationRules)
+      .set(updates)
+      .where(and(eq(automationRules.id, id), eq(automationRules.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async toggleAutomationRule(id: number, userId: string): Promise<AutomationRule | undefined> {
+    const [rule] = await db.select().from(automationRules)
+      .where(and(eq(automationRules.id, id), eq(automationRules.userId, userId)));
+    if (!rule) return undefined;
+    const [updated] = await db.update(automationRules)
+      .set({ isActive: !rule.isActive })
+      .where(eq(automationRules.id, id))
+      .returning();
+    return updated;
+  }
+
+  async executeAutomationRule(id: number, userId: string): Promise<AutomationRule | undefined> {
+    const [updated] = await db.update(automationRules)
+      .set({ 
+        executionCount: sql`${automationRules.executionCount} + 1`,
+        lastExecutedAt: new Date()
+      })
+      .where(and(eq(automationRules.id, id), eq(automationRules.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async getPipelineForecasts(userId: string): Promise<PipelineForecast[]> {
+    return await db.select().from(pipelineForecasts)
+      .where(eq(pipelineForecasts.userId, userId))
+      .orderBy(desc(pipelineForecasts.forecastDate));
+  }
+
+  async createPipelineForecast(userId: string, forecast: InsertPipelineForecast): Promise<PipelineForecast> {
+    const [newForecast] = await db.insert(pipelineForecasts).values({ ...forecast, userId }).returning();
+    return newForecast;
+  }
+
+  async getEmailTrackingStats(userId: string, campaignId?: number): Promise<{
+    sent: number;
+    opened: number;
+    clicked: number;
+    replied: number;
+    openRate: number;
+    clickRate: number;
+    replyRate: number;
+  }> {
+    const trackingData = await this.getEmailTracking(userId, campaignId);
+    const sent = trackingData.length;
+    const opened = trackingData.filter(t => t.openedAt).length;
+    const clicked = trackingData.filter(t => t.clickedAt).length;
+    const replied = trackingData.filter(t => t.repliedAt).length;
+    
+    return {
+      sent,
+      opened,
+      clicked,
+      replied,
+      openRate: sent > 0 ? Math.round((opened / sent) * 100) : 0,
+      clickRate: sent > 0 ? Math.round((clicked / sent) * 100) : 0,
+      replyRate: sent > 0 ? Math.round((replied / sent) * 100) : 0,
+    };
   }
 }
 

@@ -204,11 +204,11 @@ export const insertCustomerSuccessSchema = createInsertSchema(customerSuccess).o
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ id: true, updatedAt: true });
 export const insertAgenticTaskSchema = createInsertSchema(agenticTasks).omit({ id: true, createdAt: true, status: true, result: true, progress: true, lastRunAt: true });
 export const insertAnalyticsSchema = createInsertSchema(analytics).omit({ id: true, createdAt: true });
-export const insertLeadActivitySchema = createInsertSchema(leadActivities).omit({ id: true, createdAt: true });
-export const insertBusinessProfileSchema = createInsertSchema(businessProfiles).omit({ id: true, createdAt: true, isOnboarded: true });
+export const insertLeadActivitySchema = createInsertSchema(leadActivities).omit({ id: true, userId: true, createdAt: true });
+export const insertBusinessProfileSchema = createInsertSchema(businessProfiles).omit({ id: true, userId: true, createdAt: true, isOnboarded: true });
 export const insertEmailSequenceSchema = createInsertSchema(emailSequences).omit({ id: true, createdAt: true, enrolledCount: true, completedCount: true });
-export const insertSequenceEnrollmentSchema = createInsertSchema(sequenceEnrollments).omit({ id: true, createdAt: true, completedAt: true });
-export const insertAiGeneratedContentSchema = createInsertSchema(aiGeneratedContent).omit({ id: true, createdAt: true });
+export const insertSequenceEnrollmentSchema = createInsertSchema(sequenceEnrollments).omit({ id: true, userId: true, createdAt: true, completedAt: true });
+export const insertAiGeneratedContentSchema = createInsertSchema(aiGeneratedContent).omit({ id: true, userId: true, createdAt: true });
 
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
@@ -242,3 +242,117 @@ export const geneticTasks = agenticTasks;
 export type GeneticTask = AgenticTask;
 export type InsertGeneticTask = InsertAgenticTask;
 export const insertGeneticTaskSchema = insertAgenticTaskSchema;
+
+export const emailTracking = pgTable("email_tracking", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  campaignId: integer("campaign_id").references(() => campaigns.id),
+  leadId: integer("lead_id").references(() => leads.id),
+  emailId: text("email_id").notNull(),
+  subject: text("subject").notNull(),
+  recipient: text("recipient").notNull(),
+  status: text("status").default("sent"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  openedAt: timestamp("opened_at"),
+  clickedAt: timestamp("clicked_at"),
+  repliedAt: timestamp("replied_at"),
+  bouncedAt: timestamp("bounced_at"),
+  openCount: integer("open_count").default(0),
+  clickCount: integer("click_count").default(0),
+  metadata: jsonb("metadata"),
+});
+
+export const scheduledOutreach = pgTable("scheduled_outreach", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  leadId: integer("lead_id").references(() => leads.id).notNull(),
+  channel: text("channel").notNull(),
+  type: text("type").notNull(),
+  subject: text("subject"),
+  content: text("content").notNull(),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  executedAt: timestamp("executed_at"),
+  status: text("status").default("scheduled"),
+  result: jsonb("result"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const meetingSchedules = pgTable("meeting_schedules", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  leadId: integer("lead_id").references(() => leads.id),
+  clientId: integer("client_id").references(() => clients.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  meetingType: text("meeting_type").default("call"),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  duration: integer("duration").default(30),
+  status: text("status").default("scheduled"),
+  meetingLink: text("meeting_link"),
+  notes: text("notes"),
+  aiInsights: jsonb("ai_insights"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const salesCoaching = pgTable("sales_coaching", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  leadId: integer("lead_id").references(() => leads.id),
+  opportunityId: integer("opportunity_id").references(() => opportunities.id),
+  sessionType: text("session_type").notNull(),
+  transcript: text("transcript"),
+  summary: text("summary"),
+  insights: jsonb("insights"),
+  coachingPoints: jsonb("coaching_points"),
+  sentimentScore: integer("sentiment_score"),
+  winProbability: integer("win_probability"),
+  nextBestActions: jsonb("next_best_actions"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const automationRules = pgTable("automation_rules", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  trigger: text("trigger").notNull(),
+  conditions: jsonb("conditions"),
+  actions: jsonb("actions"),
+  isActive: boolean("is_active").default(true),
+  executionCount: integer("execution_count").default(0),
+  lastExecutedAt: timestamp("last_executed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const pipelineForecasts = pgTable("pipeline_forecasts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  forecastDate: timestamp("forecast_date").notNull(),
+  expectedRevenue: integer("expected_revenue").default(0),
+  bestCaseRevenue: integer("best_case_revenue").default(0),
+  worstCaseRevenue: integer("worst_case_revenue").default(0),
+  aiConfidence: integer("ai_confidence").default(0),
+  factors: jsonb("factors"),
+  recommendations: jsonb("recommendations"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEmailTrackingSchema = createInsertSchema(emailTracking).omit({ id: true, userId: true, sentAt: true, openedAt: true, clickedAt: true, repliedAt: true, bouncedAt: true, openCount: true, clickCount: true });
+export const insertScheduledOutreachSchema = createInsertSchema(scheduledOutreach).omit({ id: true, userId: true, createdAt: true, executedAt: true, result: true });
+export const insertMeetingScheduleSchema = createInsertSchema(meetingSchedules).omit({ id: true, userId: true, createdAt: true });
+export const insertSalesCoachingSchema = createInsertSchema(salesCoaching).omit({ id: true, userId: true, createdAt: true });
+export const insertAutomationRuleSchema = createInsertSchema(automationRules).omit({ id: true, userId: true, createdAt: true, executionCount: true, lastExecutedAt: true });
+export const insertPipelineForecastSchema = createInsertSchema(pipelineForecasts).omit({ id: true, userId: true, createdAt: true });
+
+export type EmailTracking = typeof emailTracking.$inferSelect;
+export type InsertEmailTracking = z.infer<typeof insertEmailTrackingSchema>;
+export type ScheduledOutreach = typeof scheduledOutreach.$inferSelect;
+export type InsertScheduledOutreach = z.infer<typeof insertScheduledOutreachSchema>;
+export type MeetingSchedule = typeof meetingSchedules.$inferSelect;
+export type InsertMeetingSchedule = z.infer<typeof insertMeetingScheduleSchema>;
+export type SalesCoaching = typeof salesCoaching.$inferSelect;
+export type InsertSalesCoaching = z.infer<typeof insertSalesCoachingSchema>;
+export type AutomationRule = typeof automationRules.$inferSelect;
+export type InsertAutomationRule = z.infer<typeof insertAutomationRuleSchema>;
+export type PipelineForecast = typeof pipelineForecasts.$inferSelect;
+export type InsertPipelineForecast = z.infer<typeof insertPipelineForecastSchema>;

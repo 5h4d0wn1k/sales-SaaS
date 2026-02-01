@@ -258,9 +258,9 @@ export default function AgenticMode() {
                         />
                       </div>
                     </CardContent>
-                    {task.result && (
+                    {Boolean(task.result) && (
                       <div className="px-6 pb-4">
-                        <Button variant="outline" size="sm" onClick={() => { setSelectedTask(task); setExecutionResult({ success: true, data: task.result, summary: "Previous execution results" }); }}>
+                        <Button variant="outline" size="sm" onClick={() => { setSelectedTask(task); setExecutionResult({ success: true, data: task.result as Record<string, unknown>, summary: "Previous execution results" }); }}>
                           View Last Results
                         </Button>
                       </div>
