@@ -19,6 +19,7 @@ import Subscription from "@/pages/Subscription";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -112,8 +113,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <ErrorBoundary>
+        <Router />
+        <Toaster />
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

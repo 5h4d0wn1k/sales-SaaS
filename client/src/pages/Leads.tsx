@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLeads, useDeleteLead } from "@/hooks/use-leads";
 import { useScoreAllLeads, useStaleLeads } from "@/hooks/use-ai-features";
+import { useBulkImportLeads, parseCSV } from "@/hooks/use-bulk-import";
 import { LeadModal } from "@/components/LeadModal";
 import { LeadDetailPanel } from "@/components/LeadDetailPanel";
 import { Button } from "@/components/ui/button";
@@ -14,26 +15,80 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, MoreVertical, Trash2, Edit, Brain, AlertTriangle, Eye } from "lucide-react";
+import { Plus, Search, MoreVertical, Trash2, Edit, Brain, AlertTriangle, Eye, Upload, Download } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Lead } from "@shared/schema";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Leads() {
   const { data: leads, isLoading } = useLeads();
   const deleteMutation = useDeleteLead();
   const scoreAllMutation = useScoreAllLeads();
+  const importMutation = useBulkImportLeads();
   const { data: staleLeads } = useStaleLeads(14);
+  const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | undefined>(undefined);
   const [selectedLead, setSelectedLead] = useState<Lead | undefined>(undefined);
   const [search, setSearch] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    const parsedLeads = parseCSV(text);
+    
+    if (parsedLeads.length === 0) {
+      toast({
+        title: "Import Failed",
+        description: "No valid leads found in the file. Make sure it has 'name' and 'email' columns.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    importMutation.mutate(parsedLeads, {
+      onSuccess: (result) => {
+        toast({
+          title: "Import Complete",
+          description: result.message,
+        });
+        setIsImportOpen(false);
+      },
+      onError: () => {
+        toast({
+          title: "Import Failed",
+          description: "Failed to import leads. Please try again.",
+          variant: "destructive",
+        });
+      },
+    });
+  };
+
+  const handleExport = () => {
+    if (!leads || leads.length === 0) {
+      toast({ title: "No leads to export", variant: "destructive" });
+      return;
+    }
+    window.open("/api/leads/export", "_blank");
+  };
 
   const staleLeadIds = new Set(staleLeads?.map(s => s.leadId) || []);
 
@@ -75,17 +130,34 @@ export default function Leads() {
           <h2 className="text-3xl font-display font-bold tracking-tight">Leads</h2>
           <p className="text-muted-foreground">Manage and track your potential customers.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsImportOpen(true)}
+            className="gap-2"
+            data-testid="button-import-leads"
+          >
+            <Upload className="w-4 h-4" /> Import
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleExport}
+            className="gap-2"
+            data-testid="button-export-leads"
+          >
+            <Download className="w-4 h-4" /> Export
+          </Button>
           <Button 
             variant="outline" 
             onClick={() => scoreAllMutation.mutate()} 
             disabled={scoreAllMutation.isPending}
             className="gap-2"
+            data-testid="button-score-all"
           >
             <Brain className="w-4 h-4" /> 
             {scoreAllMutation.isPending ? "Scoring..." : "AI Score All"}
           </Button>
-          <Button onClick={handleCreate} className="gap-2 shadow-lg shadow-primary/20">
+          <Button onClick={handleCreate} className="gap-2 shadow-lg shadow-primary/20" data-testid="button-add-lead">
             <Plus className="w-4 h-4" /> Add Lead
           </Button>
         </div>
@@ -208,6 +280,49 @@ export default function Leads() {
           onClose={() => setSelectedLead(undefined)} 
         />
       )}
+
+      <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Leads</DialogTitle>
+            <DialogDescription>
+              Upload a CSV file with your leads. Required columns: name, email. 
+              Optional: phone, company, title, source, status, notes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground mb-4">
+                Drag and drop your CSV file here, or click to browse
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+                data-testid="input-csv-file"
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importMutation.isPending}
+                data-testid="button-browse-file"
+              >
+                {importMutation.isPending ? "Importing..." : "Browse Files"}
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              <p className="font-medium mb-1">Example CSV format:</p>
+              <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
+name,email,company,title,phone{"\n"}
+John Doe,john@example.com,Acme Inc,CEO,555-1234
+              </pre>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -2,10 +2,21 @@ import type { Express, Request, Response } from "express";
 import OpenAI from "openai";
 import { chatStorage } from "./storage";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OpenAI API key not configured. Please set up the AI integration.");
+    }
+    openai = new OpenAI({
+      apiKey,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+  return openai;
+}
 
 export function registerChatRoutes(app: Express): void {
   // Get all conversations
@@ -22,7 +33,8 @@ export function registerChatRoutes(app: Express): void {
   // Get single conversation with messages
   app.get("/api/conversations/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const id = parseInt(idParam);
       const conversation = await chatStorage.getConversation(id);
       if (!conversation) {
         return res.status(404).json({ error: "Conversation not found" });
@@ -50,7 +62,8 @@ export function registerChatRoutes(app: Express): void {
   // Delete conversation
   app.delete("/api/conversations/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const id = parseInt(idParam);
       await chatStorage.deleteConversation(id);
       res.status(204).send();
     } catch (error) {
@@ -62,7 +75,8 @@ export function registerChatRoutes(app: Express): void {
   // Send message and get AI response (streaming)
   app.post("/api/conversations/:id/messages", async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.id);
+      const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const conversationId = parseInt(idParam);
       const { content } = req.body;
 
       // Save user message
@@ -81,7 +95,7 @@ export function registerChatRoutes(app: Express): void {
       res.setHeader("Connection", "keep-alive");
 
       // Stream response from OpenAI
-      const stream = await openai.chat.completions.create({
+      const stream = await getOpenAIClient().chat.completions.create({
         model: "gpt-5.1",
         messages: chatMessages,
         stream: true,

@@ -133,3 +133,23 @@ export function useAnalyzeConversation() {
       analyzeConversation(notes, context),
   });
 }
+
+interface AIStatus {
+  configured: boolean;
+  provider: string;
+  message: string;
+}
+
+async function getAIStatus(): Promise<AIStatus> {
+  const res = await fetch("/api/ai-status", { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to get AI status");
+  return res.json();
+}
+
+export function useAIStatus() {
+  return useQuery({
+    queryKey: ["/api/ai-status"],
+    queryFn: getAIStatus,
+    staleTime: 60000,
+  });
+}

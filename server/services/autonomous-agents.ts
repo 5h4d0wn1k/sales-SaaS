@@ -1,10 +1,21 @@
 import OpenAI from "openai";
 import type { Lead, BusinessProfile, AgenticTask, Opportunity, Client } from "@shared/schema";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OpenAI API key not configured. Please set up the AI integration.");
+    }
+    openai = new OpenAI({
+      apiKey,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+  return openai;
+}
 
 export interface AgentContext {
   businessProfile?: BusinessProfile;
@@ -35,7 +46,7 @@ export interface AutonomousAgentResult {
 
 async function executeWithAI(prompt: string): Promise<any> {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAIClient().chat.completions.create({
       model: "gpt-5.1",
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },

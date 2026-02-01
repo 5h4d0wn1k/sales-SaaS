@@ -4,11 +4,13 @@ import { useOpportunities } from "@/hooks/use-opportunities";
 import { useAgenticTasks } from "@/hooks/use-agentic-tasks";
 import { useCampaigns } from "@/hooks/use-campaigns";
 import { useClients } from "@/hooks/use-clients";
+import { useAIStatus } from "@/hooks/use-ai-features";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { Users, DollarSign, Activity, TrendingUp, Mail, Bot, Target, Heart, Zap, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Users, DollarSign, Activity, TrendingUp, Mail, Bot, Target, Heart, Zap, ArrowUpRight, ArrowDownRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +21,7 @@ export default function Dashboard() {
   const { data: tasks } = useAgenticTasks();
   const { data: campaigns } = useCampaigns();
   const { data: clients } = useClients();
+  const { data: aiStatus } = useAIStatus();
 
   const totalLeads = leads?.length || 0;
   const totalClients = clients?.length || 0;
@@ -65,6 +68,24 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {aiStatus && !aiStatus.configured && (
+        <Alert className="bg-amber-500/10 border-amber-500/30">
+          <AlertCircle className="h-4 w-4 text-amber-500" />
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>AI features are running in demo mode. Add your OpenAI API key to enable full AI capabilities.</span>
+            <Badge variant="outline" className="text-amber-500 border-amber-500/30">Demo Mode</Badge>
+          </AlertDescription>
+        </Alert>
+      )}
+      {aiStatus && aiStatus.configured && (
+        <Alert className="bg-green-500/10 border-green-500/30">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>AI features are fully configured and ready to use.</span>
+            <Badge variant="outline" className="text-green-500 border-green-500/30">AI Enabled</Badge>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-display font-bold tracking-tight">Dashboard</h2>
@@ -72,10 +93,10 @@ export default function Dashboard() {
         </div>
         <div className="flex gap-2">
           <Link href="/leads">
-            <Button variant="outline" size="sm">View Leads</Button>
+            <Button variant="outline" size="sm" data-testid="button-view-leads">View Leads</Button>
           </Link>
           <Link href="/agentic-mode">
-            <Button size="sm" className="bg-accent">
+            <Button size="sm" className="bg-accent" data-testid="button-agentic-mode">
               <Bot className="w-4 h-4 mr-2" />
               Agentic Mode
             </Button>

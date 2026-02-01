@@ -960,6 +960,100 @@ export async function registerRoutes(
     }
   });
 
+  // Health Check Endpoint
+  app.get("/api/health", async (req, res) => {
+    res.json({ 
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      version: "1.0.0"
+    });
+  });
+
+  // AI Status Check Endpoint
+  app.get("/api/ai-status", isAuthenticated, async (req, res) => {
+    const hasApiKey = !!process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+    res.json({
+      configured: hasApiKey,
+      features: {
+        leadScoring: hasApiKey,
+        contentGeneration: hasApiKey,
+        conversationIntelligence: hasApiKey,
+        autonomousAgents: hasApiKey,
+        multiChannelOrchestration: hasApiKey,
+      },
+      message: hasApiKey 
+        ? "AI features are fully enabled" 
+        : "Please configure AI integration to enable advanced features"
+    });
+  });
+
+  // Bulk Lead Import
+  app.post("/api/leads/bulk-import", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { leads: leadsData } = req.body;
+
+      if (!Array.isArray(leadsData) || leadsData.length === 0) {
+        return res.status(400).json({ message: "No leads provided" });
+      }
+
+      if (leadsData.length > 1000) {
+        return res.status(400).json({ message: "Maximum 1000 leads per import" });
+      }
+
+      const results = { success: 0, failed: 0, errors: [] as string[] };
+
+      for (const leadData of leadsData) {
+        try {
+          if (!leadData.name || !leadData.email) {
+            results.failed++;
+            results.errors.push(`Missing required fields for: ${leadData.name || leadData.email || 'unknown'}`);
+            continue;
+          }
+
+          await storage.createLead(userId, {
+            name: leadData.name,
+            email: leadData.email,
+            phone: leadData.phone || null,
+            company: leadData.company || null,
+            title: leadData.title || null,
+            source: leadData.source || "import",
+            status: leadData.status || "new",
+            notes: leadData.notes || null,
+            tags: leadData.tags || null,
+            userId,
+          });
+          results.success++;
+        } catch (err) {
+          results.failed++;
+          results.errors.push(`Failed to import: ${leadData.email}`);
+        }
+      }
+
+      res.json({
+        message: `Imported ${results.success} leads, ${results.failed} failed`,
+        ...results
+      });
+    } catch (err) {
+      console.error("Bulk import error:", err);
+      res.status(500).json({ message: "Bulk import failed" });
+    }
+  });
+
+  // Export leads endpoint
+  app.get("/api/leads/export", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const leads = await storage.getLeads(userId);
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename=leads-export.json');
+      res.json(leads);
+    } catch (err) {
+      res.status(500).json({ message: "Export failed" });
+    }
+  });
+
   await seedDatabase();
   return httpServer;
 }
