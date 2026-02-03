@@ -11,7 +11,8 @@ import {
   UserCircle,
   Building2,
   Mail,
-  Heart
+  Heart,
+  Settings2
 } from "lucide-react";
 import { 
   Sidebar, 
@@ -27,6 +28,7 @@ import {
   SidebarGroupContent
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 
 interface LayoutProps {
   children: ReactNode;
@@ -51,6 +53,7 @@ export function Layout({ children }: LayoutProps) {
 
   const settingsNavItems = [
     { icon: CreditCard, label: "Subscription", href: "/subscription" },
+    { icon: Settings2, label: "Settings", href: "/settings" },
   ];
 
   const style = {
@@ -178,6 +181,9 @@ export function Layout({ children }: LayoutProps) {
         </Sidebar>
 
         <main className="flex-1 overflow-auto">
+          <div className="sticky top-0 z-10 flex items-center justify-end gap-2 p-4 bg-background/80 backdrop-blur-sm border-b border-border/40">
+            <NotificationsDropdown />
+          </div>
           <div className="container max-w-7xl mx-auto p-4 md:p-8 lg:p-12 animate-fade-in">
             {children}
           </div>

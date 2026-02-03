@@ -16,6 +16,7 @@ import Campaigns from "@/pages/Campaigns";
 import CustomerSuccess from "@/pages/CustomerSuccess";
 import AgenticMode from "@/pages/AgenticMode";
 import Subscription from "@/pages/Subscription";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
@@ -103,6 +104,10 @@ function Router() {
       
       <Route path="/subscription">
         <ProtectedRoute component={Subscription} />
+      </Route>
+
+      <Route path="/settings">
+        <ProtectedRoute component={Settings} />
       </Route>
 
       <Route component={NotFound} />

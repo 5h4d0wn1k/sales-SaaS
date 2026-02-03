@@ -26,6 +26,20 @@ import {
   generateChannelContent,
   scheduleOutreach 
 } from "./services/multi-channel";
+import { 
+  registerWebhook, 
+  getWebhooks, 
+  deleteWebhook, 
+  processIncomingWebhook 
+} from "./services/webhooks";
+import { scheduler, initializeScheduler } from "./services/scheduler";
+import { 
+  getNotifications, 
+  getUnreadCount, 
+  markAsRead, 
+  markAllAsRead, 
+  deleteNotification 
+} from "./services/notifications";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -1053,6 +1067,121 @@ export async function registerRoutes(
       res.status(500).json({ message: "Export failed" });
     }
   });
+
+  // Webhook Management
+  app.get("/api/webhooks", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const webhooks = getWebhooks(userId);
+    res.json(webhooks.map(w => ({ ...w, secret: "***" })));
+  });
+
+  app.post("/api/webhooks", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { url, events } = req.body;
+      if (!url || !events || !Array.isArray(events)) {
+        return res.status(400).json({ message: "URL and events array required" });
+      }
+      const webhook = registerWebhook(userId, { url, events, isActive: true });
+      res.status(201).json(webhook);
+    } catch (err) {
+      res.status(400).json({ message: "Failed to create webhook" });
+    }
+  });
+
+  app.delete("/api/webhooks/:id", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const webhookId = req.params.id;
+    const deleted = deleteWebhook(userId, webhookId);
+    if (!deleted) return res.status(404).json({ message: "Webhook not found" });
+    res.status(204).send();
+  });
+
+  // Incoming Webhook Endpoints
+  app.post("/api/webhooks/stripe", async (req, res) => {
+    try {
+      const event = req.headers["stripe-signature"] ? req.body.type : req.body.event;
+      const result = await processIncomingWebhook("stripe", event, req.body, 
+        req.headers["stripe-signature"] as string, process.env.STRIPE_WEBHOOK_SECRET);
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: "Webhook processing failed" });
+    }
+  });
+
+  app.post("/api/webhooks/email", async (req, res) => {
+    try {
+      const { event } = req.body;
+      const result = await processIncomingWebhook("email", event, req.body);
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: "Webhook processing failed" });
+    }
+  });
+
+  app.post("/api/webhooks/calendar", async (req, res) => {
+    try {
+      const { event } = req.body;
+      const result = await processIncomingWebhook("calendar", event, req.body);
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: "Webhook processing failed" });
+    }
+  });
+
+  // Scheduler Status
+  app.get("/api/scheduler/status", isAuthenticated, async (req: any, res) => {
+    const status = scheduler.getStatus();
+    res.json(status);
+  });
+
+  // Notifications
+  app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const notifications = getNotifications(userId, limit);
+    const unreadCount = getUnreadCount(userId);
+    res.json({ notifications, unreadCount });
+  });
+
+  app.post("/api/notifications/:id/read", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const notificationId = req.params.id;
+    const success = markAsRead(userId, notificationId);
+    if (!success) return res.status(404).json({ message: "Notification not found" });
+    res.json({ success: true });
+  });
+
+  app.post("/api/notifications/read-all", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const count = markAllAsRead(userId);
+    res.json({ success: true, markedCount: count });
+  });
+
+  app.delete("/api/notifications/:id", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const notificationId = req.params.id;
+    const success = deleteNotification(userId, notificationId);
+    if (!success) return res.status(404).json({ message: "Notification not found" });
+    res.status(204).send();
+  });
+
+  // Health Check
+  app.get("/api/health", async (req, res) => {
+    res.json({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      version: "1.0.0",
+      services: {
+        database: "connected",
+        scheduler: "running",
+        ai: "available",
+      },
+    });
+  });
+
+  // Initialize scheduler
+  initializeScheduler();
 
   await seedDatabase();
   return httpServer;
