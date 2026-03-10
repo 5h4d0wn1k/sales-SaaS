@@ -1,0 +1,22 @@
+{
+  "name": "@sales/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "@sales/database": "file:../../packages/database",
+    "@sales/shared": "file:../../packages/shared",
+    "dotenv": "^16.4.7",
+    "hono": "^4.7.4",
+    "resend": "^6.1.2",
+    "twilio": "^5.5.3",
+    "zod": "^3.24.2"
+  }
+}
