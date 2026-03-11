@@ -8,11 +8,12 @@ import {
   timestamp,
   uuid,
   varchar,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 const timestamps = {
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
 };
 
 export const roleEnum = pgEnum("role", ["owner", "admin", "member"]);
@@ -43,14 +44,54 @@ export const workspaces = pgTable("workspaces", {
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  organizationId: uuid("organization_id").references(() => organizations.id),
+  name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  displayName: varchar("display_name", { length: 160 }).notNull(),
+  emailVerified: timestamp("email_verified", { withTimezone: true, mode: "date" }),
+  image: text("image"),
+  displayName: varchar("display_name", { length: 160 }),
   role: roleEnum("role").notNull().default("member"),
-  googleSubject: varchar("google_subject", { length: 255 }),
   passwordHash: text("password_hash"),
   ...timestamps,
 });
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: uuid("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 255 }).notNull(),
+    provider: varchar("provider", { length: 255 }).notNull(),
+    providerAccountId: varchar("providerAccountId", { length: 255 }).notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: varchar("token_type", { length: 255 }),
+    scope: varchar("scope", { length: 255 }),
+    id_token: text("id_token"),
+    session_state: varchar("session_state", { length: 255 }),
+  },
+  (account) => ({
+    compoundKey: primaryKey({ columns: [account.provider, account.providerAccountId] }),
+  })
+);
+
+export const sessions = pgTable("sessions", {
+  sessionToken: varchar("sessionToken", { length: 255 }).notNull().primaryKey(),
+  userId: uuid("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { withTimezone: true, mode: "date" }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  "verificationToken",
+  {
+    identifier: varchar("identifier", { length: 255 }).notNull(),
+    token: varchar("token", { length: 255 }).notNull(),
+    expires: timestamp("expires", { withTimezone: true, mode: "date" }).notNull(),
+  },
+  (vt) => ({
+    compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+  })
+);
 
 export const leads = pgTable("leads", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -164,6 +205,20 @@ export const subscriptions = pgTable("subscriptions", {
   seats: integer("seats").notNull().default(3),
   stripeCustomerId: varchar("stripe_customer_id", { length: 120 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 120 }),
+  razorpayCustomerId: varchar("razorpay_customer_id", { length: 120 }),
+  razorpaySubscriptionId: varchar("razorpay_subscription_id", { length: 120 }),
+  ...timestamps,
+});
+
+export const payments = pgTable("payments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  amount: integer("amount").notNull(),
+  currency: varchar("currency", { length: 10 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull(),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  providerPaymentId: varchar("provider_payment_id", { length: 255 }),
+  receiptUrl: text("receipt_url"),
   ...timestamps,
 });
 

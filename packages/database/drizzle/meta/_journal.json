@@ -8,6 +8,13 @@
       "when": 1773147303748,
       "tag": "0000_small_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773218009174,
+      "tag": "0001_odd_cable",
+      "breakpoints": true
     }
   ]
 }

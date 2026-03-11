@@ -15,7 +15,9 @@
     "@sales/shared": "file:../../packages/shared",
     "dotenv": "^16.4.7",
     "hono": "^4.7.4",
+    "razorpay": "^2.9.6",
     "resend": "^6.1.2",
+    "stripe": "^20.4.1",
     "twilio": "^5.5.3",
     "zod": "^3.24.2"
   }

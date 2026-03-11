@@ -30,6 +30,7 @@ import {
 } from "./providers";
 import { getStorage } from "./storage";
 import { verifyResendWebhook, verifyTwilioVoiceWebhook } from "./webhooks";
+import { billingRoutes } from "./routes/billing";
 
 export function createApp() {
   const app = new Hono();
@@ -410,6 +411,8 @@ export function createApp() {
     const input = campaignPolicyInputSchema.parse(payload);
     return c.json(evaluateCampaignPolicy(input));
   });
+
+  app.route("/v1/billing", billingRoutes);
 
   return app;
 }
