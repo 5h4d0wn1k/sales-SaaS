@@ -13,6 +13,7 @@ import {
     buildGetStartedUrl,
     type CheckoutState,
     type GetStartedStep,
+    type InviteQueryContext,
 } from "./flow-state";
 
 type Step = GetStartedStep;
@@ -34,20 +35,35 @@ type CheckoutResponse = {
     description?: string;
 };
 
+type InviteContext = {
+    token: string;
+    email: string | null;
+    workspaceName: string | null;
+    organizationName: string | null;
+    message: string | null;
+    status: string | null;
+};
+
 type GetStartedFlowProps = {
     initialStep: Step;
     userEmail?: string | null;
+    userEmailVerified: boolean;
     googleAuthEnabled: boolean;
     initialSelectedPlan: string;
     initialCheckoutState: CheckoutState;
+    initialNotice: "reset-success" | "verify-email-sent" | null;
+    inviteContext: InviteContext | null;
 };
 
 export default function GetStartedFlow({
     initialStep,
     userEmail,
+    userEmailVerified,
     googleAuthEnabled,
     initialSelectedPlan,
     initialCheckoutState,
+    initialNotice,
+    inviteContext,
 }: GetStartedFlowProps) {
     const router = useRouter();
     const [step, setStep] = useState<Step>(initialStep);
@@ -58,18 +74,36 @@ export default function GetStartedFlow({
     const [currency, setCurrency] = useState<"usd" | "inr">("usd");
     const [selectedPlan, setSelectedPlan] = useState<string>(initialSelectedPlan);
     const [checkoutState, setCheckoutState] = useState<CheckoutState>(initialCheckoutState);
-    const [email, setEmail] = useState(userEmail ?? "");
+    const [email, setEmail] = useState(userEmail ?? inviteContext?.email ?? "");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
 
     const currentPlan = PRICING_PLANS.find((p) => p.key === selectedPlan);
+    const inviteQuery: InviteQueryContext | undefined = inviteContext
+        ? {
+            inviteToken: inviteContext.token,
+            inviteEmail: inviteContext.email,
+            inviteWorkspace: inviteContext.workspaceName,
+            inviteOrganization: inviteContext.organizationName,
+        }
+        : undefined;
+    const normalizedInviteEmail = inviteContext?.email?.trim().toLowerCase() ?? null;
+    const normalizedSessionEmail = userEmail?.trim().toLowerCase() ?? null;
+    const signedInInviteMatch = Boolean(
+        normalizedInviteEmail && normalizedSessionEmail && normalizedInviteEmail === normalizedSessionEmail,
+    );
 
-    function syncUrl(nextStep: Step, nextPlan = selectedPlan, nextCheckoutState: CheckoutState = checkoutState) {
-        router.replace(buildGetStartedUrl({
+    function buildUrlWithInvite(nextStep?: Step | null, nextCheckoutState: CheckoutState = checkoutState, nextPlan = selectedPlan) {
+        return buildGetStartedUrl({
             planKey: nextPlan,
             step: nextStep,
             checkout: nextCheckoutState,
-        }));
+            invite: inviteQuery,
+        });
+    }
+
+    function syncUrl(nextStep: Step, nextPlan = selectedPlan, nextCheckoutState: CheckoutState = checkoutState) {
+        router.replace(buildUrlWithInvite(nextStep, nextCheckoutState, nextPlan));
     }
 
     function moveToStep(nextStep: Step, nextCheckoutState: CheckoutState = null) {
@@ -114,7 +148,7 @@ export default function GetStartedFlow({
             if (signInResult?.error) {
                 setError("Account created but sign in failed. Please try signing in manually.");
             } else {
-                moveToStep("plan_selection");
+                window.location.href = buildUrlWithInvite("plan_selection", null, selectedPlan);
             }
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : "An unexpected error occurred.";
@@ -138,7 +172,7 @@ export default function GetStartedFlow({
             if (signInResult?.error) {
                 setError("Invalid email or password");
             } else {
-                moveToStep("plan_selection");
+                window.location.href = buildUrlWithInvite("plan_selection", null, selectedPlan);
             }
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : "An unexpected error occurred.";
@@ -150,10 +184,7 @@ export default function GetStartedFlow({
 
     function handleGoogleLogin() {
         void signIn("google", {
-            callbackUrl: buildGetStartedUrl({
-                planKey: selectedPlan,
-                step: "plan_selection",
-            }),
+            callbackUrl: buildUrlWithInvite("plan_selection", null, selectedPlan),
         });
     }
 
@@ -227,6 +258,12 @@ export default function GetStartedFlow({
                 return;
             }
 
+            if (!userEmailVerified) {
+                setError("Verify your email before starting paid checkout. You can resend a verification link below.");
+                setLoading(false);
+                return;
+            }
+
             const provider = currency === "usd" ? "stripe" : "razorpay";
             const res = await fetch(`/api/billing/checkout/${provider}`, {
                 method: "POST",
@@ -235,11 +272,7 @@ export default function GetStartedFlow({
                 body: JSON.stringify({
                     planKey: selectedPlan,
                     successUrl: `${window.location.origin}${buildDashboardUrl("success")}`,
-                    cancelUrl: `${window.location.origin}${buildGetStartedUrl({
-                        planKey: selectedPlan,
-                        step: "checkout",
-                        checkout: "canceled",
-                    })}`,
+                    cancelUrl: `${window.location.origin}${buildUrlWithInvite("checkout", "canceled", selectedPlan)}`,
                 }),
             });
 
@@ -312,6 +345,64 @@ export default function GetStartedFlow({
                             </div>
                         ))}
                     </div>
+
+                    {initialNotice === "reset-success" ? (
+                        <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+                            Password updated successfully. Sign in with your new password to continue.
+                        </div>
+                    ) : null}
+                    {initialNotice === "verify-email-sent" ? (
+                        <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+                            Verification email sent. Open the latest message in your inbox to unlock billing and live outbound actions.
+                        </div>
+                    ) : null}
+                    {inviteContext ? (
+                        <div className="mb-8 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
+                            <p className="font-semibold">
+                                {inviteContext.workspaceName
+                                    ? `Invitation to ${inviteContext.workspaceName}`
+                                    : "Workspace invitation"}
+                            </p>
+                            <p className="mt-2 leading-6 text-sky-900">
+                                {inviteContext.organizationName
+                                    ? `${inviteContext.organizationName} invited `
+                                    : "A teammate invited "}
+                                {inviteContext.email ? (
+                                    <span className="font-medium">{inviteContext.email}</span>
+                                ) : (
+                                    "this account"
+                                )}
+                                {" "}to join the active workspace.
+                            </p>
+                            {inviteContext.status === "error" && inviteContext.message ? (
+                                <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                                    {inviteContext.message}
+                                </p>
+                            ) : null}
+                            {signedInInviteMatch ? (
+                                <form action="/api/account/team/invitations/accept" method="post" className="mt-4">
+                                    <input type="hidden" name="token" value={inviteContext.token} />
+                                    <input type="hidden" name="returnTo" value={buildUrlWithInvite(step, checkoutState, selectedPlan)} />
+                                    <button
+                                        type="submit"
+                                        className="rounded-full bg-sky-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-800"
+                                    >
+                                        Accept workspace invite
+                                    </button>
+                                </form>
+                            ) : (
+                                <p className="mt-4 text-sm text-sky-900">
+                                    Continue with
+                                    {" "}
+                                    <span className="font-medium">
+                                        {inviteContext.email ?? "the invited email address"}
+                                    </span>
+                                    {" "}
+                                    to accept this invite after you sign in or create the account.
+                                </p>
+                            )}
+                        </div>
+                    ) : null}
 
                     {/* Step 1: Conversational Auth */}
                     {step === "auth" && (
@@ -551,6 +642,16 @@ export default function GetStartedFlow({
                                                 <ArrowRight className="w-4 h-4 ml-2" />
                                             </Button>
                                         </div>
+                                        {authMode === "login" ? (
+                                            <div className="text-right">
+                                                <Link
+                                                    href="/forgot-password"
+                                                    className="text-sm font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                                                >
+                                                    Forgot your password?
+                                                </Link>
+                                            </div>
+                                        ) : null}
                                     </div>
                                 </div>
                             )}
@@ -702,6 +803,30 @@ export default function GetStartedFlow({
                                     Your previous checkout session was canceled. Nothing was charged, and you can retry from here.
                                 </div>
                             )}
+                            {!userEmailVerified ? (
+                                <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+                                    <p className="font-semibold">
+                                        Verify your email before starting paid checkout.
+                                    </p>
+                                    <p className="mt-2 leading-6 text-amber-900">
+                                        This keeps billing-safe actions tied to a confirmed inbox. We sent a verification email when the account was created.
+                                    </p>
+                                    <form action="/api/auth/verify-email/request" method="post" className="mt-4">
+                                        <input
+                                            type="hidden"
+                                            name="returnTo"
+                                            value={buildUrlWithInvite("checkout", null, selectedPlan)}
+                                        />
+                                        {userEmail ? <input type="hidden" name="email" value={userEmail} /> : null}
+                                        <button
+                                            type="submit"
+                                            className="rounded-full bg-amber-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800"
+                                        >
+                                            Resend verification email
+                                        </button>
+                                    </form>
+                                </div>
+                            ) : null}
 
                             <div className="rounded-2xl border p-6 mb-6 bg-white">
                                 <h3 className="font-semibold mb-4">Order Summary</h3>

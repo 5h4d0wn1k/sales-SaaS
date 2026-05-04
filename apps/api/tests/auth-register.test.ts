@@ -13,7 +13,17 @@ function createDbMock(existingUsers: unknown[] = []) {
     from: fromMock,
   }));
 
-  const valuesMock = vi.fn(async () => undefined);
+  const returningMock = vi.fn(async () => [
+    {
+      id: "user-1",
+      email: "user@example.com",
+      displayName: "Jamie Founder",
+      emailVerified: null,
+    },
+  ]);
+  const valuesMock = vi.fn(() => ({
+    returning: returningMock,
+  }));
   const insertMock = vi.fn(() => ({
     values: valuesMock,
   }));
@@ -24,6 +34,7 @@ function createDbMock(existingUsers: unknown[] = []) {
       insert: insertMock,
     },
     valuesMock,
+    returningMock,
   };
 }
 
@@ -31,6 +42,13 @@ async function loadAuthApp(existingUsers: unknown[] = []) {
   const database = await vi.importActual<typeof import("@sales/database")>("@sales/database");
   const dbMock = createDbMock(existingUsers);
   const hashMock = vi.fn(async () => "hashed-password");
+  const issueEmailVerificationMock = vi.fn(async () => ({
+    email: "user@example.com",
+    delivery: {
+      mode: "preview" as const,
+      previewUrl: "http://localhost:3000/verify-email?email=user@example.com&token=preview",
+    },
+  }));
 
   vi.doMock("@sales/database", () => ({
     ...database,
@@ -39,12 +57,19 @@ async function loadAuthApp(existingUsers: unknown[] = []) {
   vi.doMock("bcryptjs", () => ({
     hash: hashMock,
   }));
+  vi.doMock("../src/auth-lifecycle", () => ({
+    consumeEmailVerification: vi.fn(),
+    consumePasswordReset: vi.fn(),
+    findLifecycleUserByEmail: vi.fn(),
+    issueEmailVerification: issueEmailVerificationMock,
+    issuePasswordReset: vi.fn(),
+  }));
 
   const { authRoutes } = await import("../src/routes/auth");
   const app = new Hono();
   app.route("/v1/auth", authRoutes);
 
-  return { app, dbMock, hashMock };
+  return { app, dbMock, hashMock, issueEmailVerificationMock };
 }
 
 afterEach(() => {
@@ -52,6 +77,7 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.unmock("@sales/database");
   vi.unmock("bcryptjs");
+  vi.unmock("../src/auth-lifecycle");
 });
 
 describe("registration route", () => {
@@ -101,6 +127,7 @@ describe("registration route", () => {
       passwordHash: "hashed-password",
       displayName: "Jamie Founder",
       role: "owner",
+      emailVerified: null,
     });
   });
 });

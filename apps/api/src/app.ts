@@ -1,7 +1,10 @@
 import { Hono, type Context } from "hono";
 import {
+  acceptWorkspaceInvitationInputSchema,
   approveCampaignInputSchema,
   campaignPolicyInputSchema,
+  createWorkspaceInvitationInputSchema,
+  createWorkspaceInvitationResponseSchema,
   createCallInputSchema,
   createCampaignInputSchema,
   createLeadInputSchema,
@@ -17,9 +20,13 @@ import {
   platformModules,
   reviewCallInputSchema,
   runCampaignInputSchema,
+  selectWorkspaceInputSchema,
   sourcePlanInputSchema,
   sourceRunInputSchema,
   updateMeetingInputSchema,
+  workspaceInvitationListSchema,
+  workspaceMembershipListSchema,
+  workspaceTeamMemberListSchema,
 } from "@sales/shared";
 import {
   chooseSourceProviders,
@@ -40,10 +47,26 @@ import {
   requestSizeLimitMiddleware,
   auditLogMiddleware,
 } from "./middleware/security";
-import { authMiddleware, requireRole, type AuthUser } from "./middleware/auth";
+import {
+  authMiddleware,
+  requireRole,
+  requireVerifiedEmail,
+  type AuthUser,
+} from "./middleware/auth";
+import {
+  acceptWorkspaceInvitationForUser,
+  createWorkspaceInvitationForActor,
+  listWorkspaceInvitationsForActor,
+  listWorkspaceMembershipsForUser,
+  listWorkspaceTeamMembersForActor,
+  revokeWorkspaceInvitationForActor,
+  selectActiveWorkspaceForUser,
+  TenantAccessError,
+} from "./tenant-access";
+import type { AppVariables } from "./request-context";
 
 export function createApp() {
-  const app = new Hono();
+  const app = new Hono<{ Variables: AppVariables }>();
   const allowedOrigins = process.env.NODE_ENV === "production"
     ? [process.env.FRONTEND_URL].filter(Boolean)
     : ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"];
@@ -71,6 +94,19 @@ export function createApp() {
     }
 
     return value;
+  };
+  const tenantErrorResponse = (c: Context, error: unknown) => {
+    if (!(error instanceof TenantAccessError)) {
+      return null;
+    }
+
+    return c.json(
+      {
+        error: error.message,
+        code: error.code,
+      },
+      error.status as 400 | 401 | 403 | 404 | 409,
+    );
   };
 
   // Global security middleware (order matters)
@@ -135,6 +171,182 @@ export function createApp() {
   app.get("/v1/dashboard", async (c) => {
     const storage = await storageFor(c);
     return c.json(dashboardResponseSchema.parse(await storage.getDashboard()));
+  });
+
+  app.get("/v1/account/workspaces", async (c) => {
+    const user = c.get("user") as AuthUser | undefined;
+    if (!user) {
+      return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+      const memberships = await listWorkspaceMembershipsForUser({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        organizationId: user.organizationId,
+        activeWorkspaceId: user.workspaceId,
+      });
+
+      return c.json(workspaceMembershipListSchema.parse({ memberships }));
+    } catch (error) {
+      return tenantErrorResponse(c, error) ?? c.json({ error: "Unable to load workspaces" }, 500);
+    }
+  });
+
+  app.post("/v1/account/workspaces/select", async (c) => {
+    const user = c.get("user") as AuthUser | undefined;
+    if (!user) {
+      return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+      const payload = await c.req.json();
+      const { workspaceId } = selectWorkspaceInputSchema.parse(payload);
+      const selected = await selectActiveWorkspaceForUser(user.id, workspaceId);
+      const memberships = await listWorkspaceMembershipsForUser({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: selected.role,
+        organizationId: selected.organizationId,
+        activeWorkspaceId: selected.workspaceId,
+      });
+
+      return c.json(workspaceMembershipListSchema.parse({ memberships }));
+    } catch (error) {
+      return tenantErrorResponse(c, error) ?? c.json({ error: "Unable to select workspace" }, 500);
+    }
+  });
+
+  app.get("/v1/account/team", requireRole("owner", "admin"), async (c) => {
+    const user = c.get("user") as AuthUser | undefined;
+    if (!user) {
+      return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+      const members = await listWorkspaceTeamMembersForActor({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role as "owner" | "admin" | "member",
+        organizationId: user.organizationId!,
+        workspaceId: user.workspaceId!,
+      });
+
+      return c.json(workspaceTeamMemberListSchema.parse({ members }));
+    } catch (error) {
+      return tenantErrorResponse(c, error) ?? c.json({ error: "Unable to load team members" }, 500);
+    }
+  });
+
+  app.get("/v1/account/team/invitations", requireRole("owner", "admin"), async (c) => {
+    const user = c.get("user") as AuthUser | undefined;
+    if (!user) {
+      return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+      const invitations = await listWorkspaceInvitationsForActor({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role as "owner" | "admin" | "member",
+        organizationId: user.organizationId!,
+        workspaceId: user.workspaceId!,
+      });
+
+      return c.json(workspaceInvitationListSchema.parse({ invitations }));
+    } catch (error) {
+      return tenantErrorResponse(c, error) ?? c.json({ error: "Unable to load team invites" }, 500);
+    }
+  });
+
+  app.post(
+    "/v1/account/team/invitations",
+    requireRole("owner", "admin"),
+    requireVerifiedEmail("Verify your email before inviting teammates."),
+    async (c) => {
+      const user = c.get("user") as AuthUser | undefined;
+      if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+      }
+
+      try {
+        const payload = await c.req.json();
+        const input = createWorkspaceInvitationInputSchema.parse(payload);
+        const result = await createWorkspaceInvitationForActor(
+          {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role as "owner" | "admin" | "member",
+            organizationId: user.organizationId!,
+            workspaceId: user.workspaceId!,
+          },
+          input,
+        );
+
+        return c.json(createWorkspaceInvitationResponseSchema.parse(result), 201);
+      } catch (error) {
+        return tenantErrorResponse(c, error) ?? c.json({ error: "Unable to create invite" }, 500);
+      }
+    },
+  );
+
+  app.post("/v1/account/team/invitations/:id/revoke", requireRole("owner", "admin"), async (c) => {
+    const user = c.get("user") as AuthUser | undefined;
+    if (!user) {
+      return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+      return c.json(
+        await revokeWorkspaceInvitationForActor(
+          {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role as "owner" | "admin" | "member",
+            organizationId: user.organizationId!,
+            workspaceId: user.workspaceId!,
+          },
+          requiredParam(c, "id"),
+        ),
+      );
+    } catch (error) {
+      return tenantErrorResponse(c, error) ?? c.json({ error: "Unable to revoke invite" }, 500);
+    }
+  });
+
+  app.post("/v1/account/team/invitations/accept", async (c) => {
+    const user = c.get("user") as AuthUser | undefined;
+    if (!user) {
+      return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+      const payload = await c.req.json();
+      const input = acceptWorkspaceInvitationInputSchema.parse(payload);
+
+      return c.json(
+        await acceptWorkspaceInvitationForUser(
+          {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            organizationId: user.organizationId,
+            activeWorkspaceId: user.workspaceId,
+          },
+          input.token,
+        ),
+      );
+    } catch (error) {
+      return tenantErrorResponse(c, error) ?? c.json({ error: "Unable to accept invite" }, 500);
+    }
   });
 
   app.get("/v1/providers", (c) => {
@@ -334,7 +546,11 @@ export function createApp() {
     return c.json(campaign);
   });
 
-  app.post("/v1/campaigns/:id/run", requireRole("owner", "admin"), async (c) => {
+  app.post(
+    "/v1/campaigns/:id/run",
+    requireRole("owner", "admin"),
+    requireVerifiedEmail("Verify your email before running live outreach."),
+    async (c) => {
     const storage = await storageFor(c);
     const campaignId = requiredParam(c, "id");
     const payload = await c.req.json().catch(() => ({}));
@@ -346,9 +562,14 @@ export function createApp() {
     }
 
     return c.json(result);
-  });
+    },
+  );
 
-  app.post("/v1/campaigns/:id/dispatch", requireRole("owner", "admin"), async (c) => {
+  app.post(
+    "/v1/campaigns/:id/dispatch",
+    requireRole("owner", "admin"),
+    requireVerifiedEmail("Verify your email before dispatching live outreach."),
+    async (c) => {
     const storage = await storageFor(c);
     const campaignId = requiredParam(c, "id");
     const payload = await c.req.json().catch(() => ({}));
@@ -384,7 +605,8 @@ export function createApp() {
       activity: updatedActivity,
       ...dispatch,
     });
-  });
+    },
+  );
 
   app.get("/v1/campaigns/:id/activity", async (c) => {
     const storage = await storageFor(c);
@@ -404,7 +626,10 @@ export function createApp() {
     return c.json(call, 201);
   });
 
-  app.post("/v1/calls/dispatch", async (c) => {
+  app.post(
+    "/v1/calls/dispatch",
+    requireVerifiedEmail("Verify your email before dispatching live calls."),
+    async (c) => {
     const storage = await storageFor(c);
     const payload = await c.req.json();
     const input = dispatchCallInputSchema.parse(payload);
@@ -447,7 +672,8 @@ export function createApp() {
       call: updatedCall,
       ...dispatch,
     });
-  });
+    },
+  );
 
   app.get("/v1/calls/:id", async (c) => {
     const storage = await storageFor(c);

@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { and, eq, gt, desc } from "drizzle-orm";
-import { db, subscriptions, payments, organizations, users, usageEvents } from "@sales/database";
+import { db, subscriptions, payments, organizations, usageEvents } from "@sales/database";
 import { getPlanByKey } from "@sales/shared";
 import { getStorage } from "../storage";
 import {
@@ -23,6 +23,7 @@ interface BillingVars {
     id: string;
     email: string;
     role: string;
+    emailVerified: boolean;
     organizationId?: string;
   };
 }
@@ -31,7 +32,13 @@ export const billingRoutes = new Hono<{ Variables: BillingVars }>();
 
 // Helper to get authenticated user context
 function getUserFromContext(c: any) {
-    const user = c.get("user") as { id: string; email: string; role: string; organizationId?: string } | undefined;
+    const user = c.get("user") as {
+        id: string;
+        email: string;
+        role: string;
+        emailVerified: boolean;
+        organizationId?: string;
+    } | undefined;
     if (!user) {
         throw new Error("Authentication required");
     }
@@ -48,6 +55,19 @@ function requireBillingManager(c: any) {
         return {
             user,
             response: c.json({ error: "Billing management requires owner or admin access" }, 403),
+        };
+    }
+
+    if (!user.emailVerified) {
+        return {
+            user,
+            response: c.json(
+                {
+                    error: "Verify your email before managing billing or starting paid checkout.",
+                    code: "email_verification_required",
+                },
+                403,
+            ),
         };
     }
 
@@ -222,20 +242,9 @@ billingRoutes.post("/checkout/stripe", async (c) => {
             return returnUrlError;
         }
 
-        // Ensure organization exists
-        let organizationId = user.organizationId;
+        const organizationId = user.organizationId;
         if (!organizationId) {
-            const slug = `${user.email.split("@")[0]}-${user.id.slice(0, 8)}`;
-            const [org] = await db
-                .insert(organizations)
-                .values({
-                    name: `${user.email}'s Workspace`,
-                    slug,
-                    region: "global",
-                })
-                .returning();
-            organizationId = org.id;
-            await db.update(users).set({ organizationId }).where(eq(users.id, user.id));
+            return c.json({ error: "No organization associated with user" }, 404);
         }
 
         // Get or create Stripe customer
@@ -313,20 +322,9 @@ billingRoutes.post("/checkout/razorpay", async (c) => {
             return returnUrlError;
         }
 
-        // Ensure organization exists
-        let organizationId = user.organizationId;
+        const organizationId = user.organizationId;
         if (!organizationId) {
-            const slug = `${user.email.split("@")[0]}-${user.id.slice(0, 8)}`;
-            const [org] = await db
-                .insert(organizations)
-                .values({
-                    name: `${user.email}'s Workspace`,
-                    slug,
-                    region: "global",
-                })
-                .returning();
-            organizationId = org.id;
-            await db.update(users).set({ organizationId }).where(eq(users.id, user.id));
+            return c.json({ error: "No organization associated with user" }, 404);
         }
 
         // Get or create Razorpay customer

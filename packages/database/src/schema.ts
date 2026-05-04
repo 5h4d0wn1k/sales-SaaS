@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -26,6 +27,7 @@ export const onboardingStatusEnum = pgEnum("onboarding_status", ["draft", "in_pr
 export const sourceStatusEnum = pgEnum("source_status", ["planned", "running", "completed"]);
 export const activityStatusEnum = pgEnum("activity_status", ["draft", "queued", "sent", "completed", "review_required"]);
 export const meetingStatusEnum = pgEnum("meeting_status", ["pending", "scheduled", "completed", "canceled"]);
+export const invitationStatusEnum = pgEnum("invitation_status", ["pending", "accepted", "revoked", "expired"]);
 
 export const organizations = pgTable("organizations", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -43,11 +45,20 @@ export const workspaces = pgTable("workspaces", {
   name: varchar("name", { length: 160 }).notNull(),
   industry: varchar("industry", { length: 120 }),
   ...timestamps,
-});
+}, (workspace) => ({
+  organizationIdIdx: index("workspaces_organization_id_idx").on(workspace.organizationId),
+}));
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   organizationId: uuid("organization_id").references(() => organizations.id),
+  activeWorkspaceId: uuid("active_workspace_id").references(() => workspaces.id, {
+    onDelete: "set null",
+  }),
+  sessionInvalidBefore: timestamp("session_invalid_before", {
+    withTimezone: true,
+    mode: "date",
+  }),
   name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull().unique(),
   emailVerified: timestamp("email_verified", { withTimezone: true, mode: "date" }),
@@ -56,7 +67,98 @@ export const users = pgTable("users", {
   role: roleEnum("role").notNull().default("member"),
   passwordHash: text("password_hash"),
   ...timestamps,
-});
+}, (user) => ({
+  organizationIdIdx: index("users_organization_id_idx").on(user.organizationId),
+  activeWorkspaceIdIdx: index("users_active_workspace_id_idx").on(user.activeWorkspaceId),
+}));
+
+export const organizationMemberships = pgTable(
+  "organization_memberships",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: roleEnum("role").notNull().default("member"),
+    ...timestamps,
+  },
+  (membership) => ({
+    organizationUserUnique: uniqueIndex("organization_memberships_org_user_unique").on(
+      membership.organizationId,
+      membership.userId,
+    ),
+    organizationIdIdx: index("organization_memberships_organization_id_idx").on(
+      membership.organizationId,
+    ),
+    userIdIdx: index("organization_memberships_user_id_idx").on(membership.userId),
+  }),
+);
+
+export const workspaceMemberships = pgTable(
+  "workspace_memberships",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: roleEnum("role").notNull().default("member"),
+    ...timestamps,
+  },
+  (membership) => ({
+    workspaceUserUnique: uniqueIndex("workspace_memberships_workspace_user_unique").on(
+      membership.workspaceId,
+      membership.userId,
+    ),
+    workspaceIdIdx: index("workspace_memberships_workspace_id_idx").on(membership.workspaceId),
+    userIdIdx: index("workspace_memberships_user_id_idx").on(membership.userId),
+  }),
+);
+
+export const workspaceInvitations = pgTable(
+  "workspace_invitations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    invitedByUserId: uuid("invited_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    acceptedByUserId: uuid("accepted_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    email: varchar("email", { length: 255 }).notNull(),
+    role: roleEnum("role").notNull().default("member"),
+    tokenHash: varchar("token_hash", { length: 255 }).notNull(),
+    status: invitationStatusEnum("status").notNull().default("pending"),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true, mode: "date" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "date" }),
+    ...timestamps,
+  },
+  (invitation) => ({
+    tokenHashUnique: uniqueIndex("workspace_invitations_token_hash_unique").on(
+      invitation.tokenHash,
+    ),
+    workspaceEmailStatusIdx: index("workspace_invitations_workspace_email_status_idx").on(
+      invitation.workspaceId,
+      invitation.email,
+      invitation.status,
+    ),
+    invitedByUserIdIdx: index("workspace_invitations_invited_by_user_id_idx").on(
+      invitation.invitedByUserId,
+    ),
+  }),
+);
 
 export const accounts = pgTable(
   "accounts",

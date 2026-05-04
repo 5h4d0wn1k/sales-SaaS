@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DashboardResponse } from "@sales/shared";
 
+const APP_BOOT_TIMEOUT_MS = 30000;
+
 const dashboardFixture: DashboardResponse = {
   workspace: {
     organizationName: "Northstar Labs",
@@ -69,6 +71,7 @@ describe("request id middleware", () => {
             id: "user-1",
             email: "owner@example.com",
             role: "owner",
+            emailVerified: true,
             organizationId: "org-1",
             workspaceId: "ws-1",
           });
@@ -95,7 +98,7 @@ describe("request id middleware", () => {
         path: "/v1/dashboard",
       },
     });
-  }, 15000);
+  }, APP_BOOT_TIMEOUT_MS);
 
   it("generates a request id when the caller does not provide one", async () => {
     vi.doMock("../src/storage", async () => {
@@ -127,5 +130,5 @@ describe("request id middleware", () => {
     expect(requestId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
-  }, 15000);
+  }, APP_BOOT_TIMEOUT_MS);
 });

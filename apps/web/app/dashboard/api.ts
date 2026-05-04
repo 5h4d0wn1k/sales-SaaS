@@ -1,1 +1,1 @@
-export { getDashboardData } from "../api";
+export { getDashboardData, getWorkspaceMemberships } from "../api";

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DashboardResponse } from "@sales/shared";
 
+const APP_BOOT_TIMEOUT_MS = 30000;
+
 const dashboardFixture: DashboardResponse = {
   workspace: {
     organizationName: "Northstar Labs",
@@ -73,6 +75,7 @@ describe("request-scoped storage context", () => {
             id: "user-1",
             email: "owner@example.com",
             role: "owner",
+            emailVerified: true,
             organizationId: "org-1",
             workspaceId: "ws-1",
           });
@@ -92,7 +95,7 @@ describe("request-scoped storage context", () => {
     });
     expect(getDashboardMock).toHaveBeenCalledTimes(1);
     expect(auditMock).toHaveBeenCalledTimes(1);
-  }, 15000);
+  }, APP_BOOT_TIMEOUT_MS);
 
   it("does not invent tenant context for public health checks", async () => {
     const getStorageMock = vi.fn(async () => ({
@@ -123,5 +126,5 @@ describe("request-scoped storage context", () => {
 
     expect(response.status).toBe(200);
     expect(getStorageMock.mock.calls.some((call) => call.length === 0)).toBe(true);
-  }, 15000);
+  }, APP_BOOT_TIMEOUT_MS);
 });

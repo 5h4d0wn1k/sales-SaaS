@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { encode as encodeAuthJsToken } from "next-auth/jwt";
 import type { DashboardResponse } from "@sales/shared";
 
+const APP_BOOT_TIMEOUT_MS = 30000;
+
 const dashboardFixture: DashboardResponse = {
   workspace: {
     organizationName: "Northstar Labs",
@@ -47,14 +49,7 @@ function createAuthenticatedDbMock() {
         name: "Owner Example",
         role: "owner",
         organizationId: "org-1",
-      },
-    ],
-    [
-      {
-        id: "ws-1",
-        organizationId: "org-1",
-        name: "Default Workspace",
-        industry: "SaaS",
+        activeWorkspaceId: "ws-1",
       },
     ],
   ];
@@ -139,7 +134,13 @@ async function loadAppWithEnv(overrides: Record<string, string | undefined>) {
   };
 }
 
-async function loadAuthenticatedApp() {
+async function loadAuthenticatedApp(options?: {
+  tenantAccessError?: {
+    message: string;
+    status: number;
+    code: string;
+  };
+}) {
   const previous = {
     NODE_ENV: process.env.NODE_ENV,
     AUTH_SECRET: process.env.AUTH_SECRET,
@@ -152,6 +153,9 @@ async function loadAuthenticatedApp() {
 
   const actualDatabase = await vi.importActual<typeof import("@sales/database")>("@sales/database");
   const actualStorage = await vi.importActual<typeof import("../src/storage")>("../src/storage");
+  const actualTenantAccess = await vi.importActual<typeof import("../src/tenant-access")>(
+    "../src/tenant-access",
+  );
   const dbMock = createAuthenticatedDbMock();
   const getDashboardMock = vi.fn(async () => dashboardFixture);
   const auditMock = vi.fn(async () => undefined);
@@ -160,6 +164,21 @@ async function loadAuthenticatedApp() {
     getDashboard: getDashboardMock,
     audit: auditMock,
   }));
+  const ensureUserTenantAccessMock = vi.fn(async () => {
+    if (options?.tenantAccessError) {
+      throw new actualTenantAccess.TenantAccessError(
+        options.tenantAccessError.message,
+        options.tenantAccessError.status,
+        options.tenantAccessError.code,
+      );
+    }
+
+    return {
+      organizationId: "org-1",
+      workspaceId: "ws-1",
+      role: "owner" as const,
+    };
+  });
 
   vi.doMock("@sales/database", () => ({
     ...actualDatabase,
@@ -169,6 +188,10 @@ async function loadAuthenticatedApp() {
     ...actualStorage,
     getStorage: getStorageMock,
   }));
+  vi.doMock("../src/tenant-access", () => ({
+    ...actualTenantAccess,
+    ensureUserTenantAccess: ensureUserTenantAccessMock,
+  }));
 
   vi.resetModules();
   const { createApp } = await import("../src/app");
@@ -177,6 +200,7 @@ async function loadAuthenticatedApp() {
     app: createApp(),
     getStorageMock,
     getDashboardMock,
+    ensureUserTenantAccessMock,
     restore() {
       if (previous.NODE_ENV === undefined) {
         delete process.env.NODE_ENV;
@@ -204,6 +228,7 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.unmock("@sales/database");
   vi.unmock("../src/storage");
+  vi.unmock("../src/tenant-access");
 });
 
 describe("auth middleware", () => {
@@ -224,7 +249,7 @@ describe("auth middleware", () => {
     } finally {
       restore();
     }
-  }, 10000);
+  }, APP_BOOT_TIMEOUT_MS);
 
   it("allows public health checks without authentication", async () => {
     const { app, restore } = await loadAppWithEnv({
@@ -244,7 +269,7 @@ describe("auth middleware", () => {
     } finally {
       restore();
     }
-  }, 10000);
+  }, APP_BOOT_TIMEOUT_MS);
 
   it("accepts encrypted Auth.js bearer tokens for protected routes", async () => {
     const { app, getStorageMock, getDashboardMock, restore } = await loadAuthenticatedApp();
@@ -278,7 +303,7 @@ describe("auth middleware", () => {
     } finally {
       restore();
     }
-  }, 15000);
+  }, APP_BOOT_TIMEOUT_MS);
 
   it("accepts chunked Auth.js cookies for protected routes", async () => {
     const { app, getStorageMock, restore } = await loadAuthenticatedApp();
@@ -309,5 +334,39 @@ describe("auth middleware", () => {
     } finally {
       restore();
     }
-  }, 15000);
+  }, APP_BOOT_TIMEOUT_MS);
+
+  it("fails closed when the authenticated user must choose a workspace", async () => {
+    const { app, restore } = await loadAuthenticatedApp({
+      tenantAccessError: {
+        message: "Select a workspace before continuing.",
+        status: 409,
+        code: "workspace_selection_required",
+      },
+    });
+    const token = await encodeAuthJsToken({
+      secret: "sales-aaas-test-auth-secret",
+      salt: "authjs.session-token",
+      token: {
+        sub: "user-123",
+        role: "owner",
+      },
+    });
+
+    try {
+      const response = await app.request("/v1/dashboard", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.status).toBe(409);
+      await expect(response.json()).resolves.toMatchObject({
+        error: "Select a workspace before continuing.",
+        code: "workspace_selection_required",
+      });
+    } finally {
+      restore();
+    }
+  }, APP_BOOT_TIMEOUT_MS);
 });

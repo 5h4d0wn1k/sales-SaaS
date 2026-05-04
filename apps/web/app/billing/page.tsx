@@ -1,9 +1,17 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getBillingPortalData } from "@/app/api";
+import { getBillingPortalData, getWorkspaceMemberships } from "@/app/api";
 import { cancelSubscriptionAction } from "./actions";
-import { isServerApiUnauthorizedError } from "@/lib/server-api-auth";
+import {
+  isServerApiUnauthorizedError,
+  isServerApiWorkspaceSelectionRequiredError,
+} from "@/lib/server-api-auth";
+import { AuthenticatedAppNav } from "@/components/authenticated-app-nav";
+import { EmailVerificationBanner } from "@/components/email-verification-banner";
+import { WorkspaceSelectionRequired } from "@/components/workspace-selection-required";
+import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
 export const metadata: Metadata = {
   title: "Billing & Subscription - Sales SaaS",
@@ -13,6 +21,8 @@ export const metadata: Metadata = {
 type BillingPageProps = {
   searchParams?: Promise<{
     canceled?: string;
+    workspace?: string;
+    verifyEmail?: string;
   }>;
 };
 
@@ -26,6 +36,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
   try {
     const portalData = await getBillingPortalData();
+    const workspaceMemberships = await getWorkspaceMemberships();
     const scheduledCancellationDate = portalData.subscription?.cancellationRequestedAt
       ? new Date(portalData.subscription.cancellationRequestedAt).toLocaleDateString()
       : null;
@@ -33,18 +44,78 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
+          <AuthenticatedAppNav
+            currentPath="/billing"
+            userEmail={session.user.email}
+            emailVerified={Boolean(session.user.emailVerified)}
+          />
           {params?.canceled === "1" ? (
             <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               Your subscription is set to stay active until the end of the current billing period.
             </div>
           ) : null}
+          {params?.workspace === "switched" ? (
+            <div className="mb-6 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+              Workspace scope updated successfully. Billing data now reflects the selected
+              workspace.
+            </div>
+          ) : null}
+          {params?.workspace === "denied" ? (
+            <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+              That workspace is not assigned to your account. Choose one of your permitted
+              workspaces instead.
+            </div>
+          ) : null}
+          {params?.workspace === "error" ? (
+            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              We could not switch the workspace just now. Please retry once the API is healthy.
+            </div>
+          ) : null}
+          {params?.verifyEmail === "sent" ? (
+            <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+              Verification email sent. Open the latest message in your inbox to unlock billing
+              management and live outbound actions.
+            </div>
+          ) : null}
+          {params?.verifyEmail === "error" ? (
+            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              We could not send a verification email just now. Please retry in a moment.
+            </div>
+          ) : null}
+          {!session.user.emailVerified ? (
+            <div className="mb-6">
+              <EmailVerificationBanner
+                email={session.user.email}
+                returnTo="/billing"
+                title="Verify your email before starting paid checkout or changing subscription state."
+                body="Billing reads are still visible, but checkout and cancellation stay locked until the email on this account is verified."
+              />
+            </div>
+          ) : null}
 
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Billing & Subscription</h1>
-            <p className="text-gray-600 mt-2">
-              Manage your subscription, view payment history, and track usage
-            </p>
+          <div className="mb-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Billing & Subscription</h1>
+              <p className="mt-2 text-gray-600">
+                Manage your subscription, view payment history, and track usage
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/dashboard"
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900"
+                >
+                  Open dashboard
+                </Link>
+                <Link
+                  href="/settings"
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900"
+                >
+                  Workspace settings
+                </Link>
+              </div>
+            </div>
+            <WorkspaceSwitcher memberships={workspaceMemberships} returnTo="/billing" compact />
           </div>
 
           {/* Subscription Card */}
@@ -86,13 +157,21 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               </div>
               {portalData.subscription && (
                 <div className="flex gap-2">
-                  <a
-                    href={`/get-started?plan=${portalData.subscription.planKey}`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                  >
-                    Change Plan
-                  </a>
-                  {portalData.subscription.status !== 'canceled' && !portalData.subscription.cancelAtPeriodEnd && (
+                  {session.user.emailVerified ? (
+                    <a
+                      href={`/get-started?plan=${portalData.subscription.planKey}`}
+                      className="px-4 py-2 rounded-lg bg-blue-600 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                    >
+                      Change Plan
+                    </a>
+                  ) : (
+                    <span className="px-4 py-2 rounded-lg bg-gray-200 text-sm font-medium text-gray-500">
+                      Change Plan
+                    </span>
+                  )}
+                  {portalData.subscription.status !== 'canceled' &&
+                  !portalData.subscription.cancelAtPeriodEnd &&
+                  session.user.emailVerified ? (
                     <form action={cancelSubscriptionAction}>
                       <button
                         type="submit"
@@ -101,7 +180,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
                         Cancel At Period End
                       </button>
                     </form>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
@@ -206,7 +285,11 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     if (isServerApiUnauthorizedError(error)) {
       redirect("/get-started");
     }
-    // You can also add a notFound() here if needed
+    if (isServerApiWorkspaceSelectionRequiredError(error)) {
+      const memberships = await getWorkspaceMemberships().catch(() => []);
+      return <WorkspaceSelectionRequired memberships={memberships} returnTo="/billing" />;
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-lg px-6">

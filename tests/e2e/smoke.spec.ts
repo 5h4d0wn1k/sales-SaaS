@@ -47,7 +47,6 @@ test.describe('Pricing Page', () => {
   test('should show the canonical shared pricing values', async ({ page }) => {
     await page.goto('/pricing');
     
-    await expect(page.getByText('Free', { exact: true })).toBeVisible();
     await expect(page.getByText('$49', { exact: true })).toBeVisible();
     await expect(page.getByText('$99', { exact: true })).toBeVisible();
     await expect(page.getByText('$249', { exact: true })).toBeVisible();

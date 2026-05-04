@@ -9,7 +9,7 @@ const googleAuthEnabled =
   Boolean(process.env.GOOGLE_CLIENT_ID) && Boolean(process.env.GOOGLE_CLIENT_SECRET);
 
 export default {
-  trustHost: process.env.AUTH_TRUST_HOST === "true",
+  trustHost: process.env.AUTH_TRUST_HOST === "true" || process.env.NODE_ENV !== "production",
   secret: process.env.AUTH_SECRET,
   providers: [
     ...(googleAuthEnabled
@@ -44,23 +44,47 @@ export default {
           email: user.email,
           name: user.displayName,
           role: user.role,
+          emailVerified: Boolean(user.emailVerified),
         };
       },
     }),
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user, account }: any) {
+    async jwt({ token, user }: any) {
+      const resolvedUserId = user?.id ?? token.id ?? token.sub;
+
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.emailVerified = Boolean(user.emailVerified);
       }
+
+      if (resolvedUserId) {
+        const [dbUser] = await db
+          .select({
+            id: users.id,
+            role: users.role,
+            emailVerified: users.emailVerified,
+          })
+          .from(users)
+          .where(eq(users.id, resolvedUserId))
+          .limit(1);
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.emailVerified = Boolean(dbUser.emailVerified);
+        }
+      }
+
       return token;
     },
     async session({ session, token }: any) {
       if (token && session.user) {
         session.user.id = token.id || "";
         session.user.role = token.role || "member";
+        session.user.emailVerified = Boolean(token.emailVerified);
       }
       return session;
     },

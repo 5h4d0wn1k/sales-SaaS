@@ -3,12 +3,22 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { platformModules, readinessChecklist } from "@sales/shared";
 import { auth } from "../../auth";
-import { getDashboardData } from "./api";
-import { isServerApiUnauthorizedError } from "@/lib/server-api-auth";
+import { getDashboardData, getWorkspaceMemberships } from "./api";
+import {
+  isServerApiUnauthorizedError,
+  isServerApiWorkspaceSelectionRequiredError,
+} from "@/lib/server-api-auth";
+import { AuthenticatedAppNav } from "@/components/authenticated-app-nav";
+import { EmailVerificationBanner } from "@/components/email-verification-banner";
+import { WorkspaceSelectionRequired } from "@/components/workspace-selection-required";
+import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 
 type DashboardPageProps = {
   searchParams?: Promise<{
     checkout?: string;
+    workspace?: string;
+    verifyEmail?: string;
+    inviteStatus?: string;
   }>;
 };
 
@@ -106,14 +116,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const params = await searchParams;
   const showCheckoutSuccess = params?.checkout === "success";
+  const workspaceSwitchState = params?.workspace;
+  const verifyEmailState = params?.verifyEmail;
 
   let dashboard;
+  let workspaceMemberships;
 
   try {
     dashboard = await getDashboardData();
+    workspaceMemberships = await getWorkspaceMemberships();
   } catch (error) {
     if (isServerApiUnauthorizedError(error)) {
       redirect("/get-started");
+    }
+
+    if (isServerApiWorkspaceSelectionRequiredError(error)) {
+      const memberships = await getWorkspaceMemberships().catch(() => []);
+
+      return <WorkspaceSelectionRequired memberships={memberships} returnTo="/dashboard" />;
     }
 
     return (
@@ -153,10 +173,53 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fffaf5_0%,#ffffff_22%,#f8fafc_100%)] text-slate-950">
       <div className="mx-auto max-w-7xl px-6 py-10">
+        <AuthenticatedAppNav
+          currentPath="/dashboard"
+          userEmail={session.user.email}
+          emailVerified={Boolean(session.user.emailVerified)}
+        />
         {showCheckoutSuccess ? (
           <div className="mb-6 rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900 shadow-sm">
             Checkout completed successfully. Your workspace is ready for the next onboarding,
             campaign, and billing steps.
+          </div>
+        ) : null}
+        {params?.inviteStatus === "accepted" ? (
+          <div className="mb-6 rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900 shadow-sm">
+            Workspace invite accepted successfully. This dashboard now reflects the invited workspace scope.
+          </div>
+        ) : null}
+        {workspaceSwitchState === "switched" ? (
+          <div className="mb-6 rounded-3xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-900 shadow-sm">
+            Workspace scope updated successfully. All dashboard data now reflects the selected
+            workspace.
+          </div>
+        ) : null}
+        {workspaceSwitchState === "denied" ? (
+          <div className="mb-6 rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-900 shadow-sm">
+            That workspace is not assigned to your account. Choose one of your permitted
+            workspaces instead.
+          </div>
+        ) : null}
+        {workspaceSwitchState === "error" ? (
+          <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
+            We could not switch the workspace just now. Please retry once the API is healthy.
+          </div>
+        ) : null}
+        {verifyEmailState === "sent" ? (
+          <div className="mb-6 rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900 shadow-sm">
+            Verification email sent. Open the latest message in your inbox to unlock billing and
+            live outbound actions.
+          </div>
+        ) : null}
+        {verifyEmailState === "error" ? (
+          <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
+            We could not send a verification email just now. Please retry in a moment.
+          </div>
+        ) : null}
+        {!session.user.emailVerified ? (
+          <div className="mb-6">
+            <EmailVerificationBanner email={session.user.email} returnTo="/dashboard" />
           </div>
         ) : null}
 
@@ -169,9 +232,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Review the system, understand the motion, and keep every step visible.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
-              {dashboard.workspace.organizationName} is using one workspace for onboarding, source
-              planning, lead qualification, outreach review, meeting tracking, and subscription
-              visibility.
+              {dashboard.workspace.organizationName} is using{" "}
+              {workspaceMemberships.length === 1 ? "one workspace" : `${workspaceMemberships.length} workspaces`}
+              {" "}for onboarding, source planning, lead qualification, outreach review, meeting
+              tracking, and subscription visibility.
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -197,11 +261,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 Manage billing
               </Link>
               <Link
+                href="/settings"
+                className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-950"
+              >
+                Workspace settings
+              </Link>
+              <Link
                 href="/get-started"
                 className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-950"
               >
                 Review onboarding flow
               </Link>
+            </div>
+
+            <div className="mt-8">
+              <WorkspaceSwitcher memberships={workspaceMemberships} returnTo="/dashboard" compact />
             </div>
           </div>
 

@@ -1,12 +1,12 @@
 import { Context, Next } from "hono";
-import { getStorage } from "../storage";
-import { db, users, organizations, workspaces } from "@sales/database";
+import { db, users } from "@sales/database";
 import { eq } from "drizzle-orm";
 import {
   decodeAuthSessionToken,
   getAuthSessionTokenFromCookies,
   parseCookieHeader,
 } from "../auth-session-token";
+import { ensureUserTenantAccess, TenantAccessError } from "../tenant-access";
 
 const AUTH_SECRET = process.env.AUTH_SECRET;
 
@@ -24,6 +24,7 @@ export interface AuthUser {
   email: string;
   name?: string;
   role: string;
+  emailVerified: boolean;
   organizationId?: string;
   workspaceId?: string;
 }
@@ -44,6 +45,22 @@ export function requireRole(...allowedRoles: string[]) {
   };
 }
 
+export function requireVerifiedEmail(message = "Verify your email before continuing.") {
+  return async (c: Context, next: Next) => {
+    const user = c.get("user") as AuthUser | undefined;
+
+    if (!user) {
+      return c.json({ error: "Authentication required" }, 401);
+    }
+
+    if (!user.emailVerified) {
+      return c.json({ error: message, code: "email_verification_required" }, 403);
+    }
+
+    await next();
+  };
+}
+
 export async function authMiddleware(c: Context, next: Next) {
   // Public paths that don't require authentication
   const publicPaths = [
@@ -54,6 +71,10 @@ export async function authMiddleware(c: Context, next: Next) {
     "/v1/billing/webhook/stripe",
     "/v1/billing/webhook/razorpay",
     "/v1/auth/register",
+    "/v1/auth/verify-email/request",
+    "/v1/auth/verify-email/confirm",
+    "/v1/auth/password-reset/request",
+    "/v1/auth/password-reset/confirm",
     "/v1/auth/health",
   ];
 
@@ -82,6 +103,7 @@ export async function authMiddleware(c: Context, next: Next) {
         email: "test@example.com",
         name: "Test User",
         role: "owner",
+        emailVerified: true,
       } as AuthUser);
 
       return next();
@@ -114,6 +136,9 @@ export async function authMiddleware(c: Context, next: Next) {
         name: users.displayName,
         role: users.role,
         organizationId: users.organizationId,
+        activeWorkspaceId: users.activeWorkspaceId,
+        emailVerifiedAt: users.emailVerified,
+        sessionInvalidBefore: users.sessionInvalidBefore,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -123,79 +148,47 @@ export async function authMiddleware(c: Context, next: Next) {
       return c.json({ error: "User not found" }, 404);
     }
 
-    // If user doesn't have an organization, create or assign one
-    if (!user.organizationId) {
-      // Create a personal organization for the user
-      const slug = `${user.name?.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${userId.slice(0, 8)}`;
-      const [organization] = await db
-        .insert(organizations)
-        .values({
-          name: user.name || `${user.email}'s Workspace`,
-          slug: slug,
-          region: "global",
-        })
-        .returning();
+    if (user.sessionInvalidBefore) {
+      const issuedAt =
+        typeof payload.iat === "number" ? new Date(payload.iat * 1000) : null;
 
-      // Create a default workspace
-      const [workspace] = await db
-        .insert(workspaces)
-        .values({
-          organizationId: organization.id,
-          name: "Default Workspace",
-          industry: "Unknown",
-        })
-        .returning();
-
-      // Update user with organization
-      await db
-        .update(users)
-        .set({ organizationId: organization.id })
-        .where(eq(users.id, userId));
-
-      // Set the organizationId on user object
-      user.organizationId = organization.id;
-
-      // Also create a subscription for the organization (free trial)
-      const { subscriptions } = await import("@sales/database");
-      await db.insert(subscriptions).values({
-        organizationId: organization.id,
-        planKey: "free",
-        status: "trialing",
-        usageLimit: 100,
-        seats: 1,
-      });
+      if (!issuedAt || issuedAt.getTime() <= user.sessionInvalidBefore.getTime()) {
+        return c.json({ error: "Session expired. Please sign in again." }, 401);
+      }
     }
 
-    // Get the workspace for this user's organization
-    let [workspace] = await db
-      .select()
-      .from(workspaces)
-      .where(eq(workspaces.organizationId, user.organizationId))
-      .limit(1);
-
-    if (!workspace && user.organizationId) {
-      [workspace] = await db
-        .insert(workspaces)
-        .values({
-          organizationId: user.organizationId,
-          name: "Default Workspace",
-          industry: "Unknown",
-        })
-        .returning();
-    }
+    const access = await ensureUserTenantAccess({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      organizationId: user.organizationId,
+      activeWorkspaceId: user.activeWorkspaceId,
+    });
 
     // Store user info in context for use in route handlers and middleware
     c.set("user", {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
-      organizationId: user.organizationId,
-      workspaceId: workspace?.id,
+      role: access.role,
+      emailVerified: Boolean(user.emailVerifiedAt),
+      organizationId: access.organizationId,
+      workspaceId: access.workspaceId,
     } as AuthUser);
 
     await next();
   } catch (error) {
+    if (error instanceof TenantAccessError) {
+      return c.json(
+        {
+          error: error.message,
+          code: error.code,
+        },
+        error.status as 400 | 401 | 403 | 404 | 409,
+      );
+    }
+
     console.error("Auth error:", error);
     return c.json({ error: "Invalid or expired token" }, 401);
   }

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const APP_BOOT_TIMEOUT_MS = 30000;
+
 async function loadAppForRole(role: "owner" | "admin" | "member") {
   vi.resetModules();
   vi.doMock("../src/middleware/auth", async () => {
@@ -13,6 +15,7 @@ async function loadAppForRole(role: "owner" | "admin" | "member") {
           email: `${role}@example.com`,
           name: role,
           role,
+          emailVerified: true,
         });
         await next();
       },
@@ -45,5 +48,5 @@ describe("role-based authorization", () => {
     await expect(response.json()).resolves.toMatchObject({
       error: "Insufficient permissions",
     });
-  }, 10000);
+  }, APP_BOOT_TIMEOUT_MS);
 });

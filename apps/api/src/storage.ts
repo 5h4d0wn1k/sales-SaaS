@@ -222,6 +222,11 @@ class PostgresStorage implements SalesStorage {
       return;
     }
 
+    if (process.env.ENABLE_POSTGRES_DEMO_SEED !== "true") {
+      this.state.initialized = true;
+      return;
+    }
+
     const dashboard = this.state.seed.getDashboard();
     const existingOrg = await db.select().from(organizations).limit(1);
 
@@ -395,65 +400,33 @@ class PostgresStorage implements SalesStorage {
   private async workspaceContext() {
     await this.ensureInitialized();
 
-    if (this.context?.workspaceId) {
-      const [workspace] = await db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.id, this.context.workspaceId))
-        .limit(1);
-
-      if (!workspace) {
-        throw new Error("Workspace not found for request context");
-      }
-
-      const [organization] = await db
-        .select()
-        .from(organizations)
-        .where(
-          and(
-            eq(organizations.id, this.context.organizationId ?? workspace.organizationId),
-            eq(organizations.id, workspace.organizationId),
-          ),
-        )
-        .limit(1);
-
-      if (!organization) {
-        throw new Error("Organization not found for request context");
-      }
-
-      return { organization, workspace };
+    if (!this.context?.workspaceId) {
+      throw new Error("Scoped workspaceId is required for tenant storage access");
     }
 
-    if (this.context?.organizationId) {
-      const [organization] = await db
-        .select()
-        .from(organizations)
-        .where(eq(organizations.id, this.context.organizationId))
-        .limit(1);
-
-      if (!organization) {
-        throw new Error("Organization not found for request context");
-      }
-
-      const [workspace] = await db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.organizationId, organization.id))
-        .limit(1);
-
-      if (!workspace) {
-        throw new Error("Workspace not found for request context");
-      }
-
-      return { organization, workspace };
-    }
-
-    const [organization] = await db.select().from(organizations).limit(1);
     const [workspace] = await db
       .select()
       .from(workspaces)
-      .where(eq(workspaces.organizationId, organization.id))
+      .where(eq(workspaces.id, this.context.workspaceId))
       .limit(1);
+
+    if (!workspace) {
+      throw new Error("Workspace not found for request context");
+    }
+
+    if (this.context.organizationId && workspace.organizationId !== this.context.organizationId) {
+      throw new Error("Workspace does not belong to the request organization");
+    }
+
+    const [organization] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, workspace.organizationId))
+      .limit(1);
+
+    if (!organization) {
+      throw new Error("Organization not found for request context");
+    }
 
     return { organization, workspace };
   }

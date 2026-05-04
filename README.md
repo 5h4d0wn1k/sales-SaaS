@@ -1,12 +1,14 @@
 # Sales AaaS Platform
 
-Local-first foundation for an autonomous sales platform with:
+Workspace-based foundation for a reviewable, approval-aware sales SaaS + AaaS platform with:
 
-- Next.js frontend
+- Next.js product surface
 - Hono API
 - PostgreSQL + Drizzle
-- Shared domain contracts
-- Basic policy logic for approval-gated autonomous outreach
+- shared domain contracts
+- multi-workspace tenancy foundations
+- billing and guarded provider workflow foundations
+- documentation for product truth, compliance posture, and release operations
 
 ## Local setup
 
@@ -44,14 +46,40 @@ npm run db:migrate
 
 ## Current scope
 
-This bootstrap implements the platform foundation:
+The current repo supports a real production-foundation tranche:
 
-- monorepo structure
-- core SaaS domain schema
-- shared typed contracts
-- tenant, billing, and campaign policy primitives
-- dashboard shell for the product surface
+- monorepo structure with shared contracts and migrations
+- multi-tenant organization and workspace model
+- account lifecycle foundations:
+  - credentials auth
+  - email verification
+  - password reset
+  - workspace selection
+  - initial workspace invite acceptance
+- billing foundations:
+  - Stripe and Razorpay checkout paths
+  - billing portal data
+  - payment history and usage visibility
+- dashboard, lead, campaign, meeting, and call workflow primitives
+- approval-aware live outreach and voice dispatch foundations
+- Cloudflare web/API/workflow deployment scaffolding
+- source-backed product, compliance, monetization, and ops documentation in [`docs/`](docs/README.md)
 
-It now includes Drizzle migration assets and a storage layer that can use Postgres when the schema is applied.
+## Still ahead
 
-It does not yet implement provider integrations, full auth, or real agent execution.
+The platform is not yet feature-complete production SaaS. Major work still ahead includes:
+
+- mature org/workspace administration, ownership transfer, and last-owner protection
+- richer settings and provider configuration surfaces
+- real entitlements, quota enforcement, and AI budget controls
+- horizontally safe production rate limiting and abuse controls
+- content / SEO workflow as a delivered product capability
+- broader channel expansion beyond guarded email and voice foundations
+
+## Product truth standard
+
+The repo follows an operationally honest posture:
+
+- long-term vision: end-to-end AI-assisted sales automation
+- current truth: a reviewable, approval-gated revenue execution platform
+- no blanket global-compliance or full-autonomy claims without product and policy support

@@ -48,4 +48,21 @@ describe("get-started flow state helpers", () => {
     expect(buildDashboardUrl("success")).toBe("/dashboard?checkout=success");
     expect(buildDashboardUrl()).toBe("/dashboard");
   });
+
+  it("preserves invite context through get-started redirects", () => {
+    expect(
+      buildGetStartedUrl({
+        planKey: "free",
+        step: "plan_selection",
+        invite: {
+          inviteToken: "invite-token",
+          inviteEmail: "teammate@example.com",
+          inviteWorkspace: "Outbound Lab",
+          inviteOrganization: "Northstar Labs",
+        },
+      }),
+    ).toBe(
+      "/get-started?plan=free&step=plan_selection&invite=invite-token&inviteEmail=teammate%40example.com&inviteWorkspace=Outbound+Lab&inviteOrganization=Northstar+Labs",
+    );
+  });
 });

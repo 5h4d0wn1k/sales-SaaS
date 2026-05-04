@@ -77,7 +77,11 @@ function createDbMock(selectPlans: SelectPlan[]) {
 
 async function loadBillingApp(
   dbMock: ReturnType<typeof createDbMock>["dbMock"],
-  options: { role?: "owner" | "admin" | "member" } = {},
+  options: {
+    role?: "owner" | "admin" | "member";
+    emailVerified?: boolean;
+    organizationId?: string;
+  } = {},
 ) {
   const actualDatabase = await vi.importActual<typeof import("@sales/database")>("@sales/database");
   const stripeUpdateMock = vi.fn(async () => ({}));
@@ -116,7 +120,8 @@ async function loadBillingApp(
         id: string;
         email: string;
         role: "owner" | "admin" | "member";
-        organizationId: string;
+        emailVerified: boolean;
+        organizationId?: string;
       };
     };
   }>();
@@ -125,7 +130,10 @@ async function loadBillingApp(
       id: "user-1",
       email: "owner@example.com",
       role: options.role ?? "owner",
-      organizationId: "org-1",
+      emailVerified: options.emailVerified ?? true,
+      organizationId: Object.prototype.hasOwnProperty.call(options, "organizationId")
+        ? options.organizationId
+        : "org-1",
     });
     await next();
   });
@@ -292,8 +300,8 @@ describe("billing routes", () => {
       },
       body: JSON.stringify({
         planKey: "starter",
-        successUrl: "https://example.com/success",
-        cancelUrl: "https://example.com/cancel",
+        successUrl: "http://localhost:3000/success",
+        cancelUrl: "http://localhost:3000/cancel",
       }),
     });
     const cancelResponse = await app.request("/v1/billing/cancel", {
@@ -307,6 +315,26 @@ describe("billing routes", () => {
     expect(cancelResponse.status).toBe(403);
     await expect(cancelResponse.json()).resolves.toMatchObject({
       error: "Billing management requires owner or admin access",
+    });
+    expect(db.selectMock).not.toHaveBeenCalled();
+    expect(db.updateMock).not.toHaveBeenCalled();
+  });
+
+  it("requires verified email before billing mutations", async () => {
+    const db = createDbMock([]);
+
+    const { app } = await loadBillingApp(db.dbMock, {
+      role: "owner",
+      emailVerified: false,
+    });
+    const response = await app.request("/v1/billing/cancel", {
+      method: "POST",
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Verify your email before managing billing or starting paid checkout.",
+      code: "email_verification_required",
     });
     expect(db.selectMock).not.toHaveBeenCalled();
     expect(db.updateMock).not.toHaveBeenCalled();
@@ -402,5 +430,32 @@ describe("billing routes", () => {
         process.env.STRIPE_SECRET_KEY = previousStripeSecret;
       }
     }
+  });
+
+  it("fails closed when checkout is attempted without an organization context", async () => {
+    const db = createDbMock([]);
+    const { app } = await loadBillingApp(db.dbMock, {
+      role: "owner",
+      organizationId: undefined,
+    });
+
+    const response = await app.request("/v1/billing/checkout/stripe", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        planKey: "starter",
+        successUrl: "http://localhost:3000/success",
+        cancelUrl: "http://localhost:3000/cancel",
+      }),
+    });
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "No organization associated with user",
+    });
+    expect(db.selectMock).not.toHaveBeenCalled();
+    expect(db.updateMock).not.toHaveBeenCalled();
   });
 });

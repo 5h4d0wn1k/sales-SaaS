@@ -9,8 +9,21 @@ export class ServerApiUnauthorizedError extends Error {
   }
 }
 
+export class ServerApiWorkspaceSelectionRequiredError extends Error {
+  constructor(message = "Workspace selection required") {
+    super(message);
+    this.name = "ServerApiWorkspaceSelectionRequiredError";
+  }
+}
+
 export function isServerApiUnauthorizedError(error: unknown): error is ServerApiUnauthorizedError {
   return error instanceof ServerApiUnauthorizedError;
+}
+
+export function isServerApiWorkspaceSelectionRequiredError(
+  error: unknown,
+): error is ServerApiWorkspaceSelectionRequiredError {
+  return error instanceof ServerApiWorkspaceSelectionRequiredError;
 }
 
 export function getServerApiBaseUrl() {

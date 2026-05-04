@@ -2,6 +2,12 @@ import { PRICING_PLANS } from "@sales/shared";
 
 export type GetStartedStep = "auth" | "plan_selection" | "checkout" | "success";
 export type CheckoutState = "canceled" | null;
+export type InviteQueryContext = {
+  inviteToken?: string | null;
+  inviteEmail?: string | null;
+  inviteWorkspace?: string | null;
+  inviteOrganization?: string | null;
+};
 
 const validPlanKeys = new Set(PRICING_PLANS.map((plan) => plan.key));
 
@@ -59,10 +65,12 @@ export function buildGetStartedUrl({
   planKey,
   step,
   checkout,
+  invite,
 }: {
   planKey?: string;
   step?: GetStartedStep | null;
   checkout?: CheckoutState;
+  invite?: InviteQueryContext;
 }) {
   const params = new URLSearchParams();
   params.set("plan", normalizePlanKey(planKey));
@@ -73,6 +81,19 @@ export function buildGetStartedUrl({
 
   if (checkout) {
     params.set("checkout", checkout);
+  }
+
+  if (invite?.inviteToken) {
+    params.set("invite", invite.inviteToken);
+  }
+  if (invite?.inviteEmail) {
+    params.set("inviteEmail", invite.inviteEmail);
+  }
+  if (invite?.inviteWorkspace) {
+    params.set("inviteWorkspace", invite.inviteWorkspace);
+  }
+  if (invite?.inviteOrganization) {
+    params.set("inviteOrganization", invite.inviteOrganization);
   }
 
   return `/get-started?${params.toString()}`;
