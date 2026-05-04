@@ -9,6 +9,7 @@ import {
   uuid,
   varchar,
   primaryKey,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 const timestamps = {
@@ -31,6 +32,8 @@ export const organizations = pgTable("organizations", {
   name: varchar("name", { length: 160 }).notNull(),
   slug: varchar("slug", { length: 80 }).notNull().unique(),
   region: varchar("region", { length: 48 }).notNull().default("global"),
+  stripeCustomerId: text("stripe_customer_id"),
+  razorpayCustomerId: text("razorpay_customer_id"),
   ...timestamps,
 });
 
@@ -121,19 +124,27 @@ export const campaigns = pgTable("campaigns", {
   ...timestamps,
 });
 
-export const callTasks = pgTable("call_tasks", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
-  leadId: uuid("lead_id").notNull().references(() => leads.id),
-  status: taskStatusEnum("status").notNull().default("queued"),
-  provider: varchar("provider", { length: 80 }),
-  providerCallId: varchar("provider_call_id", { length: 160 }),
-  summary: text("summary"),
-  transcript: text("transcript"),
-  disposition: varchar("disposition", { length: 80 }),
-  reviewRequired: boolean("review_required").notNull().default(false),
-  ...timestamps,
-});
+export const callTasks = pgTable(
+  "call_tasks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
+    leadId: uuid("lead_id").notNull().references(() => leads.id),
+    status: taskStatusEnum("status").notNull().default("queued"),
+    provider: varchar("provider", { length: 80 }),
+    providerCallId: varchar("provider_call_id", { length: 160 }),
+    summary: text("summary"),
+    transcript: text("transcript"),
+    disposition: varchar("disposition", { length: 80 }),
+    reviewRequired: boolean("review_required").notNull().default(false),
+    ...timestamps,
+  },
+  (callTask) => ({
+    providerCallIdUnique: uniqueIndex("call_tasks_provider_call_id_unique").on(
+      callTask.providerCallId,
+    ),
+  }),
+);
 
 export const meetings = pgTable("meetings", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -182,25 +193,39 @@ export const sourceRuns = pgTable("source_runs", {
   ...timestamps,
 });
 
-export const outreachActivities = pgTable("outreach_activities", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
-  leadId: uuid("lead_id").notNull().references(() => leads.id),
-  type: varchar("type", { length: 40 }).notNull(),
-  provider: varchar("provider", { length: 80 }),
-  providerMessageId: varchar("provider_message_id", { length: 160 }),
-  status: activityStatusEnum("status").notNull().default("draft"),
-  subject: varchar("subject", { length: 160 }).notNull(),
-  preview: text("preview").notNull(),
-  personalizedFor: varchar("personalized_for", { length: 160 }).notNull(),
-  ...timestamps,
-});
+export const outreachActivities = pgTable(
+  "outreach_activities",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    campaignId: uuid("campaign_id").notNull().references(() => campaigns.id),
+    leadId: uuid("lead_id").notNull().references(() => leads.id),
+    type: varchar("type", { length: 40 }).notNull(),
+    provider: varchar("provider", { length: 80 }),
+    providerMessageId: varchar("provider_message_id", { length: 160 }),
+    status: activityStatusEnum("status").notNull().default("draft"),
+    subject: varchar("subject", { length: 160 }).notNull(),
+    preview: text("preview").notNull(),
+    personalizedFor: varchar("personalized_for", { length: 160 }).notNull(),
+    ...timestamps,
+  },
+  (activity) => ({
+    providerMessageIdUnique: uniqueIndex("outreach_activities_provider_message_id_unique").on(
+      activity.providerMessageId,
+    ),
+  }),
+);
 
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").defaultRandom().primaryKey(),
   organizationId: uuid("organization_id").notNull().references(() => organizations.id),
   planKey: varchar("plan_key", { length: 80 }).notNull(),
   status: subscriptionStatusEnum("status").notNull().default("trialing"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  cancellationRequestedAt: timestamp("cancellation_requested_at", {
+    withTimezone: true,
+    mode: "date",
+  }),
+  canceledAt: timestamp("canceled_at", { withTimezone: true, mode: "date" }),
   usageLimit: integer("usage_limit").notNull().default(500),
   seats: integer("seats").notNull().default(3),
   stripeCustomerId: varchar("stripe_customer_id", { length: 120 }),
@@ -210,17 +235,26 @@ export const subscriptions = pgTable("subscriptions", {
   ...timestamps,
 });
 
-export const payments = pgTable("payments", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
-  amount: integer("amount").notNull(),
-  currency: varchar("currency", { length: 10 }).notNull(),
-  status: varchar("status", { length: 50 }).notNull(),
-  provider: varchar("provider", { length: 50 }).notNull(),
-  providerPaymentId: varchar("provider_payment_id", { length: 255 }),
-  receiptUrl: text("receipt_url"),
-  ...timestamps,
-});
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+    amount: integer("amount").notNull(),
+    currency: varchar("currency", { length: 10 }).notNull(),
+    status: varchar("status", { length: 50 }).notNull(),
+    provider: varchar("provider", { length: 50 }).notNull(),
+    providerPaymentId: varchar("provider_payment_id", { length: 255 }),
+    receiptUrl: text("receipt_url"),
+    ...timestamps,
+  },
+  (payment) => ({
+    providerPaymentIdUnique: uniqueIndex("payments_provider_payment_id_unique").on(
+      payment.provider,
+      payment.providerPaymentId,
+    ),
+  }),
+);
 
 export const usageEvents = pgTable("usage_events", {
   id: uuid("id").defaultRandom().primaryKey(),

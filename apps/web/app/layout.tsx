@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
 import { AnimatedBackground } from "../components/ui/animated-background";
+import { AppSessionProvider } from "../components/session-provider";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
-
 export const metadata: Metadata = {
-  title: "Winrate — The world's most ambitious businesses don't chase sales. They engineer them.",
+  title: "Winrate — A reviewable workspace for modern outbound operations.",
   description:
-    "Winrate handles your entire sales operation — from first contact to closed deal — powered by AI, built for your specific business.",
+    "Winrate brings onboarding, lead planning, approval-gated outreach, activity tracking, and billing into one workspace.",
   keywords: [
     "sales automation",
     "AI sales",
@@ -23,9 +18,9 @@ export const metadata: Metadata = {
     "sales as a service",
   ],
   openGraph: {
-    title: "Winrate — Engineer your sales.",
+    title: "Winrate — Reviewable outbound operations.",
     description:
-      "Winrate handles your entire sales operation — from first contact to closed deal.",
+      "A workspace for onboarding, lead planning, campaign review, activity tracking, and billing.",
     type: "website",
   },
 };
@@ -36,10 +31,12 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} font-sans`}>
-        <AnimatedBackground />
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans">
+        <AppSessionProvider>
+          <AnimatedBackground />
+          {children}
+        </AppSessionProvider>
       </body>
     </html>
   );

@@ -15,6 +15,34 @@
       "when": 1773218009174,
       "tag": "0001_odd_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773225759668,
+      "tag": "0002_solid_psynapse",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777816869052,
+      "tag": "0003_icy_dagger",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777868094522,
+      "tag": "0004_eager_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777873962558,
+      "tag": "0005_lying_typhoid_mary",
+      "breakpoints": true
     }
   ]
 }

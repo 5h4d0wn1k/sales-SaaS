@@ -5,16 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:worker": "wrangler dev --config wrangler.jsonc",
     "build": "tsc --project tsconfig.json",
+    "deploy": "wrangler deploy --config wrangler.jsonc",
     "typecheck": "tsc --project tsconfig.json --noEmit",
+    "cf-typegen": "wrangler types --config wrangler.jsonc",
     "test": "vitest run"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
     "@sales/database": "file:../../packages/database",
     "@sales/shared": "file:../../packages/shared",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
     "hono": "^4.7.4",
+    "jose": "^6.2.1",
     "razorpay": "^2.9.6",
     "resend": "^6.1.2",
     "stripe": "^20.4.1",

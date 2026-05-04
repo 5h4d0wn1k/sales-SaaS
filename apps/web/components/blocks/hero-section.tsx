@@ -2,10 +2,11 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { ArrowRight, ChevronRight, Menu, X, Zap } from 'lucide-react'
+import { ArrowRight, Menu, X, Zap } from 'lucide-react'
 import { Button } from '../ui/button'
 import { AnimatedGroup } from '../ui/animated-group'
 import { cn } from '../../lib/utils'
+import { useSession } from "next-auth/react";
 
 const transitionVariants = {
     item: {
@@ -48,7 +49,7 @@ export function HeroSection() {
                                     <Link
                                         href="/#features"
                                         className="hover:bg-background bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300">
-                                        <span className="text-foreground text-sm">Winrate: Engineer your sales</span>
+                                        <span className="text-foreground text-sm">Winrate: Reviewable outbound ops</span>
                                         <span className="block h-4 w-0.5 border-l bg-zinc-300"></span>
                                         <div className="bg-background group-hover:bg-muted size-6 overflow-hidden rounded-full duration-500">
                                             <div className="flex w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
@@ -63,13 +64,13 @@ export function HeroSection() {
                                     </Link>
 
                                     <h1 className="mt-8 max-w-4xl mx-auto text-balance text-6xl md:text-7xl lg:mt-16 xl:text-[5.25rem] font-bold tracking-tighter">
-                                        The world&apos;s most ambitious businesses don&apos;t chase sales. They <span className="bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent">engineer</span> them.
+                                        Build a repeatable sales system without losing <span className="bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent">control</span>.
                                     </h1>
                                     <p className="mx-auto mt-8 max-w-2xl text-balance text-lg text-muted-foreground">
-                                        Winrate handles your entire sales operation — from first contact to closed deal — powered by AI, built for your specific business.
+                                        Winrate brings onboarding, lead planning, approval-gated outreach, activity tracking, and billing into one workspace for teams building a modern outbound motion.
                                     </p>
                                     <p className="mx-auto mt-4 max-w-2xl text-balance text-sm font-semibold text-foreground">
-                                        Not leads. Not outreach templates. Actual sales. End to end.
+                                        Human review stays in the loop where trust matters most.
                                     </p>
                                 </AnimatedGroup>
 
@@ -92,7 +93,7 @@ export function HeroSection() {
                                             size="lg"
                                             className="rounded-xl px-5 text-base">
                                             <Link href="/get-started">
-                                                <span className="text-nowrap">Start Winning</span>
+                                                <span className="text-nowrap">Launch Your Workspace</span>
                                                 <ArrowRight className="ml-2 size-4" />
                                             </Link>
                                         </Button>
@@ -103,7 +104,7 @@ export function HeroSection() {
                                         variant="ghost"
                                         className="h-10.5 rounded-xl px-5">
                                         <Link href="/#how-it-works">
-                                            <span className="text-nowrap">See It In Action (3 min)</span>
+                                            <span className="text-nowrap">See The Workflow</span>
                                         </Link>
                                     </Button>
                                 </AnimatedGroup>
@@ -130,6 +131,9 @@ export function HeroSection() {
                                 <div className="bg-background relative mx-auto max-w-6xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1 ring-background">
                                     {/* Dashboard preview mockup */}
                                     <div className="aspect-[15/8] relative rounded-2xl border bg-gradient-to-br from-zinc-50 to-zinc-100 p-8 overflow-hidden">
+                                        <div className="absolute right-4 top-4 rounded-full border border-zinc-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                                            Illustrative preview
+                                        </div>
                                         {/* Simulated dashboard UI */}
                                         <div className="flex items-center gap-3 mb-6">
                                             <div className="flex gap-1.5">
@@ -194,19 +198,24 @@ export function HeroSection() {
 
                 {/* Trust Strip */}
                 <section className="bg-background pb-16 pt-16 md:pb-32">
-                    <div className="group relative m-auto max-w-5xl px-6">
-                        <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
-                            <Link
-                                href="#"
-                                className="block text-sm duration-150 hover:opacity-75">
-                                <span>Trusted by 1,000+ businesses across 30+ industries</span>
-                                <ChevronRight className="ml-1 inline-block size-3" />
-                            </Link>
+                    <div className="m-auto max-w-5xl px-6">
+                        <div className="mx-auto max-w-3xl text-center">
+                            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                                Built for careful operators
+                            </p>
                         </div>
-                        <div className="group-hover:blur-xs mx-auto mt-12 grid max-w-3xl grid-cols-5 gap-x-12 gap-y-8 transition-all duration-500 group-hover:opacity-50 sm:gap-x-16 sm:gap-y-14">
-                            {['OrbitOps', 'FounderFlow', 'NovaBuild', 'ScaleKit', 'PipelineHQ'].map((name) => (
-                                <div key={name} className="flex items-center justify-center">
-                                    <span className="text-sm font-semibold text-muted-foreground/50 tracking-tight">{name}</span>
+                        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            {[
+                                "Approval-gated campaigns",
+                                "Shared dashboard visibility",
+                                "Usage-aware billing",
+                                "Provider-ready foundations",
+                            ].map((item) => (
+                                <div
+                                    key={item}
+                                    className="rounded-2xl border bg-muted/30 px-4 py-4 text-center text-sm font-medium text-foreground"
+                                >
+                                    {item}
                                 </div>
                             ))}
                         </div>
@@ -227,6 +236,8 @@ const menuItems = [
 export const HeroHeader = () => {
     const [menuState, setMenuState] = React.useState(false)
     const [isScrolled, setIsScrolled] = React.useState(false)
+    const { status } = useSession()
+    const isAuthenticated = status === "authenticated"
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -294,29 +305,42 @@ export const HeroHeader = () => {
                                 </ul>
                             </div>
                             <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                                {isAuthenticated ? (
+                                    <>
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm"
+                                            className={cn(isScrolled && 'lg:hidden')}>
+                                            <Link href="/dashboard">
+                                                <span>Dashboard</span>
+                                            </Link>
+                                        </Button>
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
+                                            <Link href="/dashboard">
+                                                <span>Dashboard</span>
+                                            </Link>
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        asChild
+                                        size="sm"
+                                        className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
+                                        <Link href="/get-started">
+                                            <span>Get Started</span>
+                                        </Link>
+                                    </Button>
+                                )}
                                 <Button
                                     asChild
-                                    variant="outline"
                                     size="sm"
                                     className={cn(isScrolled && 'lg:hidden')}>
-                                    <Link href="/dashboard">
-                                        <span>Dashboard</span>
-                                    </Link>
-                                </Button>
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className={cn(isScrolled && 'lg:hidden')}>
-                                    <Link href="/get-started">
-                                        <span>Get Started</span>
-                                    </Link>
-                                </Button>
-                                <Button
-                                    asChild
-                                    size="sm"
-                                    className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}>
-                                    <Link href="/get-started">
-                                        <span>Get Started</span>
+                                    <Link href={isAuthenticated ? "/dashboard" : "/get-started"}>
+                                        <span>{isAuthenticated ? "Dashboard" : "Get Started"}</span>
                                     </Link>
                                 </Button>
                             </div>

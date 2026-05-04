@@ -1,0 +1,78 @@
+/**
+ * Cloudflare Workers deployment for the Next.js product surface.
+ *
+ * Keep this deployment portable:
+ * - build with OpenNext, not Cloudflare-specific app code
+ * - keep runtime secrets in Wrangler secrets
+ * - keep API origin configurable through environment variables
+ * - keep routes and domains environment-specific
+ */
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sales-web",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-05-03",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "env": {
+    "staging": {
+      "workers_dev": true,
+      "secrets": {
+        "required": [
+          "AUTH_SECRET"
+        ]
+      },
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "08eda5f0a1714b69b1abb3df8c3b897e"
+        }
+      ],
+      "vars": {
+        "APP_ENV": "staging",
+        "AUTH_TRUST_HOST": "true",
+        "NODE_ENV": "production"
+      }
+    },
+    "production": {
+      "workers_dev": true,
+      "secrets": {
+        "required": [
+          "AUTH_SECRET",
+          "DATABASE_URL"
+        ]
+      },
+      "vars": {
+        "APP_ENV": "production",
+        "AUTH_TRUST_HOST": "true",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+  /**
+   * Secrets to set outside of git:
+   * - AUTH_SECRET
+   *
+   * Required runtime vars:
+   * - AUTH_TRUST_HOST=true
+   *
+   * Build-time variables to export before running `npm run deploy --workspace @sales/web`:
+   * - NEXT_PUBLIC_API_URL
+   *
+   * Optional runtime database fallback when Hyperdrive is not bound:
+   * - DATABASE_URL
+   *
+   * Optional runtime secrets for Google OAuth:
+   * - GOOGLE_CLIENT_ID
+   * - GOOGLE_CLIENT_SECRET
+   */
+}

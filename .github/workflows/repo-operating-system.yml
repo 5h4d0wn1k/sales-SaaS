@@ -1,0 +1,68 @@
+name: Repo Operating System
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-os-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run repo operating system audit
+        run: |
+          python3 .codex/scripts/repo_operating_system_audit.py . > audit.json
+          cat audit.json
+
+      - name: Render operating system report
+        run: |
+          python3 .codex/scripts/repo_operating_system_report.py . --audit-json audit.json --output audit.md
+          cat audit.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce required operating mechanisms
+        run: |
+          python3 - <<'PY'
+          import json
+          import sys
+
+          with open("audit.json", "r", encoding="utf-8") as fh:
+              data = json.load(fh)
+
+          missing_required = [
+              item["id"] for item in data["checks"]
+              if item.get("required", True) and not item["present"]
+          ]
+          missing_extras = [
+              item["id"] for item in data["extras"]
+              if not item["present"]
+          ]
+
+          if not missing_required and not missing_extras:
+              print("Repo operating system audit passed.")
+              sys.exit(0)
+
+          print("Repo operating system audit failed.")
+          if missing_required:
+              print("Missing required checks:", ", ".join(missing_required))
+          if missing_extras:
+              print("Missing delivery extras:", ", ".join(missing_extras))
+          sys.exit(1)
+          PY

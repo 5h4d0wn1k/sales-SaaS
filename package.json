@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "npm@11.10.1",
+  "engines": {
+    "node": "20.x"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -10,21 +13,48 @@
   "scripts": {
     "db:up": "docker compose up -d",
     "dev:web": "npm run dev --workspace @sales/web",
+    "preview:web": "npm run preview --workspace @sales/web",
     "dev:api": "npm run dev --workspace @sales/api",
-    "build": "npm run build --workspaces --if-present",
+    "dev:api:worker": "npm run dev:worker --workspace @sales/api",
+    "dev:workflows": "npm run dev --workspace @sales/workflows",
+    "deploy:web:staging": "npm run deploy --workspace @sales/web -- --env staging",
+    "deploy:web:production": "npm run deploy --workspace @sales/web -- --env production",
+    "deploy:api:staging": "npm run deploy --workspace @sales/api -- --env staging",
+    "deploy:api:production": "npm run deploy --workspace @sales/api -- --env production",
+    "deploy:workflows:staging": "npm run deploy --workspace @sales/workflows -- --env staging",
+    "deploy:workflows:production": "npm run deploy --workspace @sales/workflows -- --env production",
+    "smoke:cloudflare": "bash scripts/cloudflare-smoke.sh",
+    "build": "bash scripts/build-workspaces.sh",
     "typecheck": "npm run typecheck --workspaces",
-    "test": "npm run test --workspaces",
+    "verify:core": "npm run typecheck && npm run test && npm run build",
+    "test": "npm run test:root && npm run test:workspaces",
+    "test:root": "vitest run --config vitest.config.ts",
+    "test:workspaces": "npm run test --workspaces --if-present",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:ui": "vitest --config vitest.config.ts --ui",
+    "test:unit": "vitest run --config vitest.config.ts tests/unit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "repo:audit": "python3 .codex/scripts/repo_operating_system_audit.py .",
+    "repo:report": "python3 .codex/scripts/repo_operating_system_report.py . --output .codex/reports/repo-operating-system-report.md",
+    "cf:typegen:workflows": "npm run cf-typegen --workspace @sales/workflows",
     "db:generate": "npm run db:generate --workspace @sales/database",
     "db:migrate": "npm run db:migrate --workspace @sales/database"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@testcontainers/postgresql": "^11.12.0",
     "@types/node": "^22.13.10",
     "@types/pg": "^8.11.11",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "@types/uuid": "^10.0.0",
+    "@vitest/ui": "^3.2.4",
+    "msw": "^2.12.10",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
-    "vitest": "^3.0.8"
+    "uuid": "^13.0.0",
+    "vitest": "^3.2.4"
   },
   "overrides": {
     "esbuild": "^0.25.0",
@@ -34,5 +64,8 @@
     "@esbuild-kit/esm-loader": {
       "esbuild": "^0.25.0"
     }
+  },
+  "dependencies": {
+    "supabase": "^2.98.0"
   }
 }

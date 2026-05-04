@@ -1,9 +1,9 @@
 import { HeroHeader } from "../../components/blocks/hero-section";
-import { Zap, Mail, Twitter, Building2 } from "lucide-react";
-import Link from "next/link";
+import { Mail, MessageSquare, LifeBuoy } from "lucide-react";
 import { Button } from "../../components/ui/button";
+import { MarketingFooter } from "../../components/blocks/marketing-footer";
 
-export default function ContactPage() {
+export default async function ContactPage() {
     return (
         <>
             <HeroHeader />
@@ -15,10 +15,10 @@ export default function ContactPage() {
                             Contact Us
                         </span>
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tighter mb-4">
-                            Let&apos;s build your sales engine
+                            Talk to the team behind your workspace
                         </h1>
                         <p className="text-lg text-muted-foreground max-w-xl mx-auto md:mx-0 mb-10">
-                            Have questions about our platform? Need a custom enterprise plan? Or just want to say hi? We&apos;d love to hear from you.
+                            During the beta, the fastest way to reach us is email. Share your goals, blockers, billing questions, or rollout plans and we&apos;ll route it from there.
                         </p>
 
                         <div className="space-y-8">
@@ -28,82 +28,72 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-foreground mb-1">Email us</h3>
-                                    <p className="text-sm text-muted-foreground">Our friendly team is here to help.</p>
+                                    <p className="text-sm text-muted-foreground">Product, billing, onboarding, and rollout questions all start here.</p>
                                     <a href="mailto:hello@winrate.ai" className="text-sm font-medium text-foreground hover:underline mt-1 inline-block">hello@winrate.ai</a>
                                 </div>
                             </div>
 
                             <div className="flex items-start gap-4">
                                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
-                                    <Building2 className="w-5 h-5 text-purple-600" />
+                                    <LifeBuoy className="w-5 h-5 text-purple-600" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-foreground mb-1">Visit us</h3>
-                                    <p className="text-sm text-muted-foreground">Come say hello at our office HQ.</p>
-                                    <address className="text-sm font-medium text-foreground mt-1 not-italic">100 Market St.<br />San Francisco, CA 94105</address>
+                                    <h3 className="font-semibold text-foreground mb-1">Implementation help</h3>
+                                    <p className="text-sm text-muted-foreground">Include your team size, target market, and plan so we can answer with real context.</p>
+                                    <p className="text-sm font-medium text-foreground mt-1">Average response target: 1 business day during beta</p>
                                 </div>
                             </div>
 
                             <div className="flex items-start gap-4">
                                 <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center flex-shrink-0">
-                                    <Twitter className="w-5 h-5 text-slate-600" />
+                                    <MessageSquare className="w-5 h-5 text-slate-600" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-foreground mb-1">Social</h3>
-                                    <p className="text-sm text-muted-foreground">Follow our journey on X.</p>
-                                    <a href="#" className="text-sm font-medium text-foreground hover:underline mt-1 inline-block">@winrate_ai</a>
+                                    <h3 className="font-semibold text-foreground mb-1">Beta feedback</h3>
+                                    <p className="text-sm text-muted-foreground">Tell us what broke, what felt unclear, or what would make the workflow more useful for your team.</p>
+                                    <p className="text-sm font-medium text-foreground mt-1">Feedback is reviewed directly by the product team.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="bg-background border rounded-2xl p-8 shadow-sm">
-                        <h3 className="text-xl font-bold mb-6">Send us a message</h3>
-                        <form className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label htmlFor="first-name" className="text-sm font-medium">First name</label>
-                                    <input id="first-name" type="text" className="w-full px-3 py-2 border rounded-md bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" placeholder="John" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="last-name" className="text-sm font-medium">Last name</label>
-                                    <input id="last-name" type="text" className="w-full px-3 py-2 border rounded-md bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" placeholder="Doe" />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium">Email</label>
-                                <input id="email" type="email" className="w-full px-3 py-2 border rounded-md bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" placeholder="john@company.com" />
-                            </div>
-                            <div className="space-y-2">
-                                <label htmlFor="message" className="text-sm font-medium">Message</label>
-                                <textarea id="message" rows={4} className="w-full px-3 py-2 border rounded-md bg-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none" placeholder="How can we help you?"></textarea>
-                            </div>
-                            <Button type="button" className="w-full bg-foreground text-background hover:bg-foreground/90 py-6 rounded-xl mt-4">
-                                Send Message
+                        <h3 className="text-xl font-bold mb-4">Send a useful first message</h3>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                            The contact workflow is intentionally simple for now: we open your email client with the right topic so nothing disappears into a fake form.
+                        </p>
+                        <div className="mt-6 space-y-4 rounded-2xl border bg-stone-50/60 p-5">
+                            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">What to include</h4>
+                            <ul className="space-y-2 text-sm text-foreground">
+                                <li>Your company name and website</li>
+                                <li>Your current plan or intended plan</li>
+                                <li>The workflow you are trying to run</li>
+                                <li>Any blockers, billing issues, or rollout timeline</li>
+                            </ul>
+                        </div>
+                        <div className="mt-6 grid gap-3">
+                            <Button asChild className="w-full bg-foreground text-background hover:bg-foreground/90 py-6 rounded-xl">
+                                <a href="mailto:hello@winrate.ai?subject=Winrate%20workspace%20question">
+                                    Ask about setup or rollout
+                                </a>
                             </Button>
-                        </form>
+                            <Button asChild variant="outline" className="w-full py-6 rounded-xl">
+                                <a href="mailto:hello@winrate.ai?subject=Winrate%20billing%20question">
+                                    Ask about billing or plan fit
+                                </a>
+                            </Button>
+                            <Button asChild variant="outline" className="w-full py-6 rounded-xl">
+                                <a href="mailto:hello@winrate.ai?subject=Winrate%20beta%20feedback">
+                                    Send product feedback
+                                </a>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </main>
 
             {/* Footer */}
-            <footer className="py-10 border-t mt-auto">
-                <div className="mx-auto max-w-5xl px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
-                            <Zap className="w-3.5 h-3.5 text-white" />
-                        </div>
-                        <span className="text-sm font-bold tracking-tight">Winrate</span>
-                    </div>
-                    <div className="flex gap-6 text-sm text-muted-foreground">
-                        <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-                        <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-                        <Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link>
-                        <Link href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
-                    </div>
-                    <p className="text-xs text-muted-foreground">© 2026 Winrate. Built for builders.</p>
-                </div>
-            </footer>
+            <MarketingFooter />
         </>
     );
 }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, useSpring } from "framer-motion";
 
 export function AnimatedBackground() {
+    const [isClient, setIsClient] = useState(false);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
     // Spring physics for smooth mouse tracking
@@ -11,6 +12,8 @@ export function AnimatedBackground() {
     const springY = useSpring(0, { stiffness: 50, damping: 20 });
 
     useEffect(() => {
+        setIsClient(true);
+        
         const handleMouseMove = (e: MouseEvent) => {
             // Normalize mouse position between -1 and 1
             const x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -26,6 +29,17 @@ export function AnimatedBackground() {
         window.addEventListener("mousemove", handleMouseMove);
         return () => window.removeEventListener("mousemove", handleMouseMove);
     }, [springX, springY]);
+
+    // Render nothing on server to avoid hydration mismatch
+    if (!isClient) {
+        return (
+            <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none bg-background">
+                {/* Static/Ambient Orbs (no motion) */}
+                <div className="absolute top-[40%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-purple-500/15 blur-[120px] animate-pulse duration-[10000ms]" />
+                <div className="absolute bottom-[-20%] left-[20%] w-[40vw] h-[40vw] rounded-full bg-pink-400/10 blur-[100px]" />
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none bg-background">

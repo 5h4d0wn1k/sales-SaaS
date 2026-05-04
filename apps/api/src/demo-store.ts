@@ -101,7 +101,7 @@ export class DemoStore {
   };
 
   private readonly subscription: SubscriptionRecord = {
-    planKey: "growth",
+    planKey: "pro",
     status: "trialing",
     seats: 5,
     usageLimit: 500,
@@ -524,13 +524,7 @@ export class DemoStore {
       personalizedFor: lead.fullName,
     };
 
-    campaign.firstActionCompleted = true;
-    campaign.stage = "running";
-    campaign.nextActionAt = "Queued first autonomous touch";
     this.activities = [activity, ...this.activities];
-    this.subscription.monthlyUsage += 1;
-    lead.status = "contacted";
-    lead.lastTouchpoint = `${campaign.channel} queued by ${approvedBy}`;
 
     return {
       campaign,
@@ -551,51 +545,19 @@ export class DemoStore {
     const call: CallRecord = {
       id: createId("call"),
       leadId: lead.id,
-      status: lead.score > 85 ? "completed" : "review_required",
+      status: lead.score > 85 ? "queued" : "review_required",
       provider: input.provider,
       providerCallId: null,
       summary:
         lead.score > 85
-          ? "Lead showed interest and agreed to a discovery call."
-          : "Lead engaged, but transcript confidence requires review.",
-      transcript: `Agent discussed ${lead.company ?? "the business"} goals and outbound automation fit.`,
-      disposition: lead.score > 85 ? "meeting_requested" : "needs_review",
+          ? "Call queued for AI voice dispatch."
+          : "Lead requires operator review before AI calling.",
+      transcript: "",
+      disposition: lead.score > 85 ? "pending" : "needs_review",
       reviewRequired: lead.score <= 85,
     };
 
     this.calls = [call, ...this.calls];
-    this.activities = [
-      {
-        id: createId("act"),
-        campaignId: this.campaigns[0]?.id ?? "manual",
-        leadId: lead.id,
-        type: "call",
-        status: call.reviewRequired ? "review_required" : "completed",
-        provider: null,
-        providerMessageId: null,
-        subject: `AI call with ${lead.fullName}`,
-        preview: call.summary,
-        personalizedFor: lead.fullName,
-      },
-      ...this.activities,
-    ];
-    lead.lastTouchpoint = "AI call completed";
-
-    if (!call.reviewRequired) {
-      lead.status = "meeting_booked";
-      this.meetings = [
-        {
-          id: createId("meet"),
-          leadId: lead.id,
-          status: "scheduled",
-          scheduledFor: "2026-03-14T15:30:00Z",
-          owner: "autonomous-agent",
-          notes: "Auto-created after positive AI call disposition.",
-        },
-        ...this.meetings,
-      ];
-    }
-
     return call;
   }
 
@@ -609,8 +571,9 @@ export class DemoStore {
       return null;
     }
 
-    call.reviewRequired = false;
-    call.status = approved ? "completed" : "review_required";
+    call.reviewRequired = !approved;
+    call.status = approved ? "queued" : "review_required";
+    call.disposition = approved ? "pending" : "needs_review";
     call.summary = `${call.summary} Reviewer note: ${notes}`;
 
     return call;
@@ -653,6 +616,102 @@ export class DemoStore {
     }
 
     return meeting;
+  }
+
+  updateOutreachProviderResult(
+    activityId: string,
+    update: {
+      provider: string;
+      providerMessageId: string | null;
+      status: "queued" | "sent" | "review_required";
+      detail: string;
+    },
+  ) {
+    const activity = this.activities.find((entry) => entry.id === activityId);
+    if (!activity) {
+      return null;
+    }
+
+    activity.provider = update.provider;
+    activity.providerMessageId = update.providerMessageId;
+    activity.status = update.status;
+    activity.preview = `${activity.preview} ${update.detail}`;
+
+    const campaign = this.campaigns.find((entry) => entry.id === activity.campaignId);
+    const lead = this.leads.find((entry) => entry.id === activity.leadId);
+
+    if (campaign) {
+      if (update.status === "review_required") {
+        campaign.firstActionCompleted = false;
+        campaign.stage = "approved";
+        campaign.nextActionAt = "Awaiting manual review before first outbound touch";
+      } else {
+        campaign.firstActionCompleted = true;
+        campaign.stage = "running";
+        campaign.nextActionAt = update.status === "sent" ? "First autonomous touch sent" : "Queued first autonomous touch";
+        this.subscription.monthlyUsage += 1;
+      }
+    }
+
+    if (lead && update.status !== "review_required") {
+      lead.status = "contacted";
+      lead.lastTouchpoint = `${activity.type} ${update.status} via ${update.provider}`;
+    }
+
+    return activity;
+  }
+
+  updateCallProviderResult(
+    callId: string,
+    update: {
+      provider: string;
+      providerCallId: string | null;
+      detail: string;
+    },
+  ) {
+    const call = this.calls.find((entry) => entry.id === callId);
+    if (!call) {
+      return null;
+    }
+
+    call.provider = update.provider;
+    call.providerCallId = update.providerCallId;
+    call.summary = `${call.summary} ${update.detail}`;
+
+    if (!call.reviewRequired) {
+      if (update.providerCallId) {
+        call.status = "in_progress";
+        call.disposition = "in_progress";
+      } else {
+        call.status = "completed";
+        call.disposition = "meeting_requested";
+
+        const lead = this.leads.find((entry) => entry.id === call.leadId);
+        if (lead) {
+          lead.status = "meeting_booked";
+          lead.lastTouchpoint = `AI call completed via ${update.provider}`;
+        }
+
+        const existingMeeting = this.meetings.find(
+          (entry) => entry.leadId === call.leadId && entry.owner === "autonomous-agent",
+        );
+        if (!existingMeeting) {
+          this.meetings = [
+            {
+              id: createId("meet"),
+              leadId: call.leadId,
+              status: "scheduled",
+              scheduledFor: "2026-03-14T15:30:00Z",
+              owner: "autonomous-agent",
+              notes: "Auto-created after positive AI call disposition.",
+            },
+            ...this.meetings,
+          ];
+        }
+      }
+    }
+
+    return call;
   }
 }
 

@@ -1,0 +1,88 @@
+name: Deploy Cloudflare
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      services:
+        description: "Services to deploy"
+        required: true
+        type: choice
+        options:
+          - all
+          - api
+          - web
+          - workflows
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify Before Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify core quality gates
+        run: npm run verify:core
+
+  deploy:
+    name: Deploy ${{ inputs.services }} to ${{ inputs.environment }}
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: cloudflare-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+      WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+      API_HEALTHCHECK_URL: ${{ vars.API_HEALTHCHECK_URL }}
+      WORKFLOWS_HEALTHCHECK_URL: ${{ vars.WORKFLOWS_HEALTHCHECK_URL }}
+      WORKFLOWS_HEALTHCHECK_TOKEN: ${{ secrets.WORKFLOWS_HEALTHCHECK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate deploy variables
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$WEB_APP_URL"
+          test -n "$API_HEALTHCHECK_URL"
+          if [[ "${{ inputs.services }}" == "all" || "${{ inputs.services }}" == "web" ]]; then
+            test -n "$NEXT_PUBLIC_API_URL"
+          fi
+      - name: Deploy API
+        if: ${{ inputs.services == 'all' || inputs.services == 'api' }}
+        run: npm run deploy:api:${{ inputs.environment }}
+      - name: Deploy Web
+        if: ${{ inputs.services == 'all' || inputs.services == 'web' }}
+        run: npm run deploy:web:${{ inputs.environment }}
+      - name: Deploy Workflows
+        if: ${{ inputs.services == 'all' || inputs.services == 'workflows' }}
+        run: npm run deploy:workflows:${{ inputs.environment }}
+      - name: Post-deploy smoke checks
+        run: npm run smoke:cloudflare
+      - name: Rollback reminder
+        run: |
+          echo "If the smoke checks or manual verification fail, redeploy the last known good Worker version from the Cloudflare dashboard or rerun this workflow after restoring the previous artifact/config revision."

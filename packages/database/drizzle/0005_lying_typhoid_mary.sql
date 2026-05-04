@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "call_tasks_provider_call_id_unique" ON "call_tasks" USING btree ("provider_call_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "outreach_activities_provider_message_id_unique" ON "outreach_activities" USING btree ("provider_message_id");

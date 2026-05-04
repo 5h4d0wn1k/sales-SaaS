@@ -1,0 +1,80 @@
+/**
+ * Cloudflare Worker deployment for the Hono API.
+ *
+ * Keep the app contract vendor-neutral:
+ * - use plain HTTP between services
+ * - keep secrets in Wrangler secrets
+ * - treat the database as standard Postgres via DATABASE_URL
+ * - optionally map Hyperdrive to DATABASE_URL at runtime
+ */
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sales-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-05-03",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "placement": {
+    "mode": "smart"
+  },
+  "env": {
+    "staging": {
+      "workers_dev": true,
+        "secrets": {
+          "required": [
+            "AUTH_SECRET",
+            "DATABASE_URL"
+          ]
+        },
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "08eda5f0a1714b69b1abb3df8c3b897e"
+        }
+      ],
+      "vars": {
+        "APP_ENV": "staging",
+        "NODE_ENV": "production"
+      }
+    },
+    "production": {
+      "workers_dev": true,
+        "secrets": {
+          "required": [
+            "AUTH_SECRET",
+            "DATABASE_URL",
+            "STRIPE_SECRET_KEY",
+            "STRIPE_WEBHOOK_SECRET",
+            "RAZORPAY_KEY_ID",
+            "RAZORPAY_KEY_SECRET",
+            "RAZORPAY_WEBHOOK_SECRET"
+          ]
+        },
+      "vars": {
+        "APP_ENV": "production",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+  /**
+   * Non-secret text variables can be added here if needed.
+   * Keep secrets in Wrangler secrets instead:
+   * - AUTH_SECRET
+   * - DATABASE_URL
+   * - FRONTEND_URL
+   * - STRIPE_SECRET_KEY
+   * - STRIPE_WEBHOOK_SECRET
+   * - RAZORPAY_KEY_ID
+   * - RAZORPAY_KEY_SECRET
+   * - RAZORPAY_WEBHOOK_SECRET
+   * - RESEND_API_KEY
+   * - RESEND_WEBHOOK_SECRET
+   * - TWILIO_ACCOUNT_SID
+   * - TWILIO_AUTH_TOKEN
+   */
+}

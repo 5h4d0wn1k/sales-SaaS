@@ -1,0 +1,26 @@
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "prompt",
+    justification = "Hard resets discard local work.",
+    match = [
+        "git reset --hard HEAD",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "prompt",
+    justification = "git clean can permanently remove untracked files.",
+    match = [
+        "git clean -fdx",
+    ],
+)
+
+prefix_rule(
+    pattern = ["npm", "publish"],
+    decision = "prompt",
+    justification = "Publishing should be deliberate.",
+    match = [
+        "npm publish",
+    ],
+)

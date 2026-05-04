@@ -1,8 +1,7 @@
 import { HeroHeader } from "../../components/blocks/hero-section";
-import { Zap } from "lucide-react";
-import Link from "next/link";
+import { MarketingFooter } from "../../components/blocks/marketing-footer";
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
     return (
         <>
             <HeroHeader />
@@ -16,56 +15,40 @@ export default function PrivacyPage() {
                         <h1 className="text-4xl md:text-5xl font-bold tracking-tighter mb-4">
                             Privacy Policy
                         </h1>
-                        <p className="text-muted-foreground">Last updated: March 10, 2026</p>
+                        <p className="text-muted-foreground">Last updated: May 3, 2026</p>
                     </div>
 
                     <div className="prose prose-zinc dark:prose-invert max-w-none text-muted-foreground">
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">1. Information We Collect</h2>
                         <p className="mb-6 leading-relaxed">
-                            We collect information that you provide directly to us, such as when you create an account, update your profile, or communicate with us. The types of data we may collect include your name, email address, postal address, phone number, and any other information you choose to provide.
+                            We collect information you provide directly, such as account details, organization and workspace details, onboarding inputs, support requests, and billing-related identifiers. We also store workflow data generated inside the product, including leads, campaign records, meeting records, and approval activity.
                         </p>
 
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">2. How We Use Your Information</h2>
                         <p className="mb-6 leading-relaxed">
-                            We use the information we collect to operate and improve our platform, respond to your comments and questions, and provide customer service. We also use it to monitor and analyze trends, usage, and activities in connection with our services.
+                            We use the information we collect to operate the service, create and secure user accounts, process billing events, provide customer support, improve product quality, investigate abuse, and understand how the platform is being used.
                         </p>
 
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">3. Data Protection</h2>
                         <p className="mb-6 leading-relaxed">
-                            We take reasonable measures to help protect information about you from loss, theft, misuse and unauthorized access, disclosure, alteration and destruction. We use industry-standard encryption protocols to safeguard your data.
+                            We use reasonable administrative, technical, and organizational safeguards designed to reduce unauthorized access, misuse, alteration, and loss. No system is perfectly secure, so we cannot guarantee absolute security.
                         </p>
 
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">4. Sharing of Information</h2>
                         <p className="mb-6 leading-relaxed">
-                            We do not share your personal information with third parties except as described in this policy, such as with vendors, consultants, and other service providers who need access to such information to carry out work on our behalf.
+                            We share information with service providers that help us run the platform, such as infrastructure providers, authentication services, analytics tools, and payment processors. We may also disclose information when required by law, to protect our users, or to enforce our terms.
                         </p>
 
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">5. Contact Us</h2>
                         <p className="mb-6 leading-relaxed">
-                            If you have any questions about this Privacy Policy, please contact us at <a href="mailto:privacy@winrate.ai" className="text-foreground font-medium underline">privacy@winrate.ai</a>.
+                            If you have privacy-related questions, please contact us at <a href="mailto:hello@winrate.ai?subject=Winrate%20privacy%20request" className="text-foreground font-medium underline">hello@winrate.ai</a>.
                         </p>
                     </div>
                 </div>
             </main>
 
             {/* Footer */}
-            <footer className="py-10 border-t">
-                <div className="mx-auto max-w-5xl px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
-                            <Zap className="w-3.5 h-3.5 text-white" />
-                        </div>
-                        <span className="text-sm font-bold tracking-tight">Winrate</span>
-                    </div>
-                    <div className="flex gap-6 text-sm text-muted-foreground">
-                        <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-                        <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-                        <Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link>
-                        <Link href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link>
-                    </div>
-                    <p className="text-xs text-muted-foreground">© 2026 Winrate. Built for builders.</p>
-                </div>
-            </footer>
+            <MarketingFooter />
         </>
     );
 }

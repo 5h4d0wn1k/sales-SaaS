@@ -1,0 +1,77 @@
+/**
+ * Durable orchestration boundary for approval-gated campaign automation.
+ *
+ * Keep this worker portable:
+ * - orchestrate over plain HTTP/webhook contracts
+ * - do not embed provider-specific business logic here
+ * - keep secrets in Wrangler secrets
+ * - prefer payloads and callbacks that any queue/orchestrator could reuse later
+ */
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sales-workflows",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-03",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "workflows": [
+    {
+      "name": "campaign-approval-workflow",
+      "binding": "CAMPAIGN_APPROVAL_WORKFLOW",
+      "class_name": "CampaignApprovalWorkflow"
+    }
+  ],
+  "upload_source_maps": true,
+  "env": {
+    "staging": {
+      "workers_dev": true,
+      "secrets": {
+        "required": [
+          "WORKFLOWS_API_TOKEN"
+        ]
+      },
+      "workflows": [
+        {
+          "name": "campaign-approval-workflow",
+          "binding": "CAMPAIGN_APPROVAL_WORKFLOW",
+          "class_name": "CampaignApprovalWorkflow"
+        }
+      ],
+      "vars": {
+        "APP_ENV": "staging",
+        "NODE_ENV": "production"
+      }
+    },
+    "production": {
+      "workers_dev": true,
+      "secrets": {
+        "required": [
+          "WORKFLOWS_API_TOKEN"
+        ]
+      },
+      "workflows": [
+        {
+          "name": "campaign-approval-workflow",
+          "binding": "CAMPAIGN_APPROVAL_WORKFLOW",
+          "class_name": "CampaignApprovalWorkflow"
+        }
+      ],
+      "vars": {
+        "APP_ENV": "production",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+  /**
+   * Use secrets for:
+   * - WORKFLOWS_API_TOKEN
+   * - CAMPAIGN_DISPATCH_BEARER_TOKEN
+   *
+   * Optional plain-text vars:
+   * - CAMPAIGN_DISPATCH_WEBHOOK_URL_TEMPLATE
+   */
+}

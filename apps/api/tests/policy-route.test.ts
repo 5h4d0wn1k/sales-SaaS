@@ -143,9 +143,7 @@ describe("sales api flow", () => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({
-        approvedBy: "ops-user",
-      }),
+      body: JSON.stringify({}),
     });
     const dispatchedCampaign = await dispatchCampaignResponse.json();
 
@@ -168,6 +166,129 @@ describe("sales api flow", () => {
 
     expect(dispatchedCall.provider).toBe("twilio-voice");
     expect(dispatchedCall.call.id).toBeTruthy();
+  });
+
+  it("keeps a campaign approved until dispatch acceptance updates customer-facing state", async () => {
+    const app = createApp();
+
+    const createdCampaignResponse = await app.request("/v1/campaigns", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Dispatch safety campaign",
+        channel: "email",
+      }),
+    });
+    const createdCampaign = await createdCampaignResponse.json();
+    const campaignId = createdCampaign.campaign.id;
+
+    const leadsBeforeRunResponse = await app.request("/v1/leads");
+    const leadsBeforeRun = await leadsBeforeRunResponse.json();
+    const targetLeadBeforeRun = leadsBeforeRun.find((lead: any) => lead.status === "qualified");
+    expect(targetLeadBeforeRun).toBeTruthy();
+
+    const runResponse = await app.request(`/v1/campaigns/${campaignId}/run`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    const runResult = await runResponse.json();
+
+    expect(runResult.campaign.stage).toBe("approved");
+    expect(runResult.campaign.firstActionCompleted).toBe(false);
+    expect(runResult.activities[0].status).toBe("queued");
+
+    const leadsAfterRunResponse = await app.request("/v1/leads");
+    const leadsAfterRun = await leadsAfterRunResponse.json();
+    expect(leadsAfterRun.find((lead: any) => lead.id === targetLeadBeforeRun.id)?.status).toBe("qualified");
+
+    const dispatchResponse = await app.request(`/v1/campaigns/${campaignId}/dispatch`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    const dispatched = await dispatchResponse.json();
+
+    expect(dispatched.campaign.stage).toBe("running");
+    expect(dispatched.campaign.firstActionCompleted).toBe(true);
+    expect(["queued", "sent"]).toContain(dispatched.activity.status);
+
+    const leadsAfterDispatchResponse = await app.request("/v1/leads");
+    const leadsAfterDispatch = await leadsAfterDispatchResponse.json();
+    expect(leadsAfterDispatch.find((lead: any) => lead.id === targetLeadBeforeRun.id)?.status).toBe("contacted");
+  });
+
+  it("does not complete calls until dispatch succeeds", async () => {
+    const app = createApp();
+    const leadsResponse = await app.request("/v1/leads");
+    const leads = await leadsResponse.json();
+    const targetLead = leads.find((lead: any) => lead.status === "qualified");
+    expect(targetLead).toBeTruthy();
+    const leadId = targetLead.id;
+
+    const createdCallResponse = await app.request("/v1/calls", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        leadId,
+        provider: "twilio",
+      }),
+    });
+    const createdCall = await createdCallResponse.json();
+
+    expect(createdCall.status).toBe("queued");
+
+    const leadsAfterCreateResponse = await app.request("/v1/leads");
+    const leadsAfterCreate = await leadsAfterCreateResponse.json();
+    expect(leadsAfterCreate.find((lead: any) => lead.id === leadId)?.status).toBe("qualified");
+
+    const dispatchCallResponse = await app.request("/v1/calls/dispatch", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        leadId,
+      }),
+    });
+    const dispatchedCall = await dispatchCallResponse.json();
+
+    expect(dispatchedCall.call.status).toBe("completed");
+
+    const leadsAfterDispatchResponse = await app.request("/v1/leads");
+    const leadsAfterDispatch = await leadsAfterDispatchResponse.json();
+    expect(leadsAfterDispatch.find((lead: any) => lead.id === leadId)?.status).toBe("meeting_booked");
+  });
+
+  it("uses the authenticated actor for campaign approval instead of trusting request input", async () => {
+    const app = createApp();
+
+    const campaignsResponse = await app.request("/v1/campaigns");
+    const campaigns = await campaignsResponse.json();
+    const campaignId = campaigns[0].id;
+
+    const approveResponse = await app.request(`/v1/campaigns/${campaignId}/approve`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        approvedBy: "mallory",
+      }),
+    });
+    const approvedCampaign = await approveResponse.json();
+
+    expect(approveResponse.status).toBe(200);
+    expect(approvedCampaign.nextActionAt).toContain("Test User");
+    expect(approvedCampaign.nextActionAt).not.toContain("mallory");
   });
 
   it("records unconfigured provider webhooks safely", async () => {

@@ -190,9 +190,7 @@ export const createCampaignInputSchema = z.object({
   highRiskChannel: z.boolean().default(false),
 });
 
-export const approveCampaignInputSchema = z.object({
-  approvedBy: z.string().min(2),
-});
+export const approveCampaignInputSchema = z.object({});
 
 export const onboardingSessionInputSchema = z.object({
   ownerName: z.string().min(2),
@@ -211,9 +209,7 @@ export const sourceRunInputSchema = z.object({
   source: z.string().min(2),
 });
 
-export const runCampaignInputSchema = z.object({
-  approvedBy: z.string().min(2),
-});
+export const runCampaignInputSchema = z.object({});
 
 export const createCallInputSchema = z.object({
   leadId: z.string().min(2),
@@ -268,9 +264,7 @@ export const discoverLeadsResponseSchema = z.object({
   ),
 });
 
-export const dispatchCampaignInputSchema = z.object({
-  approvedBy: z.string().min(2),
-});
+export const dispatchCampaignInputSchema = z.object({});
 
 export const dispatchCampaignResponseSchema = z.object({
   campaign: campaignRecordSchema,

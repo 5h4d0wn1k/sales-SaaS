@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+
+jobs:
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run typecheck --workspaces
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            nc -z localhost 5432 && break
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate migrations
+        run: npm run db:generate --workspace @sales/database
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+      - name: Run migrations
+        run: npm run db:migrate --workspace @sales/database
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+      - name: Run unit tests
+        run: npm run test:unit -- --coverage
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+      - name: Run workspace tests
+        run: npm run test:workspaces
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: false
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Validate Cloudflare web bundle
+        run: npx wrangler deploy --dry-run --config apps/web/wrangler.jsonc
+      - name: Validate Cloudflare workflow bundle
+        run: npx wrangler deploy --dry-run --config apps/workflows/wrangler.jsonc
+      - name: Validate Cloudflare API bundle
+        run: npx wrangler deploy --dry-run --config apps/api/wrangler.jsonc
+
+  # E2E tests require Playwright browsers and are more expensive
+  # e2e:
+  #   name: E2E Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+  #     - name: Install dependencies
+  #       run: npm ci
+  #     - name: Install Playwright browsers
+  #       run: npx playwright install --with-deps chromium
+  #     - name: Start services
+  #       run: |
+  #         npm run db:up &
+  #         npm run dev:api &
+  #         npm run dev:web &
+  #         # Wait for servers
+  #         npx wait-on http://localhost:4000/health http://localhost:3000
+  #     - name: Run E2E tests
+  #       run: npm run test:e2e
+  #       env:
+  #         NEXT_PUBLIC_API_URL: http://localhost:4000

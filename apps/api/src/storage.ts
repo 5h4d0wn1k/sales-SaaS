@@ -1,4 +1,4 @@
-import { sql, eq, desc } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   db,
   organizations,
@@ -26,6 +26,14 @@ import type {
   UpdateMeetingInput,
 } from "@sales/shared";
 import { buildSourcePlan, DemoStore, inferProfile, personalizedPreview } from "./demo-store";
+import { hasOrganizationsTable } from "./storage-readiness";
+import {
+  findUniqueResendWebhookTarget,
+  findUniqueTwilioWebhookTarget,
+} from "./provider-event-targets";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export interface SalesStorage {
   mode: "memory" | "postgres";
@@ -70,12 +78,43 @@ export interface SalesStorage {
       detail: string;
     },
   ): Promise<DashboardResponse["calls"][number] | null>;
-  applyProviderEvent(event: {
-    provider: string;
-    eventType: string;
-    payload: unknown;
-  }): Promise<{ kind: "activity" | "call"; id: string } | null>;
-  recordProviderEvent(event: Omit<ProviderEvent, "id" | "receivedAt"> & { payload: unknown }): Promise<ProviderEvent>;
+   applyProviderEvent(event: {
+     provider: string;
+     eventType: string;
+     payload: unknown;
+   }): Promise<{ kind: "activity" | "call"; id: string } | null>;
+   recordProviderEvent(event: Omit<ProviderEvent, "id" | "receivedAt"> & { payload: unknown }): Promise<ProviderEvent>;
+   audit(event: {
+     organizationId: string | null;
+     actorType: string;
+     actorId?: string;
+     eventType: string;
+     payload: Record<string, unknown>;
+   }): Promise<void>;
+}
+
+export interface StorageScope {
+  organizationId?: string;
+  workspaceId?: string;
+}
+
+export interface StorageAccessContext {
+  organizationId?: string | null;
+  workspaceId?: string | null;
+}
+
+export function createStorageAccessContext(user?: {
+  organizationId?: string | null;
+  workspaceId?: string | null;
+}) {
+  if (!user?.organizationId && !user?.workspaceId) {
+    return undefined;
+  }
+
+  return {
+    organizationId: user.organizationId ?? null,
+    workspaceId: user.workspaceId ?? null,
+  } satisfies StorageAccessContext;
 }
 
 class MemoryStorage implements SalesStorage {
@@ -103,33 +142,87 @@ class MemoryStorage implements SalesStorage {
   async reviewCall(id: string, approved: boolean, notes: string) { return this.store.reviewCall(id, approved, notes); }
   async createMeeting(input: CreateMeetingInput) { return this.store.createMeeting(input); }
   async updateMeeting(id: string, input: UpdateMeetingInput) { return this.store.updateMeeting(id, input); }
-  async updateOutreachProviderResult() { return null; }
-  async updateCallProviderResult() { return null; }
-  async applyProviderEvent() { return null; }
-  async recordProviderEvent(event: Omit<ProviderEvent, "id" | "receivedAt"> & { payload: unknown }) {
-    return {
-      id: `evt_${Math.random().toString(36).slice(2, 10)}`,
-      provider: event.provider,
-      eventType: event.eventType,
-      verified: event.verified,
-      detail: event.detail,
-      receivedAt: new Date().toISOString(),
-    };
+  async updateOutreachProviderResult(
+    activityId: string,
+    update: {
+      provider: string;
+      providerMessageId: string | null;
+      status: "queued" | "sent" | "review_required";
+      detail: string;
+    },
+  ) {
+    return this.store.updateOutreachProviderResult(activityId, update);
   }
-}
+  async updateCallProviderResult(
+    callId: string,
+    update: {
+      provider: string;
+      providerCallId: string | null;
+      detail: string;
+    },
+  ) {
+    return this.store.updateCallProviderResult(callId, update);
+  }
+  async applyProviderEvent() { return null; }
+   async recordProviderEvent(event: Omit<ProviderEvent, "id" | "receivedAt"> & { payload: unknown }) {
+     return {
+       id: `evt_${Math.random().toString(36).slice(2, 10)}`,
+       provider: event.provider,
+       eventType: event.eventType,
+       verified: event.verified,
+       detail: event.detail,
+       receivedAt: new Date().toISOString(),
+     };
+   }
+
+   async audit(event: {
+     organizationId: string | null;
+     actorType: string;
+     actorId?: string;
+     eventType: string;
+     payload: Record<string, unknown>;
+   }) {
+     // Memory storage just logs to console
+     console.log("[AUDIT]", {
+       eventType: event.eventType,
+       actorType: event.actorType,
+       actorId: event.actorId,
+       organizationId: event.organizationId,
+       payload: event.payload,
+       timestamp: new Date().toISOString(),
+     });
+   }
+ }
 
 class PostgresStorage implements SalesStorage {
   readonly mode: "memory" | "postgres" = "postgres";
-  private initialized = false;
-  private readonly seed = new DemoStore();
-  private readonly memory = new DemoStore();
+  constructor(
+    private readonly context?: StorageAccessContext,
+    private readonly state: {
+      initialized: boolean;
+      seed: DemoStore;
+      memory: DemoStore;
+    } = {
+      initialized: false,
+      seed: new DemoStore(),
+      memory: new DemoStore(),
+    },
+  ) {}
+
+  scope(context?: StorageAccessContext) {
+    if (!context?.organizationId && !context?.workspaceId) {
+      return this;
+    }
+
+    return new PostgresStorage(context, this.state);
+  }
 
   private async ensureInitialized() {
-    if (this.initialized) {
+    if (this.state.initialized) {
       return;
     }
 
-    const dashboard = this.seed.getDashboard();
+    const dashboard = this.state.seed.getDashboard();
     const existingOrg = await db.select().from(organizations).limit(1);
 
     if (existingOrg.length === 0) {
@@ -296,11 +389,65 @@ class PostgresStorage implements SalesStorage {
       );
     }
 
-    this.initialized = true;
+    this.state.initialized = true;
   }
 
   private async workspaceContext() {
     await this.ensureInitialized();
+
+    if (this.context?.workspaceId) {
+      const [workspace] = await db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.id, this.context.workspaceId))
+        .limit(1);
+
+      if (!workspace) {
+        throw new Error("Workspace not found for request context");
+      }
+
+      const [organization] = await db
+        .select()
+        .from(organizations)
+        .where(
+          and(
+            eq(organizations.id, this.context.organizationId ?? workspace.organizationId),
+            eq(organizations.id, workspace.organizationId),
+          ),
+        )
+        .limit(1);
+
+      if (!organization) {
+        throw new Error("Organization not found for request context");
+      }
+
+      return { organization, workspace };
+    }
+
+    if (this.context?.organizationId) {
+      const [organization] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, this.context.organizationId))
+        .limit(1);
+
+      if (!organization) {
+        throw new Error("Organization not found for request context");
+      }
+
+      const [workspace] = await db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.organizationId, organization.id))
+        .limit(1);
+
+      if (!workspace) {
+        throw new Error("Workspace not found for request context");
+      }
+
+      return { organization, workspace };
+    }
+
     const [organization] = await db.select().from(organizations).limit(1);
     const [workspace] = await db
       .select()
@@ -309,6 +456,90 @@ class PostgresStorage implements SalesStorage {
       .limit(1);
 
     return { organization, workspace };
+  }
+
+  private async getScopedLeadRow(id: string) {
+    const { workspace } = await this.workspaceContext();
+    const [lead] = await db
+      .select()
+      .from(leads)
+      .where(and(eq(leads.id, id), eq(leads.workspaceId, workspace.id)))
+      .limit(1);
+    return lead ?? null;
+  }
+
+  private async getScopedCampaignRow(id: string) {
+    const { workspace } = await this.workspaceContext();
+    const [campaign] = await db
+      .select()
+      .from(campaigns)
+      .where(and(eq(campaigns.id, id), eq(campaigns.workspaceId, workspace.id)))
+      .limit(1);
+    return campaign ?? null;
+  }
+
+  private async getScopedCallRow(id: string) {
+    const { workspace } = await this.workspaceContext();
+    const [row] = await db
+      .select({ call: callTasks })
+      .from(callTasks)
+      .innerJoin(leads, eq(callTasks.leadId, leads.id))
+      .where(and(eq(callTasks.id, id), eq(leads.workspaceId, workspace.id)))
+      .limit(1);
+
+    return row?.call ?? null;
+  }
+
+  private async getScopedMeetingRow(id: string) {
+    const { workspace } = await this.workspaceContext();
+    const [row] = await db
+      .select({ meeting: meetings })
+      .from(meetings)
+      .innerJoin(leads, eq(meetings.leadId, leads.id))
+      .where(and(eq(meetings.id, id), eq(leads.workspaceId, workspace.id)))
+      .limit(1);
+
+    return row?.meeting ?? null;
+  }
+
+  private async getScopedOutreachActivityRow(id: string) {
+    const { workspace } = await this.workspaceContext();
+    const [row] = await db
+      .select({ activity: outreachActivities })
+      .from(outreachActivities)
+      .innerJoin(campaigns, eq(outreachActivities.campaignId, campaigns.id))
+      .where(and(eq(outreachActivities.id, id), eq(campaigns.workspaceId, workspace.id)))
+      .limit(1);
+
+    return row?.activity ?? null;
+  }
+
+  private async resolveOrganizationIdForProviderEvent(event: {
+    provider: string;
+    payload: unknown;
+  }) {
+    if (event.provider === "resend") {
+      const payload = event.payload as { data?: { email_id?: string } };
+      const externalId = payload.data?.email_id;
+
+      if (!externalId) {
+        return null;
+      }
+      const target = await findUniqueResendWebhookTarget(externalId);
+      return target?.organizationId ?? null;
+    }
+
+    if (event.provider === "twilio") {
+      const payload = event.payload as { CallSid?: string };
+
+      if (!payload.CallSid) {
+        return null;
+      }
+      const target = await findUniqueTwilioWebhookTarget(payload.CallSid);
+      return target?.organizationId ?? null;
+    }
+
+    return null;
   }
 
   private mapLead(lead: typeof leads.$inferSelect): DashboardResponse["leads"][number] {
@@ -341,10 +572,18 @@ class PostgresStorage implements SalesStorage {
   }
 
   private mapCall(call: typeof callTasks.$inferSelect): DashboardResponse["calls"][number] {
+    const statusMap: Record<typeof call.status, DashboardResponse["calls"][number]["status"]> = {
+      blocked: "review_required",
+      queued: "queued",
+      running: "in_progress",
+      failed: "review_required",
+      completed: "completed",
+    };
+
     return {
       id: call.id,
       leadId: call.leadId,
-      status: call.reviewRequired ? "review_required" : "completed",
+      status: statusMap[call.status] ?? "review_required",
       provider: call.provider ?? "twilio",
       providerCallId: call.providerCallId ?? null,
       summary: call.summary ?? "",
@@ -363,6 +602,50 @@ class PostgresStorage implements SalesStorage {
       owner: meeting.owner ?? "sales-ops",
       notes: meeting.notes ?? "",
     };
+  }
+
+  private async ensureAutonomousMeeting(leadId: string, notes: string) {
+    const [existingMeeting] = await db
+      .select({ id: meetings.id })
+      .from(meetings)
+      .where(and(eq(meetings.leadId, leadId), eq(meetings.bookingSource, "autonomous-agent")))
+      .limit(1);
+
+    if (existingMeeting) {
+      return;
+    }
+
+    await db.insert(meetings).values({
+      leadId,
+      scheduledFor: new Date("2026-03-14T15:30:00Z"),
+      status: "scheduled",
+      bookingSource: "autonomous-agent",
+      owner: "autonomous-agent",
+      notes,
+      outcome: "scheduled",
+    });
+  }
+
+  private async markLeadAsContacted(leadId: string, touchpoint: string) {
+    await db
+      .update(leads)
+      .set({
+        status: "contacted",
+        metadata: sql`jsonb_set(coalesce(${leads.metadata}, '{}'::jsonb), '{lastTouchpoint}', ${JSON.stringify(touchpoint)}::jsonb)`,
+      })
+      .where(eq(leads.id, leadId));
+  }
+
+  private async markLeadAsMeetingBooked(leadId: string, touchpoint: string, notes: string) {
+    await db
+      .update(leads)
+      .set({
+        status: "meeting_booked",
+        metadata: sql`jsonb_set(coalesce(${leads.metadata}, '{}'::jsonb), '{lastTouchpoint}', ${JSON.stringify(touchpoint)}::jsonb)`,
+      })
+      .where(eq(leads.id, leadId));
+
+    await this.ensureAutonomousMeeting(leadId, notes);
   }
 
   async getDashboard(): Promise<DashboardResponse> {
@@ -388,9 +671,24 @@ class PostgresStorage implements SalesStorage {
     const leadRows = await db.select().from(leads).where(eq(leads.workspaceId, workspace.id)).orderBy(desc(leads.createdAt));
     const campaignRows = await db.select().from(campaigns).where(eq(campaigns.workspaceId, workspace.id)).orderBy(desc(campaigns.createdAt));
     const sourceRunRows = await db.select().from(sourceRuns).where(eq(sourceRuns.workspaceId, workspace.id)).orderBy(desc(sourceRuns.createdAt));
-    const callRows = await db.select().from(callTasks).orderBy(desc(callTasks.createdAt));
-    const meetingRows = await db.select().from(meetings).orderBy(desc(meetings.createdAt));
-    const activityRows = await db.select().from(outreachActivities).orderBy(desc(outreachActivities.createdAt));
+    const callRows = await db
+      .select({ call: callTasks })
+      .from(callTasks)
+      .innerJoin(leads, eq(callTasks.leadId, leads.id))
+      .where(eq(leads.workspaceId, workspace.id))
+      .orderBy(desc(callTasks.createdAt));
+    const meetingRows = await db
+      .select({ meeting: meetings })
+      .from(meetings)
+      .innerJoin(leads, eq(meetings.leadId, leads.id))
+      .where(eq(leads.workspaceId, workspace.id))
+      .orderBy(desc(meetings.createdAt));
+    const activityRows = await db
+      .select({ activity: outreachActivities })
+      .from(outreachActivities)
+      .innerJoin(campaigns, eq(outreachActivities.campaignId, campaigns.id))
+      .where(eq(campaigns.workspaceId, workspace.id))
+      .orderBy(desc(outreachActivities.createdAt));
 
     return {
       workspace: {
@@ -412,7 +710,7 @@ class PostgresStorage implements SalesStorage {
         },
         {
           label: "Meetings booked",
-          value: String(meetingRows.filter((meeting) => meeting.status === "scheduled").length),
+          value: String(meetingRows.filter(({ meeting }) => meeting.status === "scheduled").length),
           detail: "Meetings created from outbound and voice workflows.",
         },
       ],
@@ -461,7 +759,7 @@ class PostgresStorage implements SalesStorage {
         rejectedCount: run.rejectedCount,
         summary: run.summary,
       })),
-      activities: activityRows.map((activity) => ({
+      activities: activityRows.map(({ activity }) => ({
         id: activity.id,
         campaignId: activity.campaignId,
         leadId: activity.leadId,
@@ -473,8 +771,8 @@ class PostgresStorage implements SalesStorage {
         preview: activity.preview,
         personalizedFor: activity.personalizedFor,
       })),
-      calls: callRows.map((call) => this.mapCall(call)),
-      meetings: meetingRows.map((meeting) => this.mapMeeting(meeting)),
+      calls: callRows.map(({ call }) => this.mapCall(call)),
+      meetings: meetingRows.map(({ meeting }) => this.mapMeeting(meeting)),
     };
   }
 
@@ -487,14 +785,14 @@ class PostgresStorage implements SalesStorage {
 
   async getLead(id: string) {
     await this.ensureInitialized();
-    const [lead] = await db.select().from(leads).where(eq(leads.id, id)).limit(1);
+    const lead = await this.getScopedLeadRow(id);
     return lead ? this.mapLead(lead) : null;
   }
 
   async createOnboardingSession(input: OnboardingSessionInput) {
     await this.ensureInitialized();
     const { workspace } = await this.workspaceContext();
-    const seedSession = this.memory.createOnboardingSession(input);
+    const seedSession = this.state.memory.createOnboardingSession(input);
     const [session] = await db
       .insert(onboardingSessions)
       .values({
@@ -516,7 +814,12 @@ class PostgresStorage implements SalesStorage {
 
   async appendOnboardingMessage(id: string, input: OnboardingMessageInput) {
     await this.ensureInitialized();
-    const [session] = await db.select().from(onboardingSessions).where(eq(onboardingSessions.id, id)).limit(1);
+    const { workspace } = await this.workspaceContext();
+    const [session] = await db
+      .select()
+      .from(onboardingSessions)
+      .where(and(eq(onboardingSessions.id, id), eq(onboardingSessions.workspaceId, workspace.id)))
+      .limit(1);
     if (!session) {
       return null;
     }
@@ -537,7 +840,7 @@ class PostgresStorage implements SalesStorage {
         transcript,
         currentStep: "goals-and-channels",
       })
-      .where(eq(onboardingSessions.id, id))
+      .where(and(eq(onboardingSessions.id, id), eq(onboardingSessions.workspaceId, workspace.id)))
       .returning();
 
     return {
@@ -553,7 +856,12 @@ class PostgresStorage implements SalesStorage {
 
   async finalizeOnboarding(id: string) {
     await this.ensureInitialized();
-    const [session] = await db.select().from(onboardingSessions).where(eq(onboardingSessions.id, id)).limit(1);
+    const { workspace } = await this.workspaceContext();
+    const [session] = await db
+      .select()
+      .from(onboardingSessions)
+      .where(and(eq(onboardingSessions.id, id), eq(onboardingSessions.workspaceId, workspace.id)))
+      .limit(1);
     if (!session) {
       return null;
     }
@@ -584,7 +892,7 @@ class PostgresStorage implements SalesStorage {
         scraperBrief,
         outreachBrief,
       })
-      .where(eq(onboardingSessions.id, id))
+      .where(and(eq(onboardingSessions.id, id), eq(onboardingSessions.workspaceId, workspace.id)))
       .returning();
 
     if (sourcePlan) {
@@ -645,7 +953,7 @@ class PostgresStorage implements SalesStorage {
   async runLeadSource(source: string) {
     await this.ensureInitialized();
     const { workspace } = await this.workspaceContext();
-    const memoryResult = this.memory.runLeadSource(source);
+    const memoryResult = this.state.memory.runLeadSource(source);
     const [acceptedLead] = await db
       .insert(leads)
       .values({
@@ -693,7 +1001,7 @@ class PostgresStorage implements SalesStorage {
   async createLead(input: CreateLeadInput) {
     await this.ensureInitialized();
     const { workspace } = await this.workspaceContext();
-    const created = this.memory.createLead(input);
+    const created = this.state.memory.createLead(input);
     const [lead] = await db
       .insert(leads)
       .values({
@@ -721,14 +1029,14 @@ class PostgresStorage implements SalesStorage {
 
   async getCampaign(id: string) {
     await this.ensureInitialized();
-    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id)).limit(1);
+    const campaign = await this.getScopedCampaignRow(id);
     return campaign ? this.mapCampaign(campaign) : null;
   }
 
   async createCampaign(input: CreateCampaignInput) {
     await this.ensureInitialized();
     const { workspace } = await this.workspaceContext();
-    const memoryResult = this.memory.createCampaign(input);
+    const memoryResult = this.state.memory.createCampaign(input);
     const leadCount = await db.select({ count: sql<number>`count(*)::int` }).from(leads).where(eq(leads.workspaceId, workspace.id));
     const [campaign] = await db
       .insert(campaigns)
@@ -751,6 +1059,7 @@ class PostgresStorage implements SalesStorage {
 
   async approveCampaign(id: string, approvedBy: string) {
     await this.ensureInitialized();
+    const { workspace } = await this.workspaceContext();
     const [updated] = await db
       .update(campaigns)
       .set({
@@ -758,13 +1067,14 @@ class PostgresStorage implements SalesStorage {
         stage: "approved",
         nextActionAt: `Approved by ${approvedBy}`,
       })
-      .where(eq(campaigns.id, id))
+      .where(and(eq(campaigns.id, id), eq(campaigns.workspaceId, workspace.id)))
       .returning();
     return updated ? this.mapCampaign(updated) : null;
   }
 
   async runCampaign(id: string, approvedBy: string) {
     await this.ensureInitialized();
+    const { workspace } = await this.workspaceContext();
     const approved = await this.approveCampaign(id, approvedBy);
     if (!approved) {
       return null;
@@ -773,7 +1083,7 @@ class PostgresStorage implements SalesStorage {
     const [lead] = await db
       .select()
       .from(leads)
-      .where(eq(leads.status, "qualified"))
+      .where(and(eq(leads.status, "qualified"), eq(leads.workspaceId, workspace.id)))
       .orderBy(desc(leads.score))
       .limit(1);
 
@@ -794,26 +1104,8 @@ class PostgresStorage implements SalesStorage {
       })
       .returning();
 
-    const [updatedCampaign] = await db
-      .update(campaigns)
-      .set({
-        firstActionCompleted: true,
-        stage: "running",
-        nextActionAt: "Queued first autonomous touch",
-      })
-      .where(eq(campaigns.id, id))
-      .returning();
-
-    await db
-      .update(leads)
-      .set({
-        status: "contacted",
-        metadata: { ...(lead.metadata as object), lastTouchpoint: `${approved.channel} queued by ${approvedBy}` },
-      })
-      .where(eq(leads.id, lead.id));
-
     return {
-      campaign: this.mapCampaign(updatedCampaign),
+      campaign: approved,
       activities: [
         {
           id: activity.id,
@@ -833,81 +1125,82 @@ class PostgresStorage implements SalesStorage {
 
   async getCampaignActivity(id: string) {
     await this.ensureInitialized();
-    const rows = await db.select().from(outreachActivities).where(eq(outreachActivities.campaignId, id)).orderBy(desc(outreachActivities.createdAt));
+    const { workspace } = await this.workspaceContext();
+    const rows = await db
+      .select({ activity: outreachActivities })
+      .from(outreachActivities)
+      .innerJoin(campaigns, eq(outreachActivities.campaignId, campaigns.id))
+      .where(and(eq(outreachActivities.campaignId, id), eq(campaigns.workspaceId, workspace.id)))
+      .orderBy(desc(outreachActivities.createdAt));
     return rows.map((activity) => ({
-      id: activity.id,
-      campaignId: activity.campaignId,
-      leadId: activity.leadId,
-      type: activity.type as DashboardResponse["activities"][number]["type"],
-      provider: activity.provider ?? null,
-      providerMessageId: activity.providerMessageId ?? null,
-      status: activity.status,
-      subject: activity.subject,
-      preview: activity.preview,
-      personalizedFor: activity.personalizedFor,
+      id: activity.activity.id,
+      campaignId: activity.activity.campaignId,
+      leadId: activity.activity.leadId,
+      type: activity.activity.type as DashboardResponse["activities"][number]["type"],
+      provider: activity.activity.provider ?? null,
+      providerMessageId: activity.activity.providerMessageId ?? null,
+      status: activity.activity.status,
+      subject: activity.activity.subject,
+      preview: activity.activity.preview,
+      personalizedFor: activity.activity.personalizedFor,
     }));
   }
 
   async createCall(input: CreateCallInput) {
     await this.ensureInitialized();
-    const [lead] = await db.select().from(leads).where(eq(leads.id, input.leadId)).limit(1);
+    const { workspace } = await this.workspaceContext();
+    const lead = await this.getScopedLeadRow(input.leadId);
     if (!lead) {
       return null;
     }
-    const [campaign] = await db.select().from(campaigns).orderBy(desc(campaigns.createdAt)).limit(1);
+    const [campaign] = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.workspaceId, workspace.id))
+      .orderBy(desc(campaigns.createdAt))
+      .limit(1);
+    if (!campaign) {
+      return null;
+    }
     const reviewRequired = lead.score <= 85;
     const [call] = await db
       .insert(callTasks)
       .values({
-        campaignId: campaign?.id ?? (await db.select().from(campaigns).limit(1))[0]!.id,
+        campaignId: campaign.id,
         leadId: lead.id,
-        status: reviewRequired ? "blocked" : "completed",
+        status: reviewRequired ? "blocked" : "queued",
         provider: input.provider,
         summary: reviewRequired
-          ? "Lead engaged, but transcript confidence requires review."
-          : "Lead showed interest and agreed to a discovery call.",
-        transcript: `Agent discussed ${lead.company ?? "the business"} goals and outbound automation fit.`,
-        disposition: reviewRequired ? "needs_review" : "meeting_requested",
+          ? "Lead requires operator review before AI calling."
+          : "Call queued for AI voice dispatch.",
+        transcript: "",
+        disposition: reviewRequired ? "needs_review" : "pending",
         reviewRequired,
       })
       .returning();
-
-    if (!reviewRequired) {
-      await db
-        .update(leads)
-        .set({
-          status: "meeting_booked",
-          metadata: { ...(lead.metadata as object), lastTouchpoint: "AI call completed" },
-        })
-        .where(eq(leads.id, lead.id));
-
-      await db.insert(meetings).values({
-        leadId: lead.id,
-        scheduledFor: new Date("2026-03-14T15:30:00Z"),
-        status: "scheduled",
-        bookingSource: "autonomous-agent",
-        owner: "autonomous-agent",
-        notes: "Auto-created after positive AI call disposition.",
-        outcome: "scheduled",
-      });
-    }
 
     return this.mapCall(call);
   }
 
   async getCall(id: string) {
     await this.ensureInitialized();
-    const [call] = await db.select().from(callTasks).where(eq(callTasks.id, id)).limit(1);
+    const call = await this.getScopedCallRow(id);
     return call ? this.mapCall(call) : null;
   }
 
   async reviewCall(id: string, approved: boolean, notes: string) {
     await this.ensureInitialized();
+    const existing = await this.getScopedCallRow(id);
+    if (!existing) {
+      return null;
+    }
+
     const [call] = await db
       .update(callTasks)
       .set({
-        reviewRequired: false,
-        status: approved ? "completed" : "blocked",
+        reviewRequired: approved ? false : true,
+        status: approved ? "queued" : "blocked",
+        disposition: approved ? "pending" : "needs_review",
         summary: sql`concat(${callTasks.summary}, ' Reviewer note: ', ${notes})`,
       })
       .where(eq(callTasks.id, id))
@@ -917,6 +1210,11 @@ class PostgresStorage implements SalesStorage {
 
   async createMeeting(input: CreateMeetingInput) {
     await this.ensureInitialized();
+    const lead = await this.getScopedLeadRow(input.leadId);
+    if (!lead) {
+      return null;
+    }
+
     const [meeting] = await db
       .insert(meetings)
       .values({
@@ -941,6 +1239,11 @@ class PostgresStorage implements SalesStorage {
 
   async updateMeeting(id: string, input: UpdateMeetingInput) {
     await this.ensureInitialized();
+    const existing = await this.getScopedMeetingRow(id);
+    if (!existing) {
+      return null;
+    }
+
     const [meeting] = await db
       .update(meetings)
       .set({
@@ -975,16 +1278,48 @@ class PostgresStorage implements SalesStorage {
     },
   ) {
     await this.ensureInitialized();
+    const existing = await this.getScopedOutreachActivityRow(activityId);
+    if (!existing) {
+      return null;
+    }
+
     const [activity] = await db
       .update(outreachActivities)
       .set({
         provider: update.provider,
         providerMessageId: update.providerMessageId,
         status: update.status,
-        preview: sql`concat(${outreachActivities.preview}, ' ', ${update.detail})`,
+        preview: sql`concat(${outreachActivities.preview}, ' ', cast(${update.detail} as text))`,
       })
       .where(eq(outreachActivities.id, activityId))
       .returning();
+
+    if (activity) {
+      if (update.status === "review_required") {
+        await db
+          .update(campaigns)
+          .set({
+            firstActionCompleted: false,
+            stage: "approved",
+            nextActionAt: "Awaiting manual review before first outbound touch",
+          })
+          .where(eq(campaigns.id, activity.campaignId));
+      } else {
+        await db
+          .update(campaigns)
+          .set({
+            firstActionCompleted: true,
+            stage: "running",
+            nextActionAt: update.status === "sent" ? "First autonomous touch sent" : "Queued first autonomous touch",
+          })
+          .where(eq(campaigns.id, activity.campaignId));
+
+        await this.markLeadAsContacted(
+          activity.leadId,
+          `${activity.type} ${update.status} via ${update.provider}`,
+        );
+      }
+    }
 
     return activity
       ? {
@@ -1011,15 +1346,35 @@ class PostgresStorage implements SalesStorage {
     },
   ) {
     await this.ensureInitialized();
+    const existing = await this.getScopedCallRow(callId);
+    if (!existing) {
+      return null;
+    }
+
+    const nextStatus = existing.reviewRequired
+      ? "blocked"
+      : update.providerCallId
+        ? "running"
+        : "completed";
     const [call] = await db
       .update(callTasks)
       .set({
+        status: nextStatus,
         provider: update.provider,
         providerCallId: update.providerCallId,
-        summary: sql`concat(${callTasks.summary}, ' ', ${update.detail})`,
+        disposition: nextStatus === "completed" ? "meeting_requested" : existing.disposition ?? "pending",
+        summary: sql`concat(${callTasks.summary}, ' ', cast(${update.detail} as text))`,
       })
       .where(eq(callTasks.id, callId))
       .returning();
+
+    if (call && !call.reviewRequired && nextStatus === "completed") {
+      await this.markLeadAsMeetingBooked(
+        call.leadId,
+        `AI call completed via ${update.provider}`,
+        "Auto-created after positive AI call disposition.",
+      );
+    }
 
     return call ? this.mapCall(call) : null;
   }
@@ -1037,6 +1392,10 @@ class PostgresStorage implements SalesStorage {
       if (!externalId) {
         return null;
       }
+      const target = await findUniqueResendWebhookTarget(externalId);
+      if (!target) {
+        return null;
+      }
 
       const [activity] = await db
         .update(outreachActivities)
@@ -1044,7 +1403,7 @@ class PostgresStorage implements SalesStorage {
           status: payload.type?.includes("delivered") ? "sent" : "review_required",
           preview: sql`concat(${outreachActivities.preview}, ' Webhook: ', ${String(payload.type ?? event.eventType)})`,
         })
-        .where(eq(outreachActivities.providerMessageId, externalId))
+        .where(eq(outreachActivities.id, target.id))
         .returning();
 
       return activity
@@ -1060,15 +1419,28 @@ class PostgresStorage implements SalesStorage {
       if (!payload.CallSid) {
         return null;
       }
+      const target = await findUniqueTwilioWebhookTarget(payload.CallSid);
+      if (!target) {
+        return null;
+      }
 
       const [call] = await db
         .update(callTasks)
         .set({
           status: payload.CallStatus === "completed" ? "completed" : "running",
+          disposition: payload.CallStatus === "completed" ? "meeting_requested" : callTasks.disposition,
           summary: sql`concat(${callTasks.summary}, ' Status callback: ', ${String(payload.CallStatus ?? event.eventType)})`,
         })
-        .where(eq(callTasks.providerCallId, payload.CallSid))
+        .where(eq(callTasks.id, target.id))
         .returning();
+
+      if (call && payload.CallStatus === "completed" && !call.reviewRequired) {
+        await this.markLeadAsMeetingBooked(
+          call.leadId,
+          "AI call completed via twilio",
+          "Auto-created after Twilio reported a completed autonomous call.",
+        );
+      }
 
       return call
         ? {
@@ -1081,48 +1453,119 @@ class PostgresStorage implements SalesStorage {
     return null;
   }
 
-  async recordProviderEvent(event: Omit<ProviderEvent, "id" | "receivedAt"> & { payload: unknown }) {
-    await this.ensureInitialized();
-    const { organization } = await this.workspaceContext();
-    const [created] = await db
-      .insert(auditEvents)
-      .values({
-        organizationId: organization.id,
-        actorType: "provider",
-        eventType: `${event.provider}.${event.eventType}`,
-        payload: {
-          verified: event.verified,
-          detail: event.detail,
-          body: event.payload,
-        },
-      })
-      .returning();
+   async recordProviderEvent(event: Omit<ProviderEvent, "id" | "receivedAt"> & { payload: unknown }) {
+     await this.ensureInitialized();
+     let organizationId =
+       this.context?.organizationId ??
+       (await this.resolveOrganizationIdForProviderEvent(event));
 
-    return {
-      id: created.id,
-      provider: event.provider,
-      eventType: event.eventType,
-      verified: event.verified,
-      detail: event.detail,
-      receivedAt: created.createdAt.toISOString(),
-    };
-  }
-}
+     if (!organizationId && (this.context?.organizationId || this.context?.workspaceId)) {
+       try {
+         const { organization } = await this.workspaceContext();
+         organizationId = organization.id;
+       } catch {
+         // No scoped organization context available.
+       }
+     }
+
+     if (!organizationId) {
+       console.warn("Provider event without organization attribution:", event);
+       return {
+         id: `evt_${Math.random().toString(36).slice(2, 10)}`,
+         provider: event.provider,
+         eventType: event.eventType,
+         verified: event.verified,
+         detail: event.detail,
+         receivedAt: new Date().toISOString(),
+       };
+     }
+
+     const [created] = await db
+       .insert(auditEvents)
+       .values({
+         organizationId,
+         actorType: "provider",
+         eventType: `${event.provider}.${event.eventType}`,
+         payload: {
+           verified: event.verified,
+           detail: event.detail,
+           body: event.payload,
+         },
+       })
+       .returning();
+
+     return {
+       id: created.id,
+       provider: event.provider,
+       eventType: event.eventType,
+       verified: event.verified,
+       detail: event.detail,
+       receivedAt: created.createdAt.toISOString(),
+     };
+   }
+
+  async audit(event: {
+     organizationId?: string | null;
+     actorType: string;
+     actorId?: string;
+     eventType: string;
+     payload: Record<string, unknown>;
+   }) {
+     await this.ensureInitialized();
+     let orgId = event.organizationId;
+     
+     // If no organizationId provided, only infer it when this request is already scoped.
+     if (!orgId && (this.context?.organizationId || this.context?.workspaceId)) {
+       try {
+         const { organization } = await this.workspaceContext();
+         orgId = organization.id;
+       } catch {
+         // No organization context available
+       }
+     }
+
+    if (!orgId) {
+      console.warn("Audit event without organizationId:", event);
+      return;
+    }
+
+    const actorId = event.actorId && UUID_PATTERN.test(event.actorId) ? event.actorId : null;
+    const payload =
+      actorId === event.actorId
+        ? event.payload
+        : {
+            ...event.payload,
+            rawActorId: event.actorId ?? null,
+          };
+
+     await db.insert(auditEvents).values({
+       organizationId: orgId,
+       actorType: event.actorType,
+       actorId,
+       eventType: event.eventType,
+       payload,
+     });
+   }
+ }
 
 let storagePromise: Promise<SalesStorage> | null = null;
 
 async function detectPostgresReadiness() {
+  if (process.env.NODE_ENV === "test" && !process.env.DATABASE_URL) {
+    return false;
+  }
+
   try {
     await db.execute(sql`select 1`);
     const result = await db.execute(sql`select to_regclass('public.organizations') as organizations`);
-    const rows = result as unknown as Array<{ organizations?: string | null }>;
-    return Boolean(rows[0]?.organizations);
-  } catch {
+    return hasOrganizationsTable(result);
+  } catch (error) {
+    console.error("Postgres readiness check failed.", error);
     return false;
   }
 }
 
-export async function getStorage(): Promise<SalesStorage> {
+export async function getStorage(context?: StorageAccessContext): Promise<SalesStorage> {
   if (!storagePromise) {
     storagePromise = (async () => {
       const ready = await detectPostgresReadiness();
@@ -1130,5 +1573,11 @@ export async function getStorage(): Promise<SalesStorage> {
     })();
   }
 
-  return await storagePromise;
+  const storage = await storagePromise;
+
+  if (storage.mode === "postgres") {
+    return (storage as PostgresStorage).scope(context);
+  }
+
+  return storage;
 }

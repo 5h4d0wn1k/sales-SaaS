@@ -1,0 +1,6 @@
+[features]
+codex_hooks = true
+
+# Repo-local hooks and rules load automatically when the repo is trusted.
+# Customize the hook scripts in `.codex/hooks/` and the command policy in
+# `.codex/rules/default.rules`.
