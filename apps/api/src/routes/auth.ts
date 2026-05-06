@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { Context } from "hono";
 import { db, users } from "@sales/database";
 import { eq } from "drizzle-orm";
-import { hash } from "bcryptjs";
+import * as bcryptModule from "bcryptjs";
 import {
   authLifecycleRequestResponseSchema,
   confirmPasswordResetInputSchema,
@@ -22,6 +22,8 @@ import {
 } from "../auth-lifecycle";
 
 export const authRoutes = new Hono<{ Bindings: any }>();
+const bcrypt = "default" in bcryptModule ? bcryptModule.default : bcryptModule;
+const { hash } = bcrypt;
 
 const registrationSchema = z.object({
   email: z.string().trim().email().transform((value) => value.toLowerCase()),

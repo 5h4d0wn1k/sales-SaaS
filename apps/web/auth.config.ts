@@ -1,9 +1,11 @@
 // @ts-nocheck
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
+import * as bcryptModule from "bcryptjs";
 import { db, users } from "@sales/database";
 import { eq } from "drizzle-orm";
+const bcrypt = "default" in bcryptModule ? bcryptModule.default : bcryptModule;
+const { compare } = bcrypt;
 
 const googleAuthEnabled =
   Boolean(process.env.GOOGLE_CLIENT_ID) && Boolean(process.env.GOOGLE_CLIENT_SECRET);
