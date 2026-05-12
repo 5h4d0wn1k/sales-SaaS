@@ -36,6 +36,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "repo:audit": "python3 .codex/scripts/repo_operating_system_audit.py .",
+    "repo:contracts": "python3 .codex/scripts/validate_repo_contracts.py .",
     "repo:report": "python3 .codex/scripts/repo_operating_system_report.py . --output .codex/reports/repo-operating-system-report.md",
     "cf:typegen:workflows": "npm run cf-typegen --workspace @sales/workflows",
     "db:generate": "npm run db:generate --workspace @sales/database",

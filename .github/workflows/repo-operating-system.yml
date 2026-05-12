@@ -37,6 +37,11 @@ jobs:
           python3 .codex/scripts/repo_operating_system_report.py . --audit-json audit.json --output audit.md
           cat audit.md >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run advisory repo contract validation
+        run: |
+          python3 .codex/scripts/validate_repo_contracts.py .
+          python3 .codex/scripts/validate_repo_contracts.py . --format markdown >> "$GITHUB_STEP_SUMMARY"
+
       - name: Enforce required operating mechanisms
         run: |
           python3 - <<'PY'

@@ -1,0 +1,327 @@
+{
+  "schema_version": "1.0.0",
+  "contract_name": "sales-saas-agile-work-item",
+  "contract_type": "sdlc_work_item_contract",
+  "status": "active",
+  "last_reviewed": "2026-05-12",
+  "canonical_path": "agile_work_item.json",
+  "mirrors": [
+    ".jarvis/agile_work_item.json"
+  ],
+  "purpose": "Define the minimum ready and done contract for work items in the Sales AaaS repository so implementation, review, verification, release, and rollback expectations are explicit before production-impacting changes land.",
+  "applies_to": {
+    "repository": "sales-saas",
+    "surfaces": [
+      "apps/web",
+      "apps/api",
+      "apps/workflows",
+      "packages/database",
+      "packages/shared",
+      "tests",
+      ".codex",
+      "docs"
+    ],
+    "delivery_path": "branch_to_pull_request_to_checks_to_release_gate",
+    "behavioral_scope": "This contract is process metadata only and does not change runtime application behavior or shared API contracts."
+  },
+  "source_alignment": [
+    "AGENTS.md repo expectations and Definition of Done",
+    "docs/platform/deploy-and-rollback-policy.md",
+    "docs/reliability/production-readiness-review.md",
+    "package.json verification scripts",
+    ".github/workflows CI and deploy workflows"
+  ],
+  "work_item_required_fields": [
+    {
+      "field": "id",
+      "type": "string",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Stable ticket, issue, mission node, or PR identifier."
+    },
+    {
+      "field": "title",
+      "type": "string",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Short statement of the intended outcome."
+    },
+    {
+      "field": "problem_statement",
+      "type": "string",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "The user, business, reliability, security, or operating problem being solved."
+    },
+    {
+      "field": "success_conditions",
+      "type": "array<string>",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Observable conditions that make the work complete."
+    },
+    {
+      "field": "affected_surfaces",
+      "type": "array<string>",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Repository paths, services, contracts, schemas, jobs, or workflows expected to change."
+    },
+    {
+      "field": "risk_classification",
+      "type": "object",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Risk level, rationale, high-risk surfaces, compatibility impact, and release gate expectations."
+    },
+    {
+      "field": "owner",
+      "type": "string",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Named accountable implementer or team."
+    },
+    {
+      "field": "reviewers",
+      "type": "array<string>",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Required reviewers based on affected surfaces and risk."
+    },
+    {
+      "field": "validation_plan",
+      "type": "object",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Narrow checks, broader checks, smoke checks, and required evidence before merge or release."
+    },
+    {
+      "field": "rollback_plan",
+      "type": "object",
+      "required_for_ready": true,
+      "required_for_done": true,
+      "description": "Rollback action, constraints, data/schema posture, owner, and post-rollback verification."
+    },
+    {
+      "field": "evidence",
+      "type": "object",
+      "required_for_ready": false,
+      "required_for_done": true,
+      "description": "Commands, test results, review evidence, deploy evidence, smoke evidence, and known gaps."
+    }
+  ],
+  "definition_of_ready": {
+    "required_contract_fields": [
+      "id",
+      "title",
+      "problem_statement",
+      "success_conditions",
+      "affected_surfaces",
+      "risk_classification",
+      "owner",
+      "reviewers",
+      "validation_plan",
+      "rollback_plan"
+    ],
+    "criteria": [
+      "The requested outcome is specific enough to implement without guessing at product, legal, billing, security, or migration intent.",
+      "The affected repository paths and runtime surfaces are named, including whether the change targets demo-storage behavior, Postgres-backed behavior, or both.",
+      "Shared contract, public API, billing, auth, tenancy, audit, rate-limit, approval, provider webhook, and schema impacts are explicitly marked as impacted or not impacted.",
+      "The work is small enough for a branch and pull request, or has been decomposed into child work items with non-overlapping ownership.",
+      "Acceptance checks are measurable and include JSON/schema parsing when the deliverable is a machine-readable contract.",
+      "The validation plan starts with the narrowest meaningful checks and names when to run typecheck, tests, build, core verification, and smoke checks.",
+      "The rollback plan names the concrete rollback action, rollback owner, data compatibility constraints, and post-rollback validation.",
+      "Required owner and reviewer expectations are identified before implementation begins.",
+      "New production dependencies, public contract changes, plan key or billing behavior changes, migration semantics, or weakened safety controls are called out for explicit approval before editing.",
+      "Any product claim introduced or changed has an implementation evidence path or is gated, hidden, or downgraded."
+    ]
+  },
+  "definition_of_done": {
+    "required_contract_fields": [
+      "id",
+      "title",
+      "problem_statement",
+      "success_conditions",
+      "affected_surfaces",
+      "risk_classification",
+      "owner",
+      "reviewers",
+      "validation_plan",
+      "rollback_plan",
+      "evidence"
+    ],
+    "criteria": [
+      "Implementation is limited to the approved scope or documented scope expansion.",
+      "Runtime behavior, shared contracts, migrations, billing, auth, tenancy, audit, provider webhooks, and approval gates are preserved unless the work item explicitly requires a reviewed change.",
+      "Behavior-changing work has focused tests or a documented reason tests are not applicable.",
+      "Machine-readable artifacts parse successfully and any mirrored copies are kept aligned.",
+      "The narrowest meaningful validation passed before broader validation was run.",
+      "Required repo checks for the risk level have passed or are explicitly documented as blocked with the blocker and next safe step.",
+      "Pull request evidence includes changed files, risk classification, validation results, rollout notes, rollback action, and unresolved risks.",
+      "High-risk changes document backward compatibility, migration risk, provider or webhook failure modes, and rollback path.",
+      "Public-facing copy remains honest about beta scope and implemented capabilities.",
+      "Final handoff states what changed, what was verified, and what remains risky or unverified."
+    ]
+  },
+  "risk_classification": {
+    "levels": [
+      {
+        "level": "low",
+        "criteria": [
+          "Documentation, metadata, tests, or isolated non-runtime configuration only.",
+          "No production dependency, public API, data model, billing, auth, tenancy, audit, webhook, or deployment behavior change."
+        ],
+        "minimum_validation": [
+          "Parse or syntax check for changed machine-readable files",
+          "Targeted repository audit or relevant focused check"
+        ]
+      },
+      {
+        "level": "medium",
+        "criteria": [
+          "Application, workflow, or shared package behavior changes with bounded blast radius.",
+          "No irreversible data migration or safety-control weakening."
+        ],
+        "minimum_validation": [
+          "npm run typecheck",
+          "npm run test",
+          "npm run build"
+        ]
+      },
+      {
+        "level": "high",
+        "criteria": [
+          "Auth, billing, tenancy, audit events, rate limits, approval-gated automation, provider webhooks, data model, migrations, or production deployment workflows are affected."
+        ],
+        "minimum_validation": [
+          "npm run verify:core",
+          "Relevant integration or E2E checks",
+          "Deployment or smoke validation in the target environment where credentials permit"
+        ]
+      },
+      {
+        "level": "critical",
+        "criteria": [
+          "Change may affect customer data integrity, tenant isolation, payment correctness, legal/compliance posture, or broad availability."
+        ],
+        "minimum_validation": [
+          "High-risk validation",
+          "Production-readiness review",
+          "Explicit release owner approval",
+          "Rollback rehearsal or documented rollback target confirmation"
+        ]
+      }
+    ],
+    "default_for_contract_metadata_changes": "low",
+    "escalation_rule": "Use the highest level that matches any affected surface."
+  },
+  "evidence_requirements": {
+    "ready_evidence": [
+      "Problem, success conditions, affected surfaces, owner, reviewers, validation plan, and rollback plan are present.",
+      "Risk classification includes rationale and impacted high-risk surfaces.",
+      "Scope is compatible with a branch and pull request, or child work items have non-overlapping ownership."
+    ],
+    "done_evidence": [
+      "Git branch and PR or PR-ready diff reference.",
+      "Changed files list.",
+      "Exact commands or checks run and their result.",
+      "JSON parse, schema, typecheck, test, build, and smoke evidence as applicable.",
+      "Known blocked checks with blocker and next safe step.",
+      "Release notes for customer-visible or operational changes.",
+      "Rollback action and post-rollback validation."
+    ],
+    "blocked_evidence": [
+      "What was attempted.",
+      "Observed error or missing prerequisite.",
+      "Whether the blocker is environmental, dependency-related, credential-related, or caused by the change.",
+      "Next safe step and owner."
+    ]
+  },
+  "owner_reviewer_expectations": {
+    "owner": [
+      "Keeps the diff scoped to the work item.",
+      "Updates or adds focused tests for behavior changes.",
+      "Runs and records the agreed validation plan.",
+      "Documents rollout, rollback, residual risk, and any intentionally deferred work."
+    ],
+    "reviewers": [
+      "Verify the acceptance checks and evidence match the changed surface.",
+      "Review tenant isolation, organization/workspace correctness, billing correctness, webhook idempotency, audit coverage, approval gates, secrets, and public claims when touched.",
+      "Require explicit approval for new production dependencies, public contract changes, billing plan changes, migration semantics, or weakened safety controls.",
+      "Confirm rollback posture is credible before merge for production-impacting work."
+    ],
+    "required_specialist_reviews": [
+      {
+        "surface": "auth_or_tenancy",
+        "review_focus": "Session boundaries, organization/workspace correctness, access control, audit events, and rollback behavior."
+      },
+      {
+        "surface": "billing_or_pricing",
+        "review_focus": "Plan catalog alignment, checkout behavior, portal behavior, webhook idempotency, entitlement impact, and revenue risk."
+      },
+      {
+        "surface": "database_or_migration",
+        "review_focus": "Backward compatibility, forward-only posture, migration ordering, data repair path, and rollback constraints."
+      },
+      {
+        "surface": "provider_integrations_or_webhooks",
+        "review_focus": "Signature verification, replay handling, idempotency, provider outage modes, and placeholder key safety."
+      },
+      {
+        "surface": "public_pages_or_claims",
+        "review_focus": "Launch truthfulness, beta scope, implemented capability evidence, accessibility, and failure states."
+      }
+    ]
+  },
+  "validation_expectations": {
+    "narrow_first": [
+      "Parse changed JSON: node -e \"JSON.parse(require('fs').readFileSync('agile_work_item.json','utf8')); JSON.parse(require('fs').readFileSync('.jarvis/agile_work_item.json','utf8'));\"",
+      "Compare mirrored contract files when both exist."
+    ],
+    "repo_contract_checks": [
+      "npm run typecheck",
+      "npm run test",
+      "npm run build",
+      "npm run verify:core"
+    ],
+    "release_smoke_checks": [
+      "npm run smoke:cloudflare"
+    ],
+    "when_to_skip_or_block": [
+      "Only mark a check blocked when a required service, credential, dependency, or environment prerequisite is unavailable.",
+      "Record the exact blocker and next safe step rather than treating an unrun check as passed."
+    ]
+  },
+  "rollback_expectations": {
+    "default_release_rollback_action": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare.",
+    "metadata_only_rollback_action": "Revert the contract-file commit or close the PR without merge; no runtime service rollback is required.",
+    "schema_or_data_change_rule": "Prefer forward-compatible migrations and behavior rollback. Only attempt database rollback when the migration has an explicitly safe rollback path.",
+    "post_rollback_validation": [
+      "Confirm the rollback target version.",
+      "Run the same smoke or health checks that detected the release regression.",
+      "Document any customer-visible impact, data repair need, or follow-up prevention item."
+    ]
+  },
+  "pull_request_expectations": {
+    "required_summary_sections": [
+      "Changed",
+      "Verified",
+      "Remaining risk",
+      "Rollback"
+    ],
+    "must_include": [
+      "Changed files.",
+      "Risk classification and rationale.",
+      "Commands run with pass, fail, or blocked status.",
+      "Deploy or smoke evidence for release-impacting changes.",
+      "Rollback action for the current release path.",
+      "Reviewer checklist for high-risk surfaces."
+    ],
+    "merge_rule": "Do not merge until required checks for the risk level are green or the exception is explicitly approved with documented residual risk."
+  },
+  "non_goals": [
+    "This file does not define application schemas, API contracts, billing plan keys, or runtime feature flags.",
+    "This file does not replace AGENTS.md, CI workflows, production-readiness reviews, or deploy rollback policy documents.",
+    "This file does not authorize bypassing branch, PR, review, verification, or release gates."
+  ]
+}

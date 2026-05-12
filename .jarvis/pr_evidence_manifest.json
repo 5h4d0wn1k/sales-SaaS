@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "manifest_name": "sales-saas-pr-evidence-manifest",
+  "manifest_type": "pull_request_release_evidence_contract",
+  "status": "active",
+  "last_reviewed": "2026-05-12",
+  "purpose": "Define the PR evidence, release path, deploy smoke evidence, and rollback metadata required before release-sensitive changes land or promote.",
+  "applies_to": {
+    "repository": "sales-saas",
+    "delivery_path": "branch_to_pull_request_to_checks_to_release_gate",
+    "runtime_behavior_changed_by_this_manifest": false
+  },
+  "pull_request": {
+    "required_evidence": [
+      "Changed files and affected runtime or process surfaces.",
+      "Risk classification with rationale and protected-surface impact.",
+      "Exact verification commands with pass, fail, blocked, or skipped status.",
+      "Contract validation evidence for machine-readable release or work-item artifacts.",
+      "Deploy or smoke evidence for release-impacting changes, or an explicit credential/environment blocker.",
+      "Residual risk and unverified areas.",
+      "Reviewer checklist for auth, billing, tenancy, audit, webhook, approval, schema, deploy, and public-claim surfaces when touched."
+    ],
+    "ready_done_confirmation": [
+      "Definition of Ready was met before implementation, or gaps are named in the PR.",
+      "Definition of Done is met before merge, or blockers and next safe steps are named in the PR.",
+      "Runtime behavior, dependencies, migrations, workflows, and deploy behavior are unchanged or explicitly described."
+    ],
+    "release_path": [
+      "Work lands on a scoped branch.",
+      "A PR carries evidence, risk, rollout, rollback, and residual-risk notes.",
+      "Required local or CI checks pass, or a blocker-specific substitute is documented and approved.",
+      "Production-sensitive changes deploy to staging before production promotion where credentials permit.",
+      "Production promotion records smoke, health, and rollback-target evidence."
+    ]
+  },
+  "release": {
+    "path": "branch_to_pr_to_checks_to_review_to_staging_to_production",
+    "rollback_action": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare.",
+    "rollback_metadata_required": [
+      "release.rollback_action",
+      "affected services",
+      "last known-good Worker version IDs or dashboard rollback targets",
+      "post-rollback smoke command",
+      "rollback owner",
+      "schema or data compatibility constraints"
+    ],
+    "abort_conditions": [
+      "/health fails",
+      "auth or workspace scope breaks",
+      "billing checkout, portal, or webhook verification fails",
+      "dashboard truth is wrong or unavailable",
+      "approval-required workflow can dispatch without approval",
+      "public pricing or claims become materially inaccurate"
+    ]
+  },
+  "deploy_evidence": {
+    "required_for_release": [
+      "CI or local substitute gate results.",
+      "Staging deploy result for production-sensitive changes where credentials permit.",
+      "npm run smoke:cloudflare result or blocked reason.",
+      "Healthcheck status for API and web surfaces.",
+      "Workflow healthcheck status when workflows are in scope.",
+      "Rollback target confirmation before production promotion."
+    ],
+    "credential_blocker_policy": "If Cloudflare credentials or environment variables are unavailable, record the missing prerequisite and do not claim deploy or smoke success."
+  },
+  "non_goals": [
+    "This manifest does not deploy services.",
+    "This manifest does not replace PR review, CI, or production owner approval.",
+    "This manifest does not authorize bypassing rollback or smoke evidence."
+  ]
+}

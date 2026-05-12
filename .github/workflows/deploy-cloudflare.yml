@@ -19,13 +19,46 @@ on:
           - api
           - web
           - workflows
+      release_rollback_action:
+        description: "release.rollback_action metadata; required for production deploys"
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 jobs:
+  validate-release-metadata:
+    name: Validate Release Metadata
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_ROLLBACK_ACTION: ${{ inputs.release_rollback_action }}
+      TARGET_ENVIRONMENT: ${{ inputs.environment }}
+    steps:
+      - name: Require production rollback action
+        run: |
+          if [[ "$TARGET_ENVIRONMENT" != "production" ]]; then
+            echo "release.rollback_action is optional for $TARGET_ENVIRONMENT deploys." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [[ -z "${RELEASE_ROLLBACK_ACTION//[[:space:]]/}" ]]; then
+            echo "::error title=Missing release.rollback_action::Production Cloudflare deploys require explicit release.rollback_action metadata."
+            echo "Provide the exact rollback command path for the affected Worker versions before retrying."
+            exit 1
+          fi
+
+          {
+            echo "### release.rollback_action"
+            echo
+            echo '```'
+            echo "$RELEASE_ROLLBACK_ACTION"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   verify:
     name: Verify Before Deploy
+    needs: validate-release-metadata
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
@@ -84,5 +117,13 @@ jobs:
       - name: Post-deploy smoke checks
         run: npm run smoke:cloudflare
       - name: Rollback reminder
+        env:
+          RELEASE_ROLLBACK_ACTION: ${{ inputs.release_rollback_action }}
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          echo "If the smoke checks or manual verification fail, redeploy the last known good Worker version from the Cloudflare dashboard or rerun this workflow after restoring the previous artifact/config revision."
+          if [[ "$TARGET_ENVIRONMENT" == "production" ]]; then
+            echo "If smoke checks or manual verification fail, run the approved release.rollback_action:"
+            echo "$RELEASE_ROLLBACK_ACTION"
+          else
+            echo "If smoke checks or manual verification fail, redeploy the last known-good staging Worker version or restore the previous artifact/config revision."
+          fi

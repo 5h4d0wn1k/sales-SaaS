@@ -16,6 +16,8 @@ This policy covers rollout discipline for the launch-critical Sales AaaS surface
 - claim-sensitive docs updated when product truth changes
 - required validation passes
 - rollout notes include customer-visible risk and rollback posture
+- production Cloudflare deploys include non-empty `release.rollback_action`
+  metadata before the deploy workflow reaches environment-gated verification
 
 ## Required checks
 
@@ -37,6 +39,28 @@ For auth, billing, tenant, lifecycle, or schema changes:
 4. verify health and critical journeys
 5. monitor logs, billing, and provider events
 
+## Production release metadata
+
+Production runs of `.github/workflows/deploy-cloudflare.yml` must include
+`release.rollback_action`. The workflow records this value as release evidence
+and fails production deploys before verification or deployment when it is empty.
+Staging deploys may omit this value.
+
+`release.rollback_action` must name the exact command path that restores the
+last known-good Cloudflare Worker version for each affected service and then
+reruns the shared smoke check:
+
+```bash
+npx wrangler rollback <WEB_VERSION_ID> --config apps/web/wrangler.jsonc --env production --message "rollback <release_id>: web"
+npx wrangler rollback <API_VERSION_ID> --config apps/api/wrangler.jsonc --env production --message "rollback <release_id>: api"
+npx wrangler rollback <WORKFLOWS_VERSION_ID> --config apps/workflows/wrangler.jsonc --env production --message "rollback <release_id>: workflows"
+npm run smoke:cloudflare
+```
+
+For single-service releases, include only the affected service rollback command
+plus `npm run smoke:cloudflare`. Confirm the target Worker version IDs before
+approving the production deploy.
+
 ## Abort conditions
 
 - `/health` fails
@@ -50,12 +74,17 @@ For auth, billing, tenant, lifecycle, or schema changes:
 
 ### Fast rollback
 
-- redeploy the last known good web and API revision
+- run the approved `release.rollback_action`
+- redeploy the last known-good Cloudflare Worker versions for web, API, and
+  workflows when a multi-service release regresses
+- rerun `npm run smoke:cloudflare` after rollback completes
 
 ### Schema rollback posture
 
 - prefer forward-only schemas with behavior rollback
 - only roll schema back when an explicit safe rollback exists
+- verify that the target Worker versions are compatible with the active schema
+  and bound Cloudflare resources before rollback
 
 ### Operational mitigation
 
@@ -70,4 +99,5 @@ After each production-sensitive rollout, record:
 - what changed
 - what was verified
 - customer-critical journeys checked
+- the `release.rollback_action` value for production Cloudflare deploys
 - whether rollback was considered or executed

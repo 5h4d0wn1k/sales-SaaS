@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "profile_version": "1.0.0",
+  "status": "active",
+  "last_updated": "2026-05-12",
+  "repo_identity": {
+    "name": "sales-aaas-platform",
+    "workspace": "sales-saas",
+    "workspace_class": "project",
+    "mission": "Public-facing multi-tenant Sales SaaS and AI-assisted sales operations platform.",
+    "runtime_target": "cynik",
+    "deployment_platform": "Cloudflare",
+    "healthcheck_path": "/health",
+    "toolchain": {
+      "node": "20.x",
+      "npm": "11.10.1"
+    },
+    "primary_surfaces": [
+      "apps/web",
+      "apps/api",
+      "apps/workflows",
+      "packages/database",
+      "packages/shared",
+      "tests",
+      ".codex"
+    ],
+    "source_of_truth": [
+      "AGENTS.md",
+      ".jarvis/pr_evidence_manifest.json",
+      "README.md",
+      "docs/reliability/production-readiness-review.md",
+      "docs/platform/deploy-and-rollback-policy.md",
+      "docs/platform/service-ownership.md",
+      "docs/reliability/slo-sli.md"
+    ]
+  },
+  "maturity": {
+    "current_baseline": "scaffolded",
+    "current_score_percent": 64,
+    "assessment_source": "mission baseline",
+    "target": "self_improving",
+    "target_description": "The repository should make production expectations explicit, keep delivery PR-first, require evidence before merge and release, and preserve rollback paths for launch-critical surfaces.",
+    "ratchet_rules": [
+      "Do not lower the baseline of a working system.",
+      "Prefer additive hardening over broad rewrites.",
+      "Version baseline improvements and keep them rollbackable.",
+      "Capture reusable lessons in repo contracts, runbooks, templates, or notes."
+    ]
+  },
+  "production_grade_contract": {
+    "contract_type": "advisory_and_release_gate",
+    "scope": "This file defines repo expectations and evidence gates. It does not change runtime behavior, package dependencies, migrations, workflow triggers, or deploy behavior by itself.",
+    "delivery_path": "branch_to_pr_to_checks_to_review_to_release",
+    "minimum_bar": [
+      "Preserve shared contract integrity between packages/shared, apps/api, and apps/web.",
+      "Keep auth, billing, tenancy, audit events, provider webhooks, and approval gates treated as high-risk surfaces.",
+      "Keep public pricing, plan catalog, onboarding plan selection, and API billing behavior aligned or explicitly document intentional divergence.",
+      "Hide, gate, or downgrade public claims that are not implemented.",
+      "Choose the narrowest meaningful verification first, then broaden when risk or scope requires it.",
+      "Final change summaries must state what changed, what was verified, and what remains risky or unverified."
+    ],
+    "scope_discipline": {
+      "default_mutation_policy": "smallest_safe_diff",
+      "requires_explicit_approval": [
+        "adding production dependencies",
+        "changing public API or shared contract shapes",
+        "changing plan keys, billing behavior, or migration semantics",
+        "weakening auth, audit, rate-limit, approval, tenant isolation, or provider webhook verification logic"
+      ],
+      "no_runtime_behavior_change_for_this_profile": true
+    }
+  },
+  "protected_surfaces": [
+    {
+      "name": "auth_and_session",
+      "paths": [
+        "apps/web",
+        "apps/api",
+        "packages/shared"
+      ],
+      "risk": "high",
+      "required_evidence": [
+        "targeted lifecycle/auth tests",
+        "session establishment and workspace-selection smoke evidence",
+        "backward compatibility notes for existing sessions when applicable"
+      ]
+    },
+    {
+      "name": "tenancy_and_workspace_scope",
+      "paths": [
+        "apps/api",
+        "apps/web",
+        "packages/database",
+        "packages/shared"
+      ],
+      "risk": "high",
+      "required_evidence": [
+        "tenant isolation tests or explicit manual verification",
+        "organization/workspace correctness review",
+        "audit-event coverage for sensitive mutations"
+      ]
+    },
+    {
+      "name": "billing_and_provider_webhooks",
+      "paths": [
+        "apps/api",
+        "apps/web",
+        "packages/shared",
+        "packages/database"
+      ],
+      "risk": "high",
+      "required_evidence": [
+        "checkout, billing portal, payment history, and webhook idempotency tests where touched",
+        "provider failure-mode notes",
+        "rollback and reconciliation plan"
+      ]
+    },
+    {
+      "name": "approval_gated_automation",
+      "paths": [
+        "apps/api",
+        "apps/workflows",
+        "packages/shared",
+        "packages/database"
+      ],
+      "risk": "high",
+      "required_evidence": [
+        "approval policy test coverage where behavior changes",
+        "zero-unapproved-dispatch reasoning",
+        "audit path confirmation"
+      ]
+    },
+    {
+      "name": "schema_and_migrations",
+      "paths": [
+        "packages/database"
+      ],
+      "risk": "high",
+      "required_evidence": [
+        "forward and backward compatibility notes",
+        "migration risk analysis",
+        "rollback or mitigation path",
+        "Postgres-backed behavior verification"
+      ]
+    },
+    {
+      "name": "public_claims_and_pricing_truth",
+      "paths": [
+        "apps/web",
+        "packages/shared",
+        "docs"
+      ],
+      "risk": "medium",
+      "required_evidence": [
+        "pricing page, shared plan catalog, onboarding selection, and billing route alignment check",
+        "claim truth review against implemented behavior"
+      ]
+    },
+    {
+      "name": "deploy_and_operating_system",
+      "paths": [
+        ".github/workflows",
+        ".codex",
+        "scripts",
+        "docs/platform",
+        "docs/reliability"
+      ],
+      "risk": "medium",
+      "required_evidence": [
+        "CI or local gate output",
+        "release notes with rollback posture",
+        "owner and monitoring checklist when production behavior changes"
+      ]
+    },
+    {
+      "name": "secrets_and_environment",
+      "paths": [
+        ".env.example",
+        "apps/*/wrangler.jsonc",
+        "scripts"
+      ],
+      "risk": "high",
+      "required_evidence": [
+        "no production secrets committed",
+        "placeholder defaults do not enable unsafe production behavior",
+        "environment variable compatibility notes"
+      ]
+    }
+  ],
+  "verification_contract": {
+    "risk": "medium",
+    "strategy": "Run the narrowest meaningful check first, then broaden to full repo gates for cross-boundary, release-sensitive, auth, billing, tenancy, schema, workflow, or public-claim changes.",
+    "local_gates": [
+      {
+        "name": "json_parse",
+        "command": "node -e \"JSON.parse(require('fs').readFileSync('.jarvis/production_grade_profile.json', 'utf8'));\"",
+        "required_for": [
+          ".jarvis/production_grade_profile.json"
+        ]
+      },
+      {
+        "name": "typecheck",
+        "command": "npm run typecheck",
+        "required_for": [
+          "code",
+          "shared contracts",
+          "cross-boundary changes"
+        ]
+      },
+      {
+        "name": "core_verification",
+        "command": "npm run verify:core",
+        "required_for": [
+          "release-sensitive changes",
+          "cross-boundary changes"
+        ]
+      },
+      {
+        "name": "test",
+        "command": "npm run test",
+        "required_for": [
+          "behavior changes",
+          "bug fixes",
+          "contract changes"
+        ]
+      },
+      {
+        "name": "build",
+        "command": "npm run build",
+        "required_for": [
+          "release candidates",
+          "runtime or packaging changes"
+        ]
+      },
+      {
+        "name": "cloudflare_smoke",
+        "command": "npm run smoke:cloudflare",
+        "required_for": [
+          "post-deploy smoke",
+          "Cloudflare environment changes"
+        ],
+        "credential_dependent": true
+      }
+    ],
+    "ci_gates": [
+      ".github/workflows/ci.yml",
+      ".github/workflows/repo-operating-system.yml",
+      ".github/workflows/deploy-cloudflare.yml"
+    ],
+    "release_sensitive_gate_additions": [
+      "npm run repo:audit",
+      "targeted tests for touched high-risk surfaces",
+      "manual smoke for /get-started, /dashboard, /billing, and /health when auth, billing, tenant, dashboard, or deploy behavior changes"
+    ],
+    "bridge_self_upgrade_gates": [
+      "python_syntax_gate",
+      "automated_test_suite",
+      "bridge_self_test",
+      "release_bundle_creation",
+      "shadow_deploy_attempt",
+      "shadow_smoke_where_credentials_permit",
+      "service_restart_validation",
+      "rollback_target_confirmation"
+    ],
+    "evidence_rule": "Do not claim completion from green checks alone. State which risks the checks covered and which risks remain unverified."
+  },
+  "pr_evidence_requirements": {
+    "manifest_path": ".jarvis/pr_evidence_manifest.json",
+    "required_for_every_pr": [
+      "problem statement and user impact",
+      "scope and changed files",
+      "risk classification",
+      "test, typecheck, build, and smoke evidence appropriate to risk",
+      "rollback plan or statement that the change is metadata-only and can be reverted",
+      "confirmation that runtime behavior, dependencies, migrations, workflows, and deploy behavior were or were not changed",
+      "open risks and unverified areas"
+    ],
+    "required_for_high_risk_surfaces": [
+      "targeted test evidence for the touched protected surface",
+      "backward compatibility notes",
+      "migration or provider failure-mode notes when applicable",
+      "auditability and tenant isolation review when applicable",
+      "manual critical-journey smoke plan before production promotion"
+    ],
+    "required_before_merge": [
+      "branch is PR-ready",
+      "CI status is visible or local substitute is documented",
+      "reviewer can reproduce the verification commands",
+      "public claims remain aligned with implementation truth"
+    ],
+    "forbidden_evidence_patterns": [
+      "claiming verification without command output or observed smoke evidence",
+      "using demo-only behavior as proof of production readiness",
+      "leaving rollback_action undefined for release-sensitive work"
+    ]
+  },
+  "release": {
+    "release_path": [
+      "Create a scoped branch from the latest main.",
+      "Open a PR with evidence, risk, rollout, and rollback notes.",
+      "Require CI and repo operating system checks to pass or document an approved blocker-specific substitute.",
+      "For production-sensitive changes, deploy to staging first.",
+      "Run automated gates and credential-dependent smoke checks where available.",
+      "Promote to production only after owner review of customer-visible risk and rollback posture.",
+      "Monitor health, auth, billing, dashboard, provider/webhook, and approval-sensitive signals after deploy.",
+      "Capture post-release evidence and rollback decision."
+    ],
+    "deployment_workflow": ".github/workflows/deploy-cloudflare.yml",
+    "production_target": "Cloudflare web, api, and workflows",
+    "default_rollout_strategy": "staging_then_production",
+    "abort_conditions": [
+      "/health fails",
+      "auth or workspace scope breaks",
+      "billing checkout, portal, or webhook verification fails",
+      "dashboard truth is wrong or unavailable",
+      "provider or webhook verification errors spike",
+      "approval-required workflow can dispatch without approval",
+      "public pricing or claims become materially inaccurate"
+    ],
+    "rollback_action": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare",
+    "rollback_notes": [
+      "Prefer behavior rollback over schema rollback.",
+      "Only roll schema back when the migration has an explicitly safe rollback path.",
+      "Disable unsafe public entry points or provider channels when a narrower operational mitigation is safer than a full rollback.",
+      "Record whether rollback was considered or executed in release evidence."
+    ],
+    "post_release_evidence": [
+      "commit or release identifier",
+      "services deployed",
+      "verification commands and CI links",
+      "smoke check results",
+      "health and critical journey status",
+      "rollback target confirmation"
+    ]
+  },
+  "metadata": {
+    "created_by": "Codex mission node node-745e76479b19",
+    "mission_id": "mission-e785ab85f40e",
+    "owned_path": ".jarvis/production_grade_profile.json",
+    "change_type": "metadata_only",
+    "runtime_behavior_changed": false,
+    "dependencies_changed": false,
+    "migrations_changed": false,
+    "workflows_changed": false,
+    "deploy_behavior_changed": false
+  }
+}
