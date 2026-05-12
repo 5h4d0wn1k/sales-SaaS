@@ -98,12 +98,14 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
+      - name: Build Cloudflare web worker bundle
+        run: npm run build:cf-worker --workspace @sales/web
       - name: Validate Cloudflare web bundle
-        run: npx wrangler deploy --dry-run --config apps/web/wrangler.jsonc
+        run: npx wrangler deploy --dry-run --env="" --config apps/web/wrangler.jsonc
       - name: Validate Cloudflare workflow bundle
-        run: npx wrangler deploy --dry-run --config apps/workflows/wrangler.jsonc
+        run: npx wrangler deploy --dry-run --env="" --config apps/workflows/wrangler.jsonc
       - name: Validate Cloudflare API bundle
-        run: npx wrangler deploy --dry-run --config apps/api/wrangler.jsonc
+        run: npx wrangler deploy --dry-run --env="" --config apps/api/wrangler.jsonc
 
   # E2E tests require Playwright browsers and are more expensive
   # e2e:
