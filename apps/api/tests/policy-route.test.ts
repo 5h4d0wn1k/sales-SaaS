@@ -1,5 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
+
+const originalDatabaseUrl = process.env.DATABASE_URL;
+
+beforeAll(() => {
+  // These legacy flow tests exercise the in-memory demo store. Tenant-scoped Postgres
+  // coverage lives in the auth/storage tests and requires an authenticated workspace.
+  delete process.env.DATABASE_URL;
+});
+
+afterAll(() => {
+  if (originalDatabaseUrl === undefined) {
+    delete process.env.DATABASE_URL;
+    return;
+  }
+
+  process.env.DATABASE_URL = originalDatabaseUrl;
+});
 
 describe("sales api flow", () => {
   it("requires approval for the first outbound action", async () => {
