@@ -343,5 +343,8 @@
     "migrations_changed": false,
     "workflows_changed": false,
     "deploy_behavior_changed": false
+  },
+  "toolchain": {
+    "node": "22.x"
   }
 }

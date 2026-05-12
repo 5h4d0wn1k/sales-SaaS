@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "npm@11.10.1",
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "workspaces": [
     "apps/*",
@@ -50,6 +50,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "msw": "^2.12.10",
     "tsx": "^4.19.3",
