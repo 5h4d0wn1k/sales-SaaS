@@ -31,6 +31,19 @@ PROFILE_REQUIRED_PATHS = [
     "schema_version",
     "profile_version",
     "status",
+    "workspace.name",
+    "workspace.workspace_class",
+    "workspace.repo_relative_root",
+    "workspace.repo_root_hint",
+    "workspace.environment_reference_policy",
+    "workspace.runtime_target",
+    "workspace.deployment_platform",
+    "workspace.healthcheck_path",
+    "workspace.delivery_path",
+    "workspace.pr_first_mutation_policy",
+    "workspace.secret_handling_policy",
+    "workspace.primary_runtime_targets",
+    "workspace.runtime_behavior_changed",
     "repo_identity.name",
     "production_grade_contract.delivery_path",
     "production_grade_contract.scope_discipline.no_runtime_behavior_change_for_this_profile",
@@ -39,11 +52,23 @@ PROFILE_REQUIRED_PATHS = [
     "pr_evidence_requirements.required_for_every_pr",
     "release.release_path",
     "release.rollback_action",
+    "release.rollback_metadata_required",
+    "release.rollback_metadata.platform",
+    "release.rollback_metadata.affected_services",
+    "release.rollback_metadata.service_targets",
+    "release.rollback_metadata.required_fields",
+    "release.rollback_metadata.post_rollback_smoke_command",
+    "release.rollback_metadata.metadata_only_exception",
 ]
 
 WORK_ITEM_REQUIRED_PATHS = [
     "schema_version",
     "contract_name",
+    "definition_of_ready.required_contract_fields",
+    "definition_of_ready.criteria",
+    "definition_of_done.required_contract_fields",
+    "definition_of_done.criteria",
+    "mirror_alignment.required_alignment",
     "evidence_requirements.done_evidence",
     "rollback_expectations.default_release_rollback_action",
     "pull_request_expectations.must_include",
@@ -58,9 +83,17 @@ PR_EVIDENCE_REQUIRED_PATHS = [
     "pull_request.release_path",
     "release.path",
     "release.rollback_action",
+    "release.rollback_metadata.platform",
+    "release.rollback_metadata.affected_services",
+    "release.rollback_metadata.service_targets",
+    "release.rollback_metadata.required_fields",
+    "release.rollback_metadata.post_rollback_smoke_command",
+    "release.rollback_metadata.metadata_only_exception",
     "release.rollback_metadata_required",
     "deploy_evidence.required_for_release",
 ]
+
+REQUIRED_CLOUDFLARE_ROLLBACK_SERVICES = {"web", "api", "workflows"}
 
 PR_TEMPLATE_MARKERS = [
     ("release_path", r"release\.path"),
@@ -69,6 +102,9 @@ PR_TEMPLATE_MARKERS = [
     ("deploy_evidence", r"deploy evidence|deploy/smoke evidence|smoke evidence"),
     ("residual_risk", r"residual risk|remaining risk|unresolved risk"),
     ("ready_done", r"ready\s*/\s*done|definition of ready|definition of done"),
+    ("cloudflare_rollback_targets", r"cloudflare services affected|worker version ids|dashboard rollback targets"),
+    ("rollback_owner", r"rollback owner"),
+    ("schema_data_compatibility", r"schema or data compatibility constraints"),
 ]
 
 
@@ -271,11 +307,146 @@ def check_rollback_action(relpath: str, data: Any, dotted_path: str, findings: l
         )
 
 
+def check_cloudflare_rollback_metadata(
+    relpath: str,
+    data: Any,
+    dotted_path: str,
+    findings: list[Finding],
+) -> None:
+    metadata = get_nested(data, dotted_path) if isinstance(data, dict) else None
+    if not isinstance(metadata, dict):
+        findings.append(
+            Finding(
+                "warn",
+                "release.rollback_metadata",
+                relpath,
+                f"`{dotted_path}` should define Cloudflare rollback metadata requirements.",
+            )
+        )
+        return
+
+    platform = metadata.get("platform")
+    if isinstance(platform, str) and platform.lower() == "cloudflare":
+        findings.append(
+            Finding(
+                "pass",
+                "release.rollback_metadata.platform",
+                relpath,
+                f"`{dotted_path}.platform` is Cloudflare.",
+            )
+        )
+    else:
+        findings.append(
+            Finding(
+                "warn",
+                "release.rollback_metadata.platform",
+                relpath,
+                f"`{dotted_path}.platform` should be Cloudflare.",
+                str(platform),
+            )
+        )
+
+    affected_services = metadata.get("affected_services")
+    observed_services = set()
+    if isinstance(affected_services, list):
+        observed_services = {
+            item.strip().lower()
+            for item in affected_services
+            if isinstance(item, str)
+        }
+    missing_services = sorted(REQUIRED_CLOUDFLARE_ROLLBACK_SERVICES - observed_services)
+    if not missing_services:
+        findings.append(
+            Finding(
+                "pass",
+                "release.rollback_metadata.services",
+                relpath,
+                "`release.rollback_metadata.affected_services` covers Cloudflare web, api, and workflows.",
+            )
+        )
+    else:
+        findings.append(
+            Finding(
+                "warn",
+                "release.rollback_metadata.services",
+                relpath,
+                "`release.rollback_metadata.affected_services` should cover Cloudflare web, api, and workflows.",
+                f"missing: {', '.join(missing_services)}",
+            )
+        )
+
+    service_targets = metadata.get("service_targets")
+    target_services = set()
+    concrete_target_services = set()
+    if isinstance(service_targets, list):
+        for target in service_targets:
+            if isinstance(target, dict) and isinstance(target.get("service"), str):
+                service = target["service"].strip().lower()
+                target_services.add(service)
+                required_target = target.get("required_target")
+                post_rollback_check = target.get("post_rollback_check")
+                if (
+                    isinstance(required_target, str)
+                    and "last known-good" in required_target.lower()
+                    and isinstance(post_rollback_check, str)
+                    and "npm run smoke:cloudflare" in post_rollback_check
+                ):
+                    concrete_target_services.add(service)
+    missing_targets = sorted(REQUIRED_CLOUDFLARE_ROLLBACK_SERVICES - target_services)
+    missing_concrete_targets = sorted(REQUIRED_CLOUDFLARE_ROLLBACK_SERVICES - concrete_target_services)
+    if not missing_targets and not missing_concrete_targets:
+        findings.append(
+            Finding(
+                "pass",
+                "release.rollback_metadata.service_targets",
+                relpath,
+                "`release.rollback_metadata.service_targets` names concrete rollback targets and smoke checks for Cloudflare web, api, and workflows.",
+            )
+        )
+    else:
+        evidence_parts = []
+        if missing_targets:
+            evidence_parts.append(f"missing services: {', '.join(missing_targets)}")
+        if missing_concrete_targets:
+            evidence_parts.append(f"missing concrete target/check: {', '.join(missing_concrete_targets)}")
+        findings.append(
+            Finding(
+                "warn",
+                "release.rollback_metadata.service_targets",
+                relpath,
+                "`release.rollback_metadata.service_targets` should name concrete rollback targets and smoke checks for Cloudflare web, api, and workflows.",
+                "; ".join(evidence_parts),
+            )
+        )
+
+    smoke_command = metadata.get("post_rollback_smoke_command")
+    if smoke_command == "npm run smoke:cloudflare":
+        findings.append(
+            Finding(
+                "pass",
+                "release.rollback_metadata.smoke",
+                relpath,
+                "`release.rollback_metadata.post_rollback_smoke_command` is `npm run smoke:cloudflare`.",
+            )
+        )
+    else:
+        findings.append(
+            Finding(
+                "warn",
+                "release.rollback_metadata.smoke",
+                relpath,
+                "`release.rollback_metadata.post_rollback_smoke_command` should be `npm run smoke:cloudflare`.",
+                str(smoke_command),
+            )
+        )
+
+
 def check_profile(root: Path, findings: list[Finding]) -> Any | None:
     profile = load_json(root, PROFILE_PATH, findings)
     check_required_paths(PROFILE_PATH, profile, PROFILE_REQUIRED_PATHS, findings)
     check_schema_version(PROFILE_PATH, profile, 1, findings)
     check_rollback_action(PROFILE_PATH, profile, "release.rollback_action", findings)
+    check_cloudflare_rollback_metadata(PROFILE_PATH, profile, "release.rollback_metadata", findings)
     return profile
 
 
@@ -319,6 +490,12 @@ def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> None:
     check_required_paths(PR_EVIDENCE_MANIFEST_PATH, data, PR_EVIDENCE_REQUIRED_PATHS, findings)
     check_schema_version(PR_EVIDENCE_MANIFEST_PATH, data, 1, findings)
     check_rollback_action(PR_EVIDENCE_MANIFEST_PATH, data, "release.rollback_action", findings)
+    check_cloudflare_rollback_metadata(
+        PR_EVIDENCE_MANIFEST_PATH,
+        data,
+        "release.rollback_metadata",
+        findings,
+    )
 
 
 def check_pr_template(root: Path, findings: list[Finding]) -> None:

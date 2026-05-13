@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.0",
+  "profile_version": "1.0.2",
   "status": "active",
-  "last_updated": "2026-05-12",
+  "last_updated": "2026-05-13",
   "repo_identity": {
     "name": "sales-aaas-platform",
     "workspace": "sales-saas",
@@ -33,6 +33,27 @@
       "docs/platform/service-ownership.md",
       "docs/reliability/slo-sli.md"
     ]
+  },
+  "workspace": {
+    "name": "sales-saas",
+    "workspace_class": "project",
+    "repository": "sales-aaas-platform",
+    "repo_relative_root": ".",
+    "repo_root_hint": "Repository root is the directory containing this .jarvis profile; repo-relative root is `.`.",
+    "environment_reference_policy": "Environment references may name managed runtime configuration or host-owned env file locations for evidence, but secret values and local env files must stay outside git.",
+    "runtime_target": "cynik",
+    "deployment_platform": "Cloudflare",
+    "healthcheck_path": "/health",
+    "delivery_path": "branch_to_pull_request_to_checks_to_release_gate",
+    "pr_first_mutation_policy": "Mutable code, config, workflow, and contract changes should land through a scoped branch, PR evidence, advisory contract validation, and release gate review before production promotion.",
+    "secret_handling_policy": "Production secrets stay in provider secret stores or host-managed env files outside the repository; placeholder values must not enable unsafe production behavior.",
+    "primary_runtime_targets": [
+      "Cloudflare web",
+      "Cloudflare api",
+      "Cloudflare workflows"
+    ],
+    "contract_scope": "This top-level workspace section identifies the mission workspace for repo-contract validation and does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, or shared API contracts.",
+    "runtime_behavior_changed": false
   },
   "maturity": {
     "current_baseline": "scaffolded",
@@ -318,6 +339,50 @@
       "public pricing or claims become materially inaccurate"
     ],
     "rollback_action": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare",
+    "rollback_metadata_required": [
+      "release.rollback_action",
+      "affected Cloudflare services: web, api, workflows, or explicit none for metadata-only changes",
+      "last known-good Worker version IDs or dashboard rollback targets for every affected Cloudflare service",
+      "post-rollback smoke command",
+      "rollback owner",
+      "schema or data compatibility constraints"
+    ],
+    "rollback_metadata": {
+      "platform": "Cloudflare",
+      "required_for_release": true,
+      "affected_services": [
+        "web",
+        "api",
+        "workflows"
+      ],
+      "service_targets": [
+        {
+          "service": "web",
+          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for the web surface.",
+          "post_rollback_check": "Run npm run smoke:cloudflare and confirm the web health or route smoke result."
+        },
+        {
+          "service": "api",
+          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for the api surface.",
+          "post_rollback_check": "Run npm run smoke:cloudflare and confirm /health responds successfully."
+        },
+        {
+          "service": "workflows",
+          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for workflows.",
+          "post_rollback_check": "Run npm run smoke:cloudflare and confirm workflow smoke or health evidence when workflows are in scope."
+        }
+      ],
+      "required_fields": [
+        "release or PR identifier",
+        "affected Cloudflare services: web, api, workflows, or explicit none for metadata-only changes",
+        "last known-good Worker version IDs or dashboard rollback targets for every affected Cloudflare service",
+        "rollback owner",
+        "post-rollback command: npm run smoke:cloudflare",
+        "schema or data compatibility constraints"
+      ],
+      "post_rollback_smoke_command": "npm run smoke:cloudflare",
+      "metadata_only_exception": "For metadata-only changes with no deployed service impact, state that no Cloudflare service rollback is required and the PR can be closed or reverted."
+    },
     "rollback_notes": [
       "Prefer behavior rollback over schema rollback.",
       "Only roll schema back when the migration has an explicitly safe rollback path.",
@@ -336,6 +401,8 @@
   "metadata": {
     "created_by": "Codex mission node node-745e76479b19",
     "mission_id": "mission-e785ab85f40e",
+    "last_updated_by": "Codex mission node node-9b77e087c19d",
+    "last_updated_reason": "Canonicalized top-level workspace contract fields for advisory repo validation without runtime behavior changes.",
     "owned_path": ".jarvis/production_grade_profile.json",
     "change_type": "metadata_only",
     "runtime_behavior_changed": false,

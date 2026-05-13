@@ -3,7 +3,7 @@
   "manifest_name": "sales-saas-pr-evidence-manifest",
   "manifest_type": "pull_request_release_evidence_contract",
   "status": "active",
-  "last_reviewed": "2026-05-12",
+  "last_reviewed": "2026-05-13",
   "purpose": "Define the PR evidence, release path, deploy smoke evidence, and rollback metadata required before release-sensitive changes land or promote.",
   "applies_to": {
     "repository": "sales-saas",
@@ -36,10 +36,46 @@
   "release": {
     "path": "branch_to_pr_to_checks_to_review_to_staging_to_production",
     "rollback_action": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare.",
+    "rollback_metadata": {
+      "platform": "Cloudflare",
+      "required_for_release": true,
+      "affected_services": [
+        "web",
+        "api",
+        "workflows"
+      ],
+      "service_targets": [
+        {
+          "service": "web",
+          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for the web surface.",
+          "post_rollback_check": "Run npm run smoke:cloudflare and confirm the web health or route smoke result."
+        },
+        {
+          "service": "api",
+          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for the api surface.",
+          "post_rollback_check": "Run npm run smoke:cloudflare and confirm /health responds successfully."
+        },
+        {
+          "service": "workflows",
+          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for workflows.",
+          "post_rollback_check": "Run npm run smoke:cloudflare and confirm workflow smoke or health evidence when workflows are in scope."
+        }
+      ],
+      "required_fields": [
+        "release or PR identifier",
+        "affected Cloudflare services: web, api, workflows, or explicit none for metadata-only changes",
+        "last known-good Worker version IDs or dashboard rollback targets for every affected Cloudflare service",
+        "rollback owner",
+        "post-rollback command: npm run smoke:cloudflare",
+        "schema or data compatibility constraints"
+      ],
+      "post_rollback_smoke_command": "npm run smoke:cloudflare",
+      "metadata_only_exception": "For metadata-only changes with no deployed service impact, state that no Cloudflare service rollback is required and the PR can be closed or reverted."
+    },
     "rollback_metadata_required": [
       "release.rollback_action",
-      "affected services",
-      "last known-good Worker version IDs or dashboard rollback targets",
+      "affected Cloudflare services: web, api, workflows, or explicit none for metadata-only changes",
+      "last known-good Worker version IDs or dashboard rollback targets for every affected Cloudflare service",
       "post-rollback smoke command",
       "rollback owner",
       "schema or data compatibility constraints"
@@ -60,7 +96,7 @@
       "npm run smoke:cloudflare result or blocked reason.",
       "Healthcheck status for API and web surfaces.",
       "Workflow healthcheck status when workflows are in scope.",
-      "Rollback target confirmation before production promotion."
+      "Rollback target confirmation for Cloudflare web, api, and workflows before production promotion, or an explicit metadata-only no-service-rollback note."
     ],
     "credential_blocker_policy": "If Cloudflare credentials or environment variables are unavailable, record the missing prerequisite and do not claim deploy or smoke success."
   },

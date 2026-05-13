@@ -19,6 +19,14 @@
 ## Release Metadata
 - release.path:
 - release.rollback_action:
+- Cloudflare services affected: web / api / workflows / none
+- Last known-good Cloudflare Worker version IDs or dashboard rollback targets:
+  - web:
+  - api:
+  - workflows:
+- Rollback owner:
+- Schema or data compatibility constraints:
+- Post-rollback smoke command: `npm run smoke:cloudflare`
 - Feature flag or staged rollout:
 - Backward compatibility notes:
 

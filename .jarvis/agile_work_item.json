@@ -3,11 +3,15 @@
   "contract_name": "sales-saas-agile-work-item",
   "contract_type": "sdlc_work_item_contract",
   "status": "active",
-  "last_reviewed": "2026-05-12",
+  "last_reviewed": "2026-05-13",
   "canonical_path": "agile_work_item.json",
   "mirrors": [
     ".jarvis/agile_work_item.json"
   ],
+  "mirror_alignment": {
+    "required_alignment": "Canonical and mirrored agile work item contracts must remain identical, including definition_of_ready and definition_of_done criteria.",
+    "validator_check": "work_item.mirror_alignment"
+  },
   "purpose": "Define the minimum ready and done contract for work items in the Sales AaaS repository so implementation, review, verification, release, and rollback expectations are explicit before production-impacting changes land.",
   "applies_to": {
     "repository": "sales-saas",
