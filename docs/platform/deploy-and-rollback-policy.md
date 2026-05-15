@@ -18,6 +18,10 @@ This policy covers rollout discipline for the launch-critical Sales AaaS surface
 - rollout notes include customer-visible risk and rollback posture
 - production Cloudflare deploys include non-empty `release.rollback_action`
   metadata before the deploy workflow reaches environment-gated verification
+- PR evidence and release notes identify affected Cloudflare services, rollback
+  targets, rollback owner, schema or data compatibility constraints or
+  explicit no-impact note, and post-rollback smoke command before production
+  promotion
 
 ## Required checks
 
@@ -45,6 +49,22 @@ Production runs of `.github/workflows/deploy-cloudflare.yml` must include
 `release.rollback_action`. The workflow records this value as release evidence
 and fails production deploys before verification or deployment when it is empty.
 Staging deploys may omit this value.
+
+Release metadata and PR evidence for production-sensitive changes must also
+include:
+
+- release or PR identifier
+- affected Cloudflare services: `web`, `api`, `workflows`, or explicit `none`
+  for metadata-only changes
+- last known-good Cloudflare Worker version IDs or dashboard rollback targets
+  for every affected service
+- rollback owner responsible for approving or executing rollback and confirming
+  post-rollback evidence
+- schema or data compatibility constraints between the rollback targets, active
+  database schema, migrations, queues, and bound Cloudflare resources; for
+  metadata-only changes, state that no schema or data compatibility constraint
+  applies
+- post-rollback smoke command: `npm run smoke:cloudflare`
 
 `release.rollback_action` must name the exact command path that restores the
 last known-good Cloudflare Worker version for each affected service and then
@@ -100,4 +120,7 @@ After each production-sensitive rollout, record:
 - what was verified
 - customer-critical journeys checked
 - the `release.rollback_action` value for production Cloudflare deploys
+- affected Cloudflare services and confirmed last known-good rollback targets
+- rollback owner
+- schema or data compatibility constraints, or an explicit no-impact note
 - whether rollback was considered or executed

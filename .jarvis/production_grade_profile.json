@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.2",
+  "profile_version": "1.0.6",
   "status": "active",
-  "last_updated": "2026-05-13",
+  "last_updated": "2026-05-15",
   "repo_identity": {
     "name": "sales-aaas-platform",
     "workspace": "sales-saas",
@@ -12,7 +12,7 @@
     "deployment_platform": "Cloudflare",
     "healthcheck_path": "/health",
     "toolchain": {
-      "node": "20.x",
+      "node": "22.x",
       "npm": "11.10.1"
     },
     "primary_surfaces": [
@@ -26,8 +26,17 @@
     ],
     "source_of_truth": [
       "AGENTS.md",
+      "agile_work_item.json",
+      ".jarvis/agile_work_item.json",
       ".jarvis/pr_evidence_manifest.json",
       "README.md",
+      "docs/product/platform-requirements.md",
+      "docs/product/prfaq.md",
+      "docs/product/capability-map.md",
+      "docs/product/public-claims-truth-matrix.md",
+      "docs/architecture/adr-0002-launch-truth-standard-and-channel-scope.md",
+      "docs/architecture/adr-0003-compliance-guardrails-not-legal-guarantees.md",
+      "docs/platform/cloudflare-portable-foundation.md",
       "docs/reliability/production-readiness-review.md",
       "docs/platform/deploy-and-rollback-policy.md",
       "docs/platform/service-ownership.md",
@@ -54,6 +63,635 @@
     ],
     "contract_scope": "This top-level workspace section identifies the mission workspace for repo-contract validation and does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, or shared API contracts.",
     "runtime_behavior_changed": false
+  },
+  "agile": {
+    "runtime_behavior_changed": false,
+    "source_of_truth": [
+      {
+        "path": "agile_work_item.json",
+        "cites": [
+          "definition_of_ready",
+          "definition_of_done",
+          "risk_classification",
+          "evidence_requirements",
+          "rollback_expectations",
+          "pull_request_expectations"
+        ]
+      },
+      {
+        "path": ".jarvis/agile_work_item.json",
+        "cites": [
+          "mirrored definition_of_ready and definition_of_done contract"
+        ]
+      },
+      {
+        "path": ".jarvis/pr_evidence_manifest.json",
+        "cites": [
+          "pull_request.required_evidence",
+          "pull_request.release_path",
+          "release.rollback_metadata",
+          "deploy_evidence"
+        ]
+      },
+      {
+        "path": ".github/PULL_REQUEST_TEMPLATE.md",
+        "cites": [
+          "Release Metadata",
+          "Verification Evidence",
+          "Deploy Evidence",
+          "Ready / Done Confirmation"
+        ]
+      }
+    ],
+    "work_item_contract": {
+      "canonical_path": "agile_work_item.json",
+      "mirror_paths": [
+        ".jarvis/agile_work_item.json"
+      ],
+      "alignment_requirement": "The canonical and mirrored agile work item contracts must remain byte-for-byte equivalent in meaning and validator-equivalent in structure before merge.",
+      "validator_check": "work_item.mirror_alignment"
+    },
+    "delivery_path": "branch_to_pull_request_to_checks_to_release_gate",
+    "definition_of_ready": {
+      "required_contract_fields": [
+        "id",
+        "title",
+        "problem_statement",
+        "success_conditions",
+        "affected_surfaces",
+        "risk_classification",
+        "owner",
+        "reviewers",
+        "validation_plan",
+        "rollback_plan"
+      ],
+      "criteria_source": "agile_work_item.json#definition_of_ready.criteria",
+      "summary": "Work is ready only when the outcome, affected surfaces, risk, owner, reviewers, validation plan, rollback plan, approval needs, and product-claim posture are explicit enough for a scoped branch and PR."
+    },
+    "definition_of_done": {
+      "required_contract_fields": [
+        "id",
+        "title",
+        "problem_statement",
+        "success_conditions",
+        "affected_surfaces",
+        "risk_classification",
+        "owner",
+        "reviewers",
+        "validation_plan",
+        "rollback_plan",
+        "evidence"
+      ],
+      "criteria_source": "agile_work_item.json#definition_of_done.criteria",
+      "summary": "Work is done only when the implementation is scope-limited, behavior and protected surfaces are preserved or explicitly reviewed, relevant checks are recorded, PR evidence and rollback notes are present, and remaining risk is named."
+    },
+    "risk_classification": {
+      "source_ref": "agile_work_item.json#risk_classification",
+      "default_for_contract_metadata_changes": "low",
+      "mission_node_risk": "medium",
+      "escalation_rule": "Use the highest level that matches any affected surface; auth, billing, tenancy, audit, webhooks, approval gates, schema, and deploy workflows require high-risk treatment when behavior changes."
+    },
+    "validation_policy": {
+      "narrowest_meaningful_check_first": true,
+      "required_medium_risk_gates": [
+        "npm run typecheck",
+        "npm run test",
+        "npm run build",
+        "npm run verify:core"
+      ],
+      "credential_dependent_smoke": "npm run smoke:cloudflare",
+      "blocked_check_rule": "If credentials or runtime environment are unavailable, record the blocker and next safe step instead of claiming smoke, deploy, or restart success."
+    },
+    "pr_evidence_policy": {
+      "manifest_path": ".jarvis/pr_evidence_manifest.json",
+      "required_evidence": [
+        "changed files",
+        "risk classification",
+        "verification commands and results",
+        "release path",
+        "rollback action",
+        "deploy or smoke evidence, or explicit credential blocker",
+        "residual risk"
+      ]
+    },
+    "rollback_policy": {
+      "default_release_rollback_action": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare.",
+      "required_metadata": [
+        "release or PR identifier",
+        "affected Cloudflare services or explicit none for metadata-only changes",
+        "last known-good Worker version IDs or dashboard rollback targets",
+        "rollback owner",
+        "schema or data compatibility constraints",
+        "post-rollback smoke command"
+      ],
+      "metadata_only_exception": "For this profile-only contract change, no Cloudflare service rollback is required; revert the PR or restore the previous profile and validator revision."
+    },
+    "contract_scope": "This agile section makes the ready/done and PR evidence contract discoverable from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, or deploy behavior."
+  },
+  "product": {
+    "name": "Sales AaaS",
+    "product_type": "hybrid_saas_and_aaas_sales_operations_platform",
+    "runtime_behavior_changed": false,
+    "source_of_truth": [
+      {
+        "path": "docs/product/platform-requirements.md",
+        "cites": [
+          "Product summary",
+          "Launch customer",
+          "Platform requirements",
+          "Deliberate non-goals for current truth",
+          "Metrics"
+        ]
+      },
+      {
+        "path": "docs/product/prfaq.md",
+        "cites": [
+          "Solution",
+          "Critical user journey",
+          "Near-term product truth",
+          "Roadmap, not current truth",
+          "Engineering and operations risks"
+        ]
+      },
+      {
+        "path": "docs/product/capability-map.md",
+        "cites": [
+          "Current truth for lead generation",
+          "Current truth for lead outreach",
+          "Current truth for lead conversion",
+          "Cross-cutting platform capabilities",
+          "Non-goals for current public claims"
+        ]
+      },
+      {
+        "path": "docs/product/public-claims-truth-matrix.md",
+        "cites": [
+          "Implemented claims",
+          "Beta or guarded claims",
+          "Roadmap claims",
+          "Prohibited claims",
+          "Rules"
+        ]
+      }
+    ],
+    "summary": {
+      "value": "Workspace-based SaaS plus managed-service sales operations platform for capturing business context, creating lead and campaign workflows, keeping approval-aware outreach reviewable, and making meetings, calls, conversion activity, and subscription state visible.",
+      "source_refs": [
+        "docs/product/platform-requirements.md#product-summary",
+        "docs/product/prfaq.md#solution",
+        "docs/product/capability-map.md#cross-cutting-platform-capabilities"
+      ]
+    },
+    "launch_customer": {
+      "segments": [
+        "founder-led service businesses",
+        "growth and outbound agencies",
+        "smaller teams that need structure before enterprise-weight infrastructure"
+      ],
+      "source_refs": [
+        "docs/product/platform-requirements.md#launch-customer",
+        "docs/product/prfaq.md#who-is-the-launch-customer"
+      ]
+    },
+    "critical_user_journey": {
+      "steps": [
+        "visitor",
+        "signup",
+        "guided business onboarding",
+        "workspace selection",
+        "plan selection",
+        "billing",
+        "dashboard",
+        "lead and campaign review",
+        "approved dispatch",
+        "meeting or conversion follow-up"
+      ],
+      "source_refs": [
+        "docs/product/prfaq.md#what-is-the-critical-user-journey"
+      ]
+    },
+    "critical_user_journeys": [
+      {
+        "name": "public_beta_activation_to_approved_outreach",
+        "steps": [
+          "visitor",
+          "signup",
+          "guided business onboarding",
+          "workspace selection",
+          "plan selection",
+          "billing",
+          "dashboard",
+          "lead and campaign review",
+          "approved dispatch",
+          "meeting or conversion follow-up"
+        ],
+        "source_refs": [
+          "docs/product/prfaq.md#what-is-the-critical-user-journey"
+        ]
+      }
+    ],
+    "current_scope": {
+      "includes": [
+        "guided business onboarding",
+        "workspace-based SaaS foundation",
+        "lead and campaign primitives",
+        "approval-aware outreach",
+        "meeting and call records",
+        "billing and payment visibility",
+        "account lifecycle foundations such as email verification and password reset"
+      ],
+      "source_refs": [
+        "docs/product/prfaq.md#what-is-in-scope-for-the-near-term-product-truth",
+        "docs/product/capability-map.md#cross-cutting-platform-capabilities",
+        "docs/product/public-claims-truth-matrix.md"
+      ]
+    },
+    "not_yet_fully_mature": {
+      "items": [
+        "fully mature ownership transfer, last-owner protection, and org administration",
+        "content or SEO generation and publishing workflow as a finished product",
+        "broad SMS expansion",
+        "fully autonomous voice or LinkedIn-like outbound execution",
+        "enterprise compliance and governance depth",
+        "real entitlements and AI budget controls",
+        "richer observability and rollout discipline"
+      ],
+      "source_refs": [
+        "docs/product/prfaq.md#what-is-roadmap-not-current-truth",
+        "docs/product/capability-map.md#required-maturity-path",
+        "docs/product/public-claims-truth-matrix.md"
+      ]
+    },
+    "public_claims_policy": {
+      "rules": [
+        "If a claim is not implemented, label it beta, guarded, roadmap, or remove it.",
+        "If a capability depends on configuration, say so.",
+        "If a capability is high-risk by channel or jurisdiction, describe the guardrails before the promise.",
+        "Update the public claims truth matrix before changing public copy when repo truth changes."
+      ],
+      "source_refs": [
+        "docs/product/public-claims-truth-matrix.md#rules",
+        "docs/product/capability-map.md#non-goals-for-current-public-claims",
+        "docs/product/prfaq.md#what-are-we-not-claiming-at-launch"
+      ]
+    },
+    "automation_posture": {
+      "default": "approval_gated_by_default",
+      "policy": "Risky or first outbound actions must remain visible, reviewable, and auditable; the launch reality is approval-gated sales support work rather than fully autonomous execution.",
+      "source_refs": [
+        "docs/product/platform-requirements.md#trust-model",
+        "docs/product/prfaq.md#what-is-the-default-automation-posture",
+        "docs/product/prfaq.md#solution"
+      ]
+    },
+    "current_product_truth": {
+      "business_context": {
+        "capabilities": [
+          "guided business onboarding",
+          "business profile capture covering offer, audience, goals, channels, regions, constraints, and voice"
+        ],
+        "source_refs": [
+          "docs/product/platform-requirements.md#business-context-model",
+          "docs/product/capability-map.md#stage-1-lead-generation",
+          "docs/product/public-claims-truth-matrix.md"
+        ]
+      },
+      "workspace_platform": {
+        "capabilities": [
+          "workspace-based multi-tenant foundation",
+          "explicit organization and workspace identity",
+          "workspace switching",
+          "tenant-aware account scope",
+          "account lifecycle foundations for email verification and password reset"
+        ],
+        "source_refs": [
+          "docs/product/platform-requirements.md#tenant-model",
+          "docs/product/capability-map.md#cross-cutting-platform-capabilities",
+          "docs/product/public-claims-truth-matrix.md"
+        ]
+      },
+      "lead_generation": {
+        "capabilities": [
+          "source plan and source run records",
+          "lead record storage",
+          "lead qualification state",
+          "mock source adapters for website, search, and directory discovery"
+        ],
+        "source_refs": [
+          "docs/product/capability-map.md#stage-1-lead-generation"
+        ]
+      },
+      "lead_outreach": {
+        "capabilities": [
+          "campaign records",
+          "outreach activity records",
+          "approval-aware dispatch flow",
+          "configured or mock email dispatch path",
+          "review-gated LinkedIn-style outreach placeholder",
+          "provider health visibility"
+        ],
+        "source_refs": [
+          "docs/product/capability-map.md#stage-2-lead-outreach",
+          "docs/product/public-claims-truth-matrix.md"
+        ]
+      },
+      "lead_conversion": {
+        "capabilities": [
+          "meeting records",
+          "call records and dispositions",
+          "dashboard visibility into leads, campaigns, meetings, and subscription state"
+        ],
+        "source_refs": [
+          "docs/product/capability-map.md#stage-3-lead-conversion",
+          "docs/product/public-claims-truth-matrix.md"
+        ]
+      },
+      "billing_and_commercial": {
+        "capabilities": [
+          "subscription workspace as the primary billable unit",
+          "billing and payment visibility",
+          "Stripe and Razorpay support in implemented billing routes",
+          "managed-service overlay as a higher-touch commercial path"
+        ],
+        "source_refs": [
+          "docs/product/platform-requirements.md#commercial-model",
+          "docs/product/prfaq.md#what-is-the-business-model",
+          "docs/product/public-claims-truth-matrix.md"
+        ]
+      }
+    },
+    "trust_and_claim_boundaries": {
+      "default_posture": {
+        "claims": [
+          "risky actions are approval-gated",
+          "sensitive operations should be audit-friendly",
+          "configured provider flows must stay distinct from mock or guarded flows",
+          "channel claims must stay aligned with implementation truth"
+        ],
+        "source_refs": [
+          "docs/product/platform-requirements.md#trust-model",
+          "docs/product/prfaq.md#what-is-the-default-automation-posture",
+          "docs/product/public-claims-truth-matrix.md#rules"
+        ]
+      },
+      "guarded_or_beta": {
+        "claims": [
+          "voice dispatch foundation is beta or guarded",
+          "LinkedIn-style outreach is mock or review-gated and must not be described as production-grade automation"
+        ],
+        "source_refs": [
+          "docs/product/public-claims-truth-matrix.md",
+          "docs/product/capability-map.md#non-goals-for-current-public-claims"
+        ]
+      },
+      "roadmap_not_current_truth": {
+        "claims": [
+          "SMS outreach as a mature product flow",
+          "content or SEO generation and publishing workflow as a finished product",
+          "fully autonomous cross-channel sales execution",
+          "mature org administration, ownership transfer, and last-owner protection",
+          "enterprise compliance and governance depth"
+        ],
+        "source_refs": [
+          "docs/product/prfaq.md#what-is-roadmap-not-current-truth",
+          "docs/product/public-claims-truth-matrix.md",
+          "docs/product/capability-map.md#non-goals-for-current-public-claims"
+        ]
+      },
+      "prohibited_public_claims": {
+        "claims": [
+          "global outbound compliance out of the box",
+          "LinkedIn scraping",
+          "browser automation",
+          "auto-connect or auto-DM behavior"
+        ],
+        "source_refs": [
+          "docs/product/public-claims-truth-matrix.md"
+        ]
+      }
+    },
+    "success_metrics": {
+      "metrics": [
+        "signup-to-workspace activation rate",
+        "onboarding completion rate",
+        "time to first lead plan",
+        "time to first approved dispatch",
+        "trial-to-paid conversion",
+        "paid workspace retention",
+        "support burden by workflow",
+        "managed-service attach rate",
+        "provider or AI cost per active paid workspace"
+      ],
+      "source_refs": [
+        "docs/product/platform-requirements.md#metrics",
+        "docs/product/prfaq.md#what-are-the-primary-business-metrics"
+      ]
+    },
+    "contract_scope": "This product section summarizes existing product truth for repo-contract validation. It does not add public claims, change runtime behavior, change dependencies, change migrations, change workflows, or change deploy behavior."
+  },
+  "architecture": {
+    "runtime_behavior_changed": false,
+    "source_of_truth": [
+      {
+        "path": "AGENTS.md",
+        "cites": [
+          "Repo Map",
+          "Engineering Rules",
+          "Review Focus"
+        ]
+      },
+      {
+        "path": "docs/product/platform-requirements.md",
+        "cites": [
+          "Tenant model",
+          "Business-context model",
+          "Revenue workflow model",
+          "Trust model",
+          "Commercial model"
+        ]
+      },
+      {
+        "path": "docs/platform/cloudflare-portable-foundation.md",
+        "cites": [
+          "What is in place",
+          "Portability rules",
+          "Staging deploy order",
+          "Current staging posture"
+        ]
+      },
+      {
+        "path": "docs/architecture/adr-0002-launch-truth-standard-and-channel-scope.md",
+        "cites": [
+          "Decision",
+          "Consequences",
+          "Follow-up"
+        ]
+      },
+      {
+        "path": "docs/architecture/adr-0003-compliance-guardrails-not-legal-guarantees.md",
+        "cites": [
+          "Decision",
+          "Operational rules"
+        ]
+      },
+      {
+        "path": "docs/platform/deploy-and-rollback-policy.md",
+        "cites": [
+          "Required checks",
+          "Rollback metadata",
+          "Post-release evidence"
+        ]
+      }
+    ],
+    "system_summary": {
+      "value": "Sales AaaS is a Cloudflare-targeted, workspace-based sales SaaS composed of a Next.js web surface, Hono API, Cloudflare workflow worker, Drizzle/Postgres database package, and shared contract package. Runtime boundaries are intentionally split so public UX, API authorization and provider callbacks, workflow orchestration, data schema, and shared policy definitions can be reviewed and rolled back independently.",
+      "source_refs": [
+        "AGENTS.md#repo-map",
+        "docs/product/platform-requirements.md#platform-requirements",
+        "docs/platform/cloudflare-portable-foundation.md#what-is-in-place"
+      ]
+    },
+    "runtime_targets": [
+      "apps/web: Next.js product surface for marketing, onboarding, billing, dashboard, legal pages, and authenticated flows.",
+      "apps/api: Hono API for onboarding, leads, campaigns, billing, provider webhooks, and dashboard data.",
+      "apps/workflows: Cloudflare workflow worker for approval-gated campaign orchestration.",
+      "packages/database: Drizzle schema, migrations, and database client.",
+      "packages/shared: shared contracts, pricing definitions, policy logic, and platform module definitions."
+    ],
+    "service_boundaries": {
+      "web": {
+        "path": "apps/web",
+        "responsibilities": [
+          "public product surface",
+          "get-started onboarding",
+          "billing entry points",
+          "dashboard and authenticated app navigation"
+        ],
+        "must_not_own": [
+          "database schema truth",
+          "provider webhook signature verification",
+          "plan catalog divergence from packages/shared"
+        ]
+      },
+      "api": {
+        "path": "apps/api",
+        "responsibilities": [
+          "API authorization and session handling",
+          "workspace-scoped data access",
+          "billing and provider routes",
+          "dashboard data contracts"
+        ],
+        "must_not_own": [
+          "public claims that outrun implementation evidence",
+          "database migration semantics",
+          "autonomous dispatch without approval gates"
+        ]
+      },
+      "workflows": {
+        "path": "apps/workflows",
+        "responsibilities": [
+          "approval-gated campaign orchestration",
+          "workflow health endpoint",
+          "HTTP callback contract for dispatch results"
+        ],
+        "must_not_own": [
+          "provider-specific business logic that belongs behind API contracts",
+          "Cloudflare-only coupling where an HTTP contract is sufficient"
+        ]
+      },
+      "shared_packages": {
+        "paths": [
+          "packages/shared",
+          "packages/database"
+        ],
+        "responsibilities": [
+          "shared policy and pricing truth",
+          "database schema and migrations",
+          "cross-boundary contract definitions"
+        ],
+        "must_not_own": [
+          "runtime secrets",
+          "environment-specific deploy state"
+        ]
+      }
+    },
+    "data_architecture": {
+      "primary_store": "Postgres accessed through packages/database with Drizzle schema and migrations; Cloudflare can use DATABASE_URL directly or Hyperdrive as a transport optimization.",
+      "migration_owner": "packages/database",
+      "compatibility_policy": "Prefer forward-compatible schema changes and behavior rollback. Schema or data rollback requires an explicitly safe rollback path before release promotion.",
+      "source_refs": [
+        "AGENTS.md#repo-map",
+        "docs/platform/cloudflare-portable-foundation.md#hyperdrive-usage",
+        "docs/platform/deploy-and-rollback-policy.md"
+      ]
+    },
+    "multi_tenancy": {
+      "boundary": "Organization and workspace identity are the tenancy boundary; auth, API routes, dashboard state, billing, team operations, leads, campaigns, and workflow callbacks must preserve workspace correctness.",
+      "high_risk_invariants": [
+        "No cross-workspace reads or writes.",
+        "Billing and subscription state remain workspace-scoped.",
+        "Provider webhooks and workflow callbacks must map to the intended organization and workspace.",
+        "Approval-gated automation cannot dispatch without a recorded approval path."
+      ],
+      "source_refs": [
+        "AGENTS.md#review-focus",
+        "docs/product/platform-requirements.md#tenant-model",
+        "docs/product/platform-requirements.md#trust-model"
+      ]
+    },
+    "integration_boundaries": {
+      "provider_posture": "Provider integrations remain configured, mock-backed, or guarded unless implementation evidence proves production readiness; placeholder keys and dummy payment defaults must not enable production behavior.",
+      "callback_contract": "Workflow-to-backend integration uses HTTP payloads rather than Cloudflare-only service bindings unless a future ADR approves tighter coupling.",
+      "source_refs": [
+        "AGENTS.md#engineering-rules",
+        "docs/platform/cloudflare-portable-foundation.md#callback-contract",
+        "docs/architecture/adr-0002-launch-truth-standard-and-channel-scope.md",
+        "docs/architecture/adr-0003-compliance-guardrails-not-legal-guarantees.md"
+      ]
+    },
+    "deploy_architecture": {
+      "platform": "Cloudflare Workers for web, api, and workflows, with staging before production for production-sensitive changes.",
+      "healthcheck_path": "/health",
+      "rollback_posture": "Production-sensitive releases require explicit release.rollback_action metadata, affected Cloudflare services, rollback targets, rollback owner, schema or data compatibility notes, and post-rollback smoke via npm run smoke:cloudflare.",
+      "source_refs": [
+        "docs/platform/deploy-and-rollback-policy.md",
+        ".github/workflows/deploy-cloudflare.yml",
+        ".jarvis/pr_evidence_manifest.json"
+      ]
+    },
+    "decision_records": {
+      "accepted_adrs": [
+        {
+          "path": "docs/architecture/adr-0002-launch-truth-standard-and-channel-scope.md",
+          "decision": "Constrain launch claims to current repo truth and approval-gated automation instead of broad autonomous-channel promises."
+        },
+        {
+          "path": "docs/architecture/adr-0003-compliance-guardrails-not-legal-guarantees.md",
+          "decision": "Present compliance posture as guardrails, evidence, auditability, and safer defaults rather than blanket legal guarantees."
+        }
+      ],
+      "required_for": [
+        "meaningful technical decisions",
+        "migration semantics",
+        "runtime platform coupling",
+        "auth, billing, tenancy, audit, webhook, approval, or schema behavior changes",
+        "public claim posture changes"
+      ]
+    },
+    "portability_rules": [
+      "Keep Postgres connection strings as the app-level database contract.",
+      "Treat Hyperdrive as optional transport optimization, not schema or query truth.",
+      "Keep workflow-to-backend integration on HTTP payloads unless a future ADR approves stronger platform coupling.",
+      "Keep provider payloads and webhook contracts provider-neutral where practical.",
+      "Do not add Supabase-specific auth, storage, or RPC assumptions to workflow code."
+    ],
+    "architecture_risks": [
+      "Production OAuth on Workers still depends on correct AUTH_TRUST_HOST and deployed callback smoke evidence.",
+      "Tenant isolation and billing hardening remain launch-critical review areas.",
+      "Some provider and workflow paths remain mock, guarded, or not production-grade.",
+      "Actual last known-good Cloudflare Worker rollback targets must be captured from provider state before production promotion."
+    ],
+    "contract_scope": "This architecture section makes existing runtime boundaries, source documents, deploy posture, and architecture risks discoverable from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, or deploy behavior."
   },
   "maturity": {
     "current_baseline": "scaffolded",
@@ -400,9 +1038,9 @@
   },
   "metadata": {
     "created_by": "Codex mission node node-745e76479b19",
-    "mission_id": "mission-e785ab85f40e",
-    "last_updated_by": "Codex mission node node-9b77e087c19d",
-    "last_updated_reason": "Canonicalized top-level workspace contract fields for advisory repo validation without runtime behavior changes.",
+    "mission_id": "mission-ff6100899322",
+    "last_updated_by": "Codex mission node node-b13eb8783364",
+    "last_updated_reason": "Added top-level architecture contract and advisory validation while preserving metadata-only runtime behavior.",
     "owned_path": ".jarvis/production_grade_profile.json",
     "change_type": "metadata_only",
     "runtime_behavior_changed": false,

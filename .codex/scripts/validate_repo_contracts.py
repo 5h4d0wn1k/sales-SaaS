@@ -27,10 +27,115 @@ PR_TEMPLATE_PATH = ".github/PULL_REQUEST_TEMPLATE.md"
 PACKAGE_JSON_PATH = "package.json"
 REPO_OS_WORKFLOW_PATH = ".github/workflows/repo-operating-system.yml"
 
+PROFILE_REQUIRED_SECTIONS = [
+    "product",
+    "agile",
+    "architecture",
+]
+
+PROFILE_REQUIRED_AGILE_PATHS = [
+    "agile.runtime_behavior_changed",
+    "agile.source_of_truth",
+    "agile.work_item_contract.canonical_path",
+    "agile.work_item_contract.mirror_paths",
+    "agile.work_item_contract.alignment_requirement",
+    "agile.delivery_path",
+    "agile.definition_of_ready.required_contract_fields",
+    "agile.definition_of_ready.criteria_source",
+    "agile.definition_of_ready.summary",
+    "agile.definition_of_done.required_contract_fields",
+    "agile.definition_of_done.criteria_source",
+    "agile.definition_of_done.summary",
+    "agile.risk_classification.source_ref",
+    "agile.validation_policy.narrowest_meaningful_check_first",
+    "agile.validation_policy.required_medium_risk_gates",
+    "agile.pr_evidence_policy.manifest_path",
+    "agile.pr_evidence_policy.required_evidence",
+    "agile.rollback_policy.default_release_rollback_action",
+    "agile.rollback_policy.required_metadata",
+    "agile.contract_scope",
+]
+
+PROFILE_REQUIRED_PRODUCT_PATHS = [
+    "product.name",
+    "product.product_type",
+    "product.runtime_behavior_changed",
+    "product.source_of_truth",
+    "product.summary.value",
+    "product.summary.source_refs",
+    "product.launch_customer",
+    "product.launch_customer.segments",
+    "product.launch_customer.source_refs",
+    "product.critical_user_journey.steps",
+    "product.critical_user_journey.source_refs",
+    "product.critical_user_journeys",
+    "product.current_scope.includes",
+    "product.current_scope.source_refs",
+    "product.not_yet_fully_mature.items",
+    "product.not_yet_fully_mature.source_refs",
+    "product.public_claims_policy.rules",
+    "product.public_claims_policy.source_refs",
+    "product.automation_posture.default",
+    "product.automation_posture.policy",
+    "product.automation_posture.source_refs",
+    "product.current_product_truth.business_context.capabilities",
+    "product.current_product_truth.business_context.source_refs",
+    "product.current_product_truth.workspace_platform.capabilities",
+    "product.current_product_truth.workspace_platform.source_refs",
+    "product.current_product_truth.lead_generation.capabilities",
+    "product.current_product_truth.lead_generation.source_refs",
+    "product.current_product_truth.lead_outreach.capabilities",
+    "product.current_product_truth.lead_outreach.source_refs",
+    "product.current_product_truth.lead_conversion.capabilities",
+    "product.current_product_truth.lead_conversion.source_refs",
+    "product.current_product_truth.billing_and_commercial.capabilities",
+    "product.current_product_truth.billing_and_commercial.source_refs",
+    "product.trust_and_claim_boundaries.default_posture.claims",
+    "product.trust_and_claim_boundaries.default_posture.source_refs",
+    "product.trust_and_claim_boundaries.guarded_or_beta.claims",
+    "product.trust_and_claim_boundaries.guarded_or_beta.source_refs",
+    "product.trust_and_claim_boundaries.roadmap_not_current_truth.claims",
+    "product.trust_and_claim_boundaries.roadmap_not_current_truth.source_refs",
+    "product.trust_and_claim_boundaries.prohibited_public_claims.claims",
+    "product.trust_and_claim_boundaries.prohibited_public_claims.source_refs",
+    "product.success_metrics.metrics",
+    "product.success_metrics.source_refs",
+    "product.contract_scope",
+]
+
+PROFILE_REQUIRED_ARCHITECTURE_PATHS = [
+    "architecture.runtime_behavior_changed",
+    "architecture.source_of_truth",
+    "architecture.system_summary.value",
+    "architecture.system_summary.source_refs",
+    "architecture.runtime_targets",
+    "architecture.service_boundaries.web",
+    "architecture.service_boundaries.api",
+    "architecture.service_boundaries.workflows",
+    "architecture.service_boundaries.shared_packages",
+    "architecture.data_architecture.primary_store",
+    "architecture.data_architecture.migration_owner",
+    "architecture.data_architecture.compatibility_policy",
+    "architecture.multi_tenancy.boundary",
+    "architecture.multi_tenancy.high_risk_invariants",
+    "architecture.integration_boundaries.provider_posture",
+    "architecture.deploy_architecture.platform",
+    "architecture.deploy_architecture.healthcheck_path",
+    "architecture.deploy_architecture.rollback_posture",
+    "architecture.decision_records.accepted_adrs",
+    "architecture.decision_records.required_for",
+    "architecture.portability_rules",
+    "architecture.architecture_risks",
+    "architecture.contract_scope",
+]
+
 PROFILE_REQUIRED_PATHS = [
     "schema_version",
     "profile_version",
     "status",
+    *PROFILE_REQUIRED_AGILE_PATHS,
+    *PROFILE_REQUIRED_PRODUCT_PATHS,
+    *PROFILE_REQUIRED_ARCHITECTURE_PATHS,
     "workspace.name",
     "workspace.workspace_class",
     "workspace.repo_relative_root",
@@ -227,6 +332,77 @@ def check_required_paths(
                 f"`{dotted_path}` is missing or empty.",
             )
         )
+
+
+def check_required_sections(
+    relpath: str,
+    data: Any,
+    required_sections: Iterable[str],
+    findings: list[Finding],
+) -> None:
+    if data is None:
+        return
+    if not isinstance(data, dict):
+        return
+
+    for section in required_sections:
+        value = data.get(section)
+        if isinstance(value, dict) and has_value(value):
+            findings.append(
+                Finding(
+                    "pass",
+                    "contract.required_section",
+                    relpath,
+                    f"`production_grade_profile.{section}` section is present.",
+                )
+            )
+            continue
+
+        if value is None:
+            evidence = "observed missing"
+        elif isinstance(value, dict):
+            evidence = "observed empty object"
+        else:
+            evidence = f"observed {type(value).__name__}"
+        findings.append(
+            Finding(
+                "warn",
+                "contract.required_section",
+                relpath,
+                f"`production_grade_profile.{section}` section is missing or empty.",
+                evidence,
+            )
+        )
+
+
+def check_expected_value(
+    relpath: str,
+    data: Any,
+    dotted_path: str,
+    expected: Any,
+    findings: list[Finding],
+) -> None:
+    value = get_nested(data, dotted_path) if isinstance(data, dict) else None
+    if type(value) is type(expected) and value == expected:
+        findings.append(
+            Finding(
+                "pass",
+                "contract.expected_value",
+                relpath,
+                f"`{dotted_path}` is `{json.dumps(expected)}`.",
+            )
+        )
+        return
+
+    findings.append(
+        Finding(
+            "warn",
+            "contract.expected_value",
+            relpath,
+            f"`{dotted_path}` must be `{json.dumps(expected)}`.",
+            f"observed {value!r}",
+        )
+    )
 
 
 def check_definition_criteria(relpath: str, data: Any, key: str, findings: list[Finding]) -> None:
@@ -443,7 +619,11 @@ def check_cloudflare_rollback_metadata(
 
 def check_profile(root: Path, findings: list[Finding]) -> Any | None:
     profile = load_json(root, PROFILE_PATH, findings)
+    check_required_sections(PROFILE_PATH, profile, PROFILE_REQUIRED_SECTIONS, findings)
     check_required_paths(PROFILE_PATH, profile, PROFILE_REQUIRED_PATHS, findings)
+    check_expected_value(PROFILE_PATH, profile, "agile.runtime_behavior_changed", False, findings)
+    check_expected_value(PROFILE_PATH, profile, "product.runtime_behavior_changed", False, findings)
+    check_expected_value(PROFILE_PATH, profile, "architecture.runtime_behavior_changed", False, findings)
     check_schema_version(PROFILE_PATH, profile, 1, findings)
     check_rollback_action(PROFILE_PATH, profile, "release.rollback_action", findings)
     check_cloudflare_rollback_metadata(PROFILE_PATH, profile, "release.rollback_metadata", findings)
