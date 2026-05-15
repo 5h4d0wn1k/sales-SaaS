@@ -187,3 +187,45 @@ This diff is PR-ready for review as metadata/process hardening. It is not produc
 ### Rollback note
 
 For this metadata-only change, revert the PR or restore the previous versions of `.jarvis/production_grade_profile.json`, `.codex/scripts/validate_repo_contracts.py`, `docs/platform/deploy-and-rollback-policy.md`, and this report section. No Cloudflare service rollback is required for this diff by itself. If this diff ships together with runtime service changes, redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun `npm run smoke:cloudflare`.
+
+## Release Readiness Retry Addendum: 2026-05-15 Mission Node node-b13eb8783364
+
+### Current PR posture
+
+- Branch: `node-57f374c2e811-agile-work-item`
+- Open PR: `https://github.com/5h4d0wn1k/sales-SaaS/pull/1`
+- Latest verified commit before this addendum: `f6887a00b0c07b152dca0d438e9276a5c1f9e5e4`
+- Worktree state before this addendum: clean, tracking `origin/node-57f374c2e811-agile-work-item`
+- Runtime behavior changed by this addendum: no.
+
+### Fresh verification evidence
+
+- `python3 -m py_compile .codex/scripts/validate_repo_contracts.py .codex/scripts/repo_operating_system_audit.py .codex/scripts/repo_operating_system_report.py` passed.
+- `node -e "for (const p of ['.jarvis/production_grade_profile.json','agile_work_item.json','.jarvis/agile_work_item.json','.jarvis/pr_evidence_manifest.json']) JSON.parse(require('fs').readFileSync(p,'utf8')); console.log('json ok')"` passed.
+- `npm run repo:contracts -- --format json` passed with 189 pass, 0 warn, 0 error.
+- `npm run repo:audit` passed with `git_dirty: false`, score 100%, and no priority gaps.
+- `npm run typecheck` passed under the host shell.
+- `npm run test` failed under host Node `v18.19.1` before tests executed with Vitest/Vite `ERR_REQUIRE_ESM`.
+- `npm run build` passed under the host shell after the web build wrapper retried one transient missing Next.js static manifest.
+- `npm run verify:core` failed under host Node `v18.19.1` during the `npm run test` substep with the same Vitest/Vite `ERR_REQUIRE_ESM`.
+- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'` passed under Node `v22.22.3` and npm `11.10.1`: root 24 tests, API 63 tests, web 19 tests, database 1 test, shared 2 tests.
+- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run verify:core'` passed under Node `v22.22.3` and npm `11.10.1`.
+- `npm run smoke:cloudflare` was blocked with `WEB_APP_URL is required`.
+- `test -r /etc/cynik/apps/sales-saas.env && echo env-readable || echo env-not-readable` returned `env-not-readable`.
+- `WEB_APP_URL`, `API_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_URL`, and `CLOUDFLARE_API_TOKEN` were unset in the shell.
+- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` passed and produced the ignored OpenNext Cloudflare worker bundle.
+- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && ./node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/web/wrangler.jsonc'` passed.
+- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && ./node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/api/wrangler.jsonc'` passed.
+- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && ./node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/workflows/wrangler.jsonc'` passed.
+
+### External CI blocker
+
+Fresh GitHub PR checks for PR #1 on commit `f6887a00b0c07b152dca0d438e9276a5c1f9e5e4` failed before job startup. `gh api /repos/5h4d0wn1k/sales-SaaS/check-runs/<check_run_id>/annotations` reported for Type Check, Unit Tests, Build, and Repo Operating System audit:
+
+> The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings
+
+This is an external GitHub account billing or spending-limit blocker, not an observed code regression. The local CI-equivalent Node 22 gates passed, but merge confidence remains incomplete until GitHub Actions can start and complete on PR #1.
+
+### Rollback and release note
+
+This retry addendum is documentation-only. Roll back by reverting the report commit or closing/reverting the PR. No Cloudflare service rollback or service restart is required for this addendum. Production promotion remains blocked until GitHub Actions can run, Cloudflare smoke has readable environment configuration, and a release owner records actual last known-good Worker rollback targets for affected services.
