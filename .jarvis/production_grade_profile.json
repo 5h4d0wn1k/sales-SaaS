@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.6",
+  "profile_version": "1.0.8",
   "status": "active",
-  "last_updated": "2026-05-15",
+  "last_updated": "2026-05-22",
   "repo_identity": {
     "name": "sales-aaas-platform",
     "workspace": "sales-saas",
@@ -29,6 +29,7 @@
       "agile_work_item.json",
       ".jarvis/agile_work_item.json",
       ".jarvis/pr_evidence_manifest.json",
+      "docs/platform/release-readiness-report.md",
       "README.md",
       "docs/product/platform-requirements.md",
       "docs/product/prfaq.md",
@@ -40,7 +41,11 @@
       "docs/reliability/production-readiness-review.md",
       "docs/platform/deploy-and-rollback-policy.md",
       "docs/platform/service-ownership.md",
-      "docs/reliability/slo-sli.md"
+      "docs/reliability/slo-sli.md",
+      "docs/reliability/postmortem-template.md",
+      "scripts/cloudflare-smoke.sh",
+      ".github/workflows/ci.yml",
+      ".github/workflows/deploy-cloudflare.yml"
     ]
   },
   "workspace": {
@@ -846,6 +851,360 @@
       ]
     }
   ],
+  "reliability": {
+    "runtime_behavior_changed": false,
+    "source_of_truth": [
+      {
+        "path": "docs/reliability/slo-sli.md",
+        "cites": [
+          "launch-critical journey SLOs",
+          "error budget policy",
+          "instrumentation expectations"
+        ]
+      },
+      {
+        "path": "docs/reliability/production-readiness-review.md",
+        "cites": [
+          "worst credible failure",
+          "verification standard",
+          "operational readiness",
+          "open risks"
+        ]
+      },
+      {
+        "path": "docs/platform/service-ownership.md",
+        "cites": [
+          "critical journeys supported",
+          "common failure modes",
+          "first response checklist",
+          "maintenance cadence"
+        ]
+      },
+      {
+        "path": "docs/platform/deploy-and-rollback-policy.md",
+        "cites": [
+          "required checks",
+          "abort conditions",
+          "rollback strategy",
+          "evidence capture"
+        ]
+      },
+      {
+        "path": "scripts/cloudflare-smoke.sh",
+        "cites": [
+          "WEB_APP_URL",
+          "API_HEALTHCHECK_URL",
+          "WORKFLOWS_HEALTHCHECK_URL",
+          "API status ok smoke",
+          "web root smoke"
+        ]
+      }
+    ],
+    "success_paths": [
+      "visitor activation through get-started and auth callback",
+      "workspace selection and dashboard load for the correct workspace",
+      "billing checkout, subscription visibility, and webhook correctness",
+      "approval-aware outbound operations that do not dispatch without approval",
+      "lifecycle recovery through email verification and password reset"
+    ],
+    "failure_modes": [
+      "user can sign in but cannot trust workspace, billing, or dispatch state",
+      "auth/session state is invalid or loses workspace scope",
+      "checkout or subscription state drifts from provider truth",
+      "provider webhook verification or idempotency fails",
+      "public claims outrun implemented product truth",
+      "Cloudflare smoke cannot run because healthcheck URLs or credentials are missing"
+    ],
+    "slo_policy": {
+      "source_ref": "docs/reliability/slo-sli.md",
+      "launch_journeys": [
+        {
+          "journey": "signup_onboarding_workspace_activation",
+          "objective": "99.5% success over 30 days",
+          "indicators": [
+            "get-started availability",
+            "auth callback success",
+            "workspace-selection success"
+          ]
+        },
+        {
+          "journey": "dashboard_trust",
+          "objective": "99.9% success over 30 days",
+          "indicators": [
+            "GET /v1/dashboard success",
+            "workspace-scoped data correctness",
+            "p95 dashboard API latency under 500ms"
+          ]
+        },
+        {
+          "journey": "billing_subscription_correctness",
+          "objective": "99.9% availability and 99.95% verified-event correctness over 30 days",
+          "indicators": [
+            "checkout creation success",
+            "webhook verification success",
+            "billing page load success"
+          ]
+        },
+        {
+          "journey": "approval_aware_outbound_control",
+          "objective": "100% block rate for approval-required actions until approval",
+          "indicators": [
+            "policy-evaluation success",
+            "zero unauthorized dispatches",
+            "audit-event success for sensitive actions"
+          ]
+        }
+      ],
+      "error_budget_policy": "Pause nonessential channel expansion during elevated burn and ship only fixes, rollback-safe changes, or reliability work when a launch-critical journey exhausts its budget."
+    },
+    "health_checks": [
+      {
+        "surface": "api",
+        "path": "/health",
+        "expected": "JSON response includes status ok",
+        "source": "scripts/cloudflare-smoke.sh"
+      },
+      {
+        "surface": "web",
+        "path": "WEB_APP_URL root",
+        "expected": "HTTP HEAD succeeds",
+        "source": "scripts/cloudflare-smoke.sh"
+      },
+      {
+        "surface": "workflows",
+        "path": "WORKFLOWS_HEALTHCHECK_URL when configured",
+        "expected": "HTTP smoke succeeds, with bearer token when configured",
+        "source": "scripts/cloudflare-smoke.sh"
+      }
+    ],
+    "smoke_checks": {
+      "command": "npm run smoke:cloudflare",
+      "required_environment": [
+        "WEB_APP_URL",
+        "API_HEALTHCHECK_URL",
+        "optional WORKFLOWS_HEALTHCHECK_URL",
+        "optional WORKFLOWS_HEALTHCHECK_TOKEN"
+      ],
+      "blocked_check_policy": "If environment-backed URLs or credentials are unavailable, record the exact missing prerequisite and do not claim deploy or smoke success.",
+      "post_rollback_required": true
+    },
+    "observability_expectations": [
+      "route health and latency",
+      "auth and lifecycle errors",
+      "billing checkout and webhook results",
+      "approval denials and dispatch results",
+      "workspace-selection failures"
+    ],
+    "alerting_policy": {
+      "required_before_full_production": [
+        "/health availability alert",
+        "auth callback and session establishment failure alert",
+        "billing webhook verification failure alert",
+        "dashboard API error-rate or latency alert",
+        "approval-required dispatch anomaly alert"
+      ],
+      "current_gap": "The repository documents the signals, but production-grade alert wiring and dashboards are not fully verified in this local mission."
+    },
+    "incident_response": {
+      "runbook": "docs/platform/service-ownership.md",
+      "postmortem_template": "docs/reliability/postmortem-template.md",
+      "first_response": [
+        "check /health",
+        "confirm latest deploy and migration context",
+        "inspect auth, billing, and provider logs",
+        "reproduce with the narrowest route or page",
+        "decide whether to pause rollout, rollback, or narrow scope"
+      ]
+    },
+    "release_readiness_gates": [
+      "npm run typecheck",
+      "npm run test",
+      "npm run build",
+      "npm run verify:core",
+      "npm run repo:audit",
+      "npm run repo:contracts -- --strict",
+      "npm run smoke:cloudflare where credentials permit"
+    ],
+    "rollback_policy": {
+      "default_action": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare.",
+      "metadata_only_action": "Revert the PR or restore the previous metadata files; no Cloudflare service rollback is required for this profile section by itself.",
+      "target_confirmation_required_for_production": true
+    },
+    "open_risks": [
+      "Production-grade alert wiring and dashboards remain to be verified.",
+      "Cloudflare smoke depends on environment-backed URLs and credentials.",
+      "Actual last known-good Cloudflare Worker rollback targets must be captured from provider state before production promotion."
+    ],
+    "contract_scope": "This reliability section makes SLOs, health checks, smoke requirements, incident response, alerting gaps, and rollback expectations discoverable from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, or deploy behavior."
+  },
+  "verification": {
+    "runtime_behavior_changed": false,
+    "source_of_truth": [
+      {
+        "path": "package.json",
+        "cites": [
+          "typecheck",
+          "test",
+          "build",
+          "verify:core",
+          "smoke:cloudflare",
+          "repo:audit",
+          "repo:contracts"
+        ]
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "cites": [
+          "typecheck job",
+          "test job",
+          "build job",
+          "Cloudflare dry-run validation"
+        ]
+      },
+      {
+        "path": ".github/workflows/repo-operating-system.yml",
+        "cites": [
+          "repo operating system audit",
+          "advisory repo contract validation",
+          "operating system enforcement gate"
+        ]
+      },
+      {
+        "path": ".github/workflows/deploy-cloudflare.yml",
+        "cites": [
+          "production rollback metadata validation",
+          "verify before deploy",
+          "post-deploy smoke checks"
+        ]
+      },
+      {
+        "path": ".jarvis/pr_evidence_manifest.json",
+        "cites": [
+          "deploy_evidence.required_for_release",
+          "release.rollback_metadata",
+          "pull_request.required_evidence"
+        ]
+      }
+    ],
+    "strategy": "Run the narrowest meaningful validation first, then broaden to typecheck, tests, build, core verification, and credential-dependent smoke based on risk and touched surface.",
+    "narrowest_meaningful_check_first": true,
+    "required_local_gates": [
+      {
+        "name": "json_parse",
+        "command": "node -e \"JSON.parse(require('fs').readFileSync('.jarvis/production_grade_profile.json', 'utf8')); JSON.parse(require('fs').readFileSync('.jarvis/pr_evidence_manifest.json', 'utf8')); JSON.parse(require('fs').readFileSync('agile_work_item.json', 'utf8')); JSON.parse(require('fs').readFileSync('.jarvis/agile_work_item.json', 'utf8'));\"",
+        "required_for": [
+          "machine-readable repo contracts"
+        ]
+      },
+      {
+        "name": "python_syntax_gate",
+        "command": "python3 -m py_compile .codex/scripts/validate_repo_contracts.py .codex/scripts/repo_operating_system_audit.py .codex/scripts/repo_operating_system_report.py",
+        "required_for": [
+          ".codex script changes"
+        ]
+      },
+      {
+        "name": "repo_contracts",
+        "command": "npm run repo:contracts -- --strict",
+        "required_for": [
+          "production profile",
+          "agile work item",
+          "PR evidence",
+          "release rollback metadata"
+        ]
+      },
+      {
+        "name": "repo_audit",
+        "command": "npm run repo:audit",
+        "required_for": [
+          "repo operating system maturity evidence"
+        ]
+      },
+      {
+        "name": "typecheck",
+        "command": "npm run typecheck",
+        "required_for": [
+          "code",
+          "shared contracts",
+          "cross-boundary changes"
+        ]
+      },
+      {
+        "name": "test",
+        "command": "npm run test",
+        "required_for": [
+          "behavior changes",
+          "bug fixes",
+          "contract changes"
+        ]
+      },
+      {
+        "name": "build",
+        "command": "npm run build",
+        "required_for": [
+          "release candidates",
+          "runtime or packaging changes"
+        ]
+      },
+      {
+        "name": "core_verification",
+        "command": "npm run verify:core",
+        "required_for": [
+          "medium or higher risk release readiness claims"
+        ]
+      }
+    ],
+    "required_ci_gates": [
+      ".github/workflows/ci.yml",
+      ".github/workflows/repo-operating-system.yml",
+      ".github/workflows/deploy-cloudflare.yml"
+    ],
+    "credential_dependent_gates": [
+      {
+        "name": "cloudflare_smoke",
+        "command": "npm run smoke:cloudflare",
+        "required_for": [
+          "post-deploy smoke",
+          "Cloudflare environment changes",
+          "production promotion"
+        ],
+        "blocked_when": [
+          "Cloudflare URLs, tokens, or environment variables are unavailable",
+          "host-owned env file is unreadable to the verification runner"
+        ]
+      }
+    ],
+    "bridge_self_upgrade_gates": [
+      "python_syntax_gate",
+      "automated_test_suite",
+      "bridge_self_test",
+      "release_bundle_creation",
+      "shadow_deploy_attempt",
+      "shadow_smoke_where_credentials_permit",
+      "service_restart_validation",
+      "rollback_target_confirmation"
+    ],
+    "evidence_policy": [
+      "Record exact commands and pass, fail, blocked, or skipped status.",
+      "Do not claim release readiness from green checks alone; name the risks covered and the risks still unverified.",
+      "For metadata-only changes, include JSON parsing and repo contract validation evidence before broader gates.",
+      "For production deploys, record smoke evidence and rollback target confirmation before promotion."
+    ],
+    "blocked_check_policy": "If a gate is blocked by the local toolchain, credentials, or environment access, record the blocker, whether runtime behavior changed, and the next safe verification step instead of claiming success.",
+    "release_readiness_policy": {
+      "branch_sync_required": true,
+      "pr_first_required": true,
+      "medium_risk_contract": [
+        "npm run typecheck",
+        "npm run test",
+        "npm run build",
+        "npm run verify:core"
+      ],
+      "cloudflare_smoke_required_where_credentials_permit": true,
+      "rollback_target_confirmation_required_for_production": true
+    },
+    "contract_scope": "This verification section makes validation gates and evidence requirements discoverable from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, or deploy behavior."
+  },
   "verification_contract": {
     "risk": "medium",
     "strategy": "Run the narrowest meaningful check first, then broaden to full repo gates for cross-boundary, release-sensitive, auth, billing, tenancy, schema, workflow, or public-claim changes.",
@@ -1039,8 +1398,8 @@
   "metadata": {
     "created_by": "Codex mission node node-745e76479b19",
     "mission_id": "mission-ff6100899322",
-    "last_updated_by": "Codex mission node node-b13eb8783364",
-    "last_updated_reason": "Added top-level architecture contract and advisory validation while preserving metadata-only runtime behavior.",
+    "last_updated_by": "Codex mission node node-b0fddb7a269f",
+    "last_updated_reason": "Added top-level reliability contract and advisory validation while preserving metadata-only runtime behavior.",
     "owned_path": ".jarvis/production_grade_profile.json",
     "change_type": "metadata_only",
     "runtime_behavior_changed": false,

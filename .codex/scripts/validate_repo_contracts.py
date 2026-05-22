@@ -31,6 +31,8 @@ PROFILE_REQUIRED_SECTIONS = [
     "product",
     "agile",
     "architecture",
+    "reliability",
+    "verification",
 ]
 
 PROFILE_REQUIRED_AGILE_PATHS = [
@@ -129,6 +131,40 @@ PROFILE_REQUIRED_ARCHITECTURE_PATHS = [
     "architecture.contract_scope",
 ]
 
+PROFILE_REQUIRED_RELIABILITY_PATHS = [
+    "reliability.runtime_behavior_changed",
+    "reliability.source_of_truth",
+    "reliability.success_paths",
+    "reliability.failure_modes",
+    "reliability.slo_policy.source_ref",
+    "reliability.slo_policy.launch_journeys",
+    "reliability.health_checks",
+    "reliability.smoke_checks.command",
+    "reliability.smoke_checks.required_environment",
+    "reliability.observability_expectations",
+    "reliability.alerting_policy",
+    "reliability.incident_response",
+    "reliability.release_readiness_gates",
+    "reliability.rollback_policy",
+    "reliability.open_risks",
+    "reliability.contract_scope",
+]
+
+PROFILE_REQUIRED_VERIFICATION_PATHS = [
+    "verification.runtime_behavior_changed",
+    "verification.source_of_truth",
+    "verification.strategy",
+    "verification.narrowest_meaningful_check_first",
+    "verification.required_local_gates",
+    "verification.required_ci_gates",
+    "verification.credential_dependent_gates",
+    "verification.bridge_self_upgrade_gates",
+    "verification.evidence_policy",
+    "verification.blocked_check_policy",
+    "verification.release_readiness_policy",
+    "verification.contract_scope",
+]
+
 PROFILE_REQUIRED_PATHS = [
     "schema_version",
     "profile_version",
@@ -136,6 +172,8 @@ PROFILE_REQUIRED_PATHS = [
     *PROFILE_REQUIRED_AGILE_PATHS,
     *PROFILE_REQUIRED_PRODUCT_PATHS,
     *PROFILE_REQUIRED_ARCHITECTURE_PATHS,
+    *PROFILE_REQUIRED_RELIABILITY_PATHS,
+    *PROFILE_REQUIRED_VERIFICATION_PATHS,
     "workspace.name",
     "workspace.workspace_class",
     "workspace.repo_relative_root",
@@ -624,6 +662,8 @@ def check_profile(root: Path, findings: list[Finding]) -> Any | None:
     check_expected_value(PROFILE_PATH, profile, "agile.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "product.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "architecture.runtime_behavior_changed", False, findings)
+    check_expected_value(PROFILE_PATH, profile, "reliability.runtime_behavior_changed", False, findings)
+    check_expected_value(PROFILE_PATH, profile, "verification.runtime_behavior_changed", False, findings)
     check_schema_version(PROFILE_PATH, profile, 1, findings)
     check_rollback_action(PROFILE_PATH, profile, "release.rollback_action", findings)
     check_cloudflare_rollback_metadata(PROFILE_PATH, profile, "release.rollback_metadata", findings)

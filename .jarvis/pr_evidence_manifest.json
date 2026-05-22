@@ -3,7 +3,7 @@
   "manifest_name": "sales-saas-pr-evidence-manifest",
   "manifest_type": "pull_request_release_evidence_contract",
   "status": "active",
-  "last_reviewed": "2026-05-13",
+  "last_reviewed": "2026-05-22",
   "purpose": "Define the PR evidence, release path, deploy smoke evidence, and rollback metadata required before release-sensitive changes land or promote.",
   "applies_to": {
     "repository": "sales-saas",
@@ -99,6 +99,146 @@
       "Rollback target confirmation for Cloudflare web, api, and workflows before production promotion, or an explicit metadata-only no-service-rollback note."
     ],
     "credential_blocker_policy": "If Cloudflare credentials or environment variables are unavailable, record the missing prerequisite and do not claim deploy or smoke success."
+  },
+  "current_mission_evidence": {
+    "mission_id": "mission-b555301bce80",
+    "mission_node": "node-b0fddb7a269f",
+    "branch": "node-57f374c2e811-agile-work-item",
+    "base_head_before_metadata_edits": "8c159d0",
+    "captured_at": "2026-05-22",
+    "runtime_behavior_changed": false,
+    "scope": "Release-readiness metadata, reliability contract validation, advisory validation, PR evidence, rollback posture, test-tooling configuration, and current verification evidence.",
+    "affected_runtime_services": [],
+    "release_readiness_report": "docs/platform/release-readiness-report.md",
+    "branch_sync": {
+      "command": "git fetch origin && git rev-list --left-right --count HEAD...@{upstream}",
+      "result": "0 ahead, 0 behind after fetch",
+      "status": "passed"
+    },
+    "pull_request": {
+      "command": "gh pr view 1 --json number,url,state,headRefName,baseRefName,mergeable,statusCheckRollup",
+      "url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+      "status": "open_mergeable",
+      "checks_observed": "At evidence-capture time, GitHub checks were green for the previously pushed branch commit; the pushed commit for this diff must be observed before merge."
+    },
+    "ready_done_contract": {
+      "canonical_path": "agile_work_item.json",
+      "mirror_path": ".jarvis/agile_work_item.json",
+      "mirror_check": "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
+      "status": "passed"
+    },
+    "verification_evidence": [
+      {
+        "command": "python3 -m py_compile .codex/scripts/validate_repo_contracts.py .codex/scripts/repo_operating_system_audit.py .codex/scripts/repo_operating_system_report.py",
+        "status": "passed",
+        "scope": "Python syntax gate for repo operating-system scripts."
+      },
+      {
+        "command": "node -e \"for (const path of ['.jarvis/production_grade_profile.json','.jarvis/pr_evidence_manifest.json','agile_work_item.json','.jarvis/agile_work_item.json']) JSON.parse(require('fs').readFileSync(path,'utf8')); console.log('json parse ok')\"",
+        "status": "passed",
+        "scope": "Machine-readable JSON contract parsing."
+      },
+      {
+        "command": "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
+        "status": "passed",
+        "scope": "Canonical and mirrored agile work item contract alignment."
+      },
+      {
+        "command": "git diff --check",
+        "status": "passed",
+        "scope": "Whitespace and patch hygiene."
+      },
+      {
+        "command": "npm run repo:contracts -- --strict",
+        "status": "passed",
+        "scope": "Strict advisory validation for production-grade profile reliability, agile work item, PR evidence, rollback metadata, and PR template. Result: 221 pass, 0 warn, 0 error."
+      },
+      {
+        "command": "npm run repo:audit",
+        "status": "passed",
+        "scope": "Repo operating-system audit; score 100%, no priority gaps, git_dirty true while PR-ready edits were uncommitted."
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "passed",
+        "scope": "Required medium-risk lint/type gate across workspaces."
+      },
+      {
+        "command": "npm run test",
+        "status": "passed",
+        "scope": "Required automated test suite. Final result: root 24, API 63, web 19, database 1, shared 2 tests passed after adding a test-only Web Crypto fallback."
+      },
+      {
+        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'",
+        "status": "passed",
+        "scope": "CI engine parity test under Node v22.22.3 and npm 11.10.1."
+      },
+      {
+        "command": "npm run build",
+        "status": "passed",
+        "scope": "Required build and release bundle gate."
+      },
+      {
+        "command": "npm run verify:core",
+        "status": "passed",
+        "scope": "Required core verification aggregate."
+      },
+      {
+        "command": "test -r /etc/cynik/apps/sales-saas.env && echo env-readable || echo env-not-readable",
+        "status": "blocked",
+        "scope": "Host-managed smoke environment access. Result: env-not-readable."
+      },
+      {
+        "command": "npm run smoke:cloudflare",
+        "status": "blocked",
+        "scope": "Credential-dependent Cloudflare smoke. Result: WEB_APP_URL is required."
+      }
+    ],
+    "deploy_evidence": [
+      {
+        "check": "cloudflare_shadow_deploy_attempt",
+        "status": "passed",
+        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web' plus Wrangler --dry-run for web, api, and workflows",
+        "evidence": "OpenNext web worker build passed under Node 22, and Wrangler dry-runs passed for web, API, and workflows. Host Node 18 attempts failed before deploy because Wrangler/OpenNext require newer Node."
+      },
+      {
+        "check": "cloudflare_shadow_smoke",
+        "status": "blocked",
+        "command": "npm run smoke:cloudflare",
+        "evidence": "Blocked because /etc/cynik/apps/sales-saas.env is not readable and WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, and CLOUDFLARE_API_TOKEN are unset."
+      },
+      {
+        "check": "service_restart_validation",
+        "status": "not_applicable",
+        "evidence": "No runtime service restart is required or authorized for metadata and test-tooling release-readiness artifacts."
+      },
+      {
+        "check": "rollback_target_confirmation",
+        "status": "blocked",
+        "evidence": "Actual last known-good Cloudflare Worker version IDs or dashboard rollback targets require Cloudflare environment access and were not confirmable locally."
+      }
+    ],
+    "rollback_metadata": {
+      "release_or_pr_identifier": "mission-b555301bce80 / node-b0fddb7a269f",
+      "affected_cloudflare_services": [],
+      "rollback_owner": "DevOps release owner for the PR.",
+      "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, or runtime contract change.",
+      "metadata_only_rollback_action": "Revert the PR or restore the previous versions of .codex/scripts/validate_repo_contracts.py, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, package.json, tests/setup.ts, vitest.config.ts, apps/web/vitest.config.ts, and docs/platform/release-readiness-report.md.",
+      "production_service_rollback_action_if_bundled_with_runtime_changes": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare.",
+      "post_rollback_validation": [
+        "npm run repo:contracts -- --strict",
+        "npm run repo:audit",
+        "npm run test",
+        "npm run smoke:cloudflare when runtime services were deployed or rolled back"
+      ]
+    },
+    "unresolved_risks": [
+      "GitHub checks for the pushed commit from this pass must be observed before merge.",
+      "Cloudflare staging or production deploy was not authorized by this release-readiness mission.",
+      "Cloudflare smoke remains blocked until environment-backed URLs and credentials are available.",
+      "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without Cloudflare provider access.",
+      "Production-grade alert wiring and dashboards remain documented expectations, not verified runtime evidence."
+    ]
   },
   "non_goals": [
     "This manifest does not deploy services.",

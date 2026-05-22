@@ -1,9 +1,24 @@
 import { beforeAll, afterAll } from "vitest";
+import { randomUUID, webcrypto } from "node:crypto";
 
 // Keep production env guards strict while giving local/CI tests deterministic defaults.
 process.env.NODE_ENV ||= "test";
 process.env.AUTH_SECRET ||= "sales-aaas-test-auth-secret";
 process.env.ALLOW_TEST_AUTH_BYPASS ||= "true";
+
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, "crypto", {
+    value: webcrypto,
+    configurable: true,
+  });
+}
+
+if (!globalThis.crypto.randomUUID) {
+  Object.defineProperty(globalThis.crypto, "randomUUID", {
+    value: randomUUID,
+    configurable: true,
+  });
+}
 
 // Test database configuration (only for tests that actually need DB)
 // Integration tests can set DATABASE_URL before running
