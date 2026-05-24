@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "manifest_name": "sales-saas-dirty-worktree-quarantine",
+  "status": "active",
+  "captured_at": "2026-05-24",
+  "mission_id": "mission-37decb31706c",
+  "mission_node": "node-0972c3bef4bd",
+  "workspace": "sales-saas",
+  "branch": "node-57f374c2e811-agile-work-item",
+  "upstream": "origin/node-57f374c2e811-agile-work-item",
+  "head_before_this_node": "8c7ef67",
+  "upstream_sync_before_this_node": {
+    "command": "git rev-list --left-right --count HEAD...@{upstream}",
+    "result": "0 ahead, 0 behind"
+  },
+  "pull_request_context": {
+    "url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+    "state": "OPEN",
+    "head_ref": "node-57f374c2e811-agile-work-item",
+    "base_ref": "main",
+    "mergeable_at_capture": "MERGEABLE",
+    "checks_at_capture": "Previously pushed branch commit had green GitHub checks; checks must be observed again after any new commit is pushed."
+  },
+  "pre_existing_wip": {
+    "captured_before_new_edits": true,
+    "git_status_command": "git status --short --branch",
+    "git_status_result": [
+      "## node-57f374c2e811-agile-work-item...origin/node-57f374c2e811-agile-work-item",
+      " M .codex/scripts/validate_repo_contracts.py",
+      " M .jarvis/production_grade_profile.json",
+      " M docs/platform/release-readiness-report.md"
+    ],
+    "diff_stat_command": "git diff --stat",
+    "diff_stat_summary": [
+      ".codex/scripts/validate_repo_contracts.py | 22 +++++",
+      ".jarvis/production_grade_profile.json | 155 +++++++++++++++++++++++++++++-",
+      "docs/platform/release-readiness-report.md | 75 ++++++---------",
+      "3 files changed, 201 insertions(+), 51 deletions(-)"
+    ],
+    "wip_summary": "Inherited WIP adds a production_grade_profile ownership contract, validator enforcement for ownership paths, and an ownership-focused release-readiness report update."
+  },
+  "quarantine_policy": [
+    "Do not discard, overwrite, hide, or revert inherited user/Ayushman/senior-dev changes.",
+    "Treat this manifest as the provenance marker for dirty state observed before node-0972c3bef4bd made additional edits.",
+    "Keep subsequent hardening additive and PR-first.",
+    "If a reviewer needs the exact inherited patch, compare head_before_this_node 8c7ef67 against this branch before the node-0972c3bef4bd changes or inspect the PR diff history."
+  ],
+  "runtime_behavior_changed": false,
+  "dependencies_changed": false,
+  "migrations_changed": false,
+  "workflows_changed": false,
+  "deploy_behavior_changed": false,
+  "rollback_note": "This quarantine manifest is metadata-only. Roll back by reverting the manifest addition or closing/reverting the PR; no Cloudflare service rollback is required for this file by itself."
+}

@@ -28,11 +28,13 @@ PACKAGE_JSON_PATH = "package.json"
 REPO_OS_WORKFLOW_PATH = ".github/workflows/repo-operating-system.yml"
 
 PROFILE_REQUIRED_SECTIONS = [
+    "ownership",
     "product",
     "agile",
     "architecture",
     "reliability",
     "verification",
+    "continuous_improvement",
 ]
 
 PROFILE_REQUIRED_AGILE_PATHS = [
@@ -56,6 +58,25 @@ PROFILE_REQUIRED_AGILE_PATHS = [
     "agile.rollback_policy.default_release_rollback_action",
     "agile.rollback_policy.required_metadata",
     "agile.contract_scope",
+]
+
+PROFILE_REQUIRED_OWNERSHIP_PATHS = [
+    "ownership.runtime_behavior_changed",
+    "ownership.source_of_truth",
+    "ownership.primary_owner.handle",
+    "ownership.primary_owner.ownership_model",
+    "ownership.primary_owner.source_ref",
+    "ownership.operating_model",
+    "ownership.scope_of_ownership",
+    "ownership.runtime_service_owners",
+    "ownership.protected_surface_owners",
+    "ownership.decision_rights.requires_explicit_approval",
+    "ownership.release_ownership.pr_first_required",
+    "ownership.release_ownership.rollback_owner",
+    "ownership.release_ownership.metadata_only_rollback",
+    "ownership.escalation_policy",
+    "ownership.handoff_requirements",
+    "ownership.contract_scope",
 ]
 
 PROFILE_REQUIRED_PRODUCT_PATHS = [
@@ -165,15 +186,35 @@ PROFILE_REQUIRED_VERIFICATION_PATHS = [
     "verification.contract_scope",
 ]
 
+PROFILE_REQUIRED_CONTINUOUS_IMPROVEMENT_PATHS = [
+    "continuous_improvement.runtime_behavior_changed",
+    "continuous_improvement.source_of_truth",
+    "continuous_improvement.maturity_baseline.current_baseline",
+    "continuous_improvement.maturity_baseline.current_score_percent",
+    "continuous_improvement.maturity_baseline.assessment_source",
+    "continuous_improvement.target_state.name",
+    "continuous_improvement.target_state.success_conditions",
+    "continuous_improvement.ratchet_policy.rules",
+    "continuous_improvement.feedback_loops",
+    "continuous_improvement.evidence_cadence",
+    "continuous_improvement.improvement_backlog",
+    "continuous_improvement.learning_capture.destinations",
+    "continuous_improvement.metrics",
+    "continuous_improvement.rollback_policy.metadata_only_action",
+    "continuous_improvement.contract_scope",
+]
+
 PROFILE_REQUIRED_PATHS = [
     "schema_version",
     "profile_version",
     "status",
+    *PROFILE_REQUIRED_OWNERSHIP_PATHS,
     *PROFILE_REQUIRED_AGILE_PATHS,
     *PROFILE_REQUIRED_PRODUCT_PATHS,
     *PROFILE_REQUIRED_ARCHITECTURE_PATHS,
     *PROFILE_REQUIRED_RELIABILITY_PATHS,
     *PROFILE_REQUIRED_VERIFICATION_PATHS,
+    *PROFILE_REQUIRED_CONTINUOUS_IMPROVEMENT_PATHS,
     "workspace.name",
     "workspace.workspace_class",
     "workspace.repo_relative_root",
@@ -659,11 +700,13 @@ def check_profile(root: Path, findings: list[Finding]) -> Any | None:
     profile = load_json(root, PROFILE_PATH, findings)
     check_required_sections(PROFILE_PATH, profile, PROFILE_REQUIRED_SECTIONS, findings)
     check_required_paths(PROFILE_PATH, profile, PROFILE_REQUIRED_PATHS, findings)
+    check_expected_value(PROFILE_PATH, profile, "ownership.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "agile.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "product.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "architecture.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "reliability.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "verification.runtime_behavior_changed", False, findings)
+    check_expected_value(PROFILE_PATH, profile, "continuous_improvement.runtime_behavior_changed", False, findings)
     check_schema_version(PROFILE_PATH, profile, 1, findings)
     check_rollback_action(PROFILE_PATH, profile, "release.rollback_action", findings)
     check_cloudflare_rollback_metadata(PROFILE_PATH, profile, "release.rollback_metadata", findings)

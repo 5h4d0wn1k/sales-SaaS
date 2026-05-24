@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.8",
+  "profile_version": "1.0.10",
   "status": "active",
-  "last_updated": "2026-05-22",
+  "last_updated": "2026-05-24",
   "repo_identity": {
     "name": "sales-aaas-platform",
     "workspace": "sales-saas",
@@ -29,6 +29,7 @@
       "agile_work_item.json",
       ".jarvis/agile_work_item.json",
       ".jarvis/pr_evidence_manifest.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json",
       "docs/platform/release-readiness-report.md",
       "README.md",
       "docs/product/platform-requirements.md",
@@ -68,6 +69,151 @@
     ],
     "contract_scope": "This top-level workspace section identifies the mission workspace for repo-contract validation and does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, or shared API contracts.",
     "runtime_behavior_changed": false
+  },
+  "ownership": {
+    "runtime_behavior_changed": false,
+    "source_of_truth": [
+      {
+        "path": "docs/platform/service-ownership.md",
+        "cites": [
+          "Service identity",
+          "Scope of ownership",
+          "High-risk surfaces",
+          "First response checklist",
+          "Maintenance cadence"
+        ]
+      },
+      {
+        "path": "AGENTS.md",
+        "cites": [
+          "Repo Map",
+          "Engineering Rules",
+          "Definition of Done",
+          "Review Focus"
+        ]
+      },
+      {
+        "path": "agile_work_item.json",
+        "cites": [
+          "owner",
+          "reviewers",
+          "pull_request_expectations"
+        ]
+      },
+      {
+        "path": ".jarvis/pr_evidence_manifest.json",
+        "cites": [
+          "pull_request.required_evidence",
+          "release.rollback_metadata",
+          "deploy_evidence"
+        ]
+      }
+    ],
+    "primary_owner": {
+      "handle": "@5h4d0wn1k",
+      "ownership_model": "founder-operated until a wider team exists",
+      "source_ref": "docs/platform/service-ownership.md#service-identity"
+    },
+    "operating_model": [
+      "branch_to_pull_request_to_checks_to_release_gate",
+      "advisory_first_contract_validation",
+      "owner review before production promotion",
+      "rollback posture documented before release"
+    ],
+    "scope_of_ownership": [
+      "public marketing and pricing surface",
+      "onboarding and workspace bootstrap",
+      "auth and lifecycle flows",
+      "dashboard data contract",
+      "billing and subscriptions",
+      "provider dispatch posture and webhook handling",
+      "documentation truth alignment"
+    ],
+    "runtime_service_owners": [
+      {
+        "surface": "web",
+        "paths": [
+          "apps/web"
+        ],
+        "owner_role": "product surface owner",
+        "release_gate": "PR evidence, typecheck, tests, build, verify:core, and Cloudflare smoke where credentials permit before production promotion"
+      },
+      {
+        "surface": "api",
+        "paths": [
+          "apps/api",
+          "packages/shared",
+          "packages/database"
+        ],
+        "owner_role": "platform API owner",
+        "release_gate": "protected-surface review for auth, billing, tenancy, audit, webhook, and approval-gate changes"
+      },
+      {
+        "surface": "workflows",
+        "paths": [
+          "apps/workflows",
+          "packages/shared"
+        ],
+        "owner_role": "automation workflow owner",
+        "release_gate": "approval-gate and provider-dispatch evidence before enabling or widening autonomous operations"
+      }
+    ],
+    "protected_surface_owners": [
+      {
+        "surface": "auth_and_session",
+        "owner_role": "platform owner",
+        "required_evidence": "auth/session tests or smoke evidence when behavior changes"
+      },
+      {
+        "surface": "tenancy_and_workspace_scope",
+        "owner_role": "platform owner",
+        "required_evidence": "tenant isolation and workspace correctness evidence when behavior changes"
+      },
+      {
+        "surface": "billing_and_provider_webhooks",
+        "owner_role": "commercial platform owner",
+        "required_evidence": "checkout, portal, webhook idempotency, provider failure-mode, and reconciliation evidence when behavior changes"
+      },
+      {
+        "surface": "approval_gated_automation",
+        "owner_role": "automation workflow owner",
+        "required_evidence": "approval policy, audit path, and zero-unapproved-dispatch evidence when behavior changes"
+      },
+      {
+        "surface": "public_claims_and_pricing_truth",
+        "owner_role": "product owner",
+        "required_evidence": "claim truth and pricing-plan alignment review when public copy or pricing behavior changes"
+      }
+    ],
+    "decision_rights": {
+      "requires_explicit_approval": [
+        "adding production dependencies",
+        "changing public API or shared contract shapes",
+        "changing plan keys, billing behavior, or migration semantics",
+        "weakening auth, audit, rate-limit, approval, tenant isolation, or provider webhook verification logic",
+        "promoting production runtime deploys without rollback target confirmation"
+      ],
+      "advisory_first": true,
+      "pr_first_required": true
+    },
+    "release_ownership": {
+      "pr_first_required": true,
+      "rollback_owner": "@5h4d0wn1k until delegated in service-ownership documentation",
+      "metadata_only_rollback": "Revert the PR or restore the previous production profile and validator revisions; no Cloudflare service rollback is required for this ownership metadata change by itself.",
+      "runtime_release_rollback": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare."
+    },
+    "escalation_policy": [
+      "Escalate before changing runtime ownership semantics, public API behavior, deployment behavior, or protected auth, billing, tenancy, audit, provider webhook, or approval-gate behavior.",
+      "Hold production promotion when owner review, rollback target confirmation, or credential-backed smoke evidence is missing for runtime-impacting changes.",
+      "For metadata-only profile changes, require JSON parsing, Python syntax, strict repo contracts, repo audit, and medium-risk repo gates before claiming completion."
+    ],
+    "handoff_requirements": [
+      "Owner, reviewers, affected surfaces, validation plan, rollback plan, and residual risk are recorded in the work item or PR evidence.",
+      "Service ownership and release-readiness documents remain aligned with the production grade profile.",
+      "Credential-dependent smoke blockers are named explicitly instead of treated as passing evidence.",
+      "Runtime behavior, dependencies, migrations, workflows, deploy behavior, billing, auth, tenancy, and provider callback impacts are stated as changed or unchanged."
+    ],
+    "contract_scope": "This ownership section makes existing owner, review, escalation, release, and rollback responsibilities discoverable from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, ownership semantics, or deploy behavior."
   },
   "agile": {
     "runtime_behavior_changed": false,
@@ -710,6 +856,181 @@
       "Version baseline improvements and keep them rollbackable.",
       "Capture reusable lessons in repo contracts, runbooks, templates, or notes."
     ]
+  },
+  "continuous_improvement": {
+    "runtime_behavior_changed": false,
+    "source_of_truth": [
+      {
+        "path": ".jarvis/production_grade_profile.json",
+        "cites": [
+          "maturity",
+          "verification",
+          "release",
+          "continuous_improvement"
+        ]
+      },
+      {
+        "path": ".jarvis/pr_evidence_manifest.json",
+        "cites": [
+          "current_mission_evidence",
+          "verification_evidence",
+          "deploy_evidence",
+          "unresolved_risks"
+        ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json",
+        "cites": [
+          "pre_existing_wip",
+          "quarantine_policy",
+          "rollback_note"
+        ]
+      },
+      {
+        "path": "docs/platform/release-readiness-report.md",
+        "cites": [
+          "Delivery Blockers",
+          "Verification Evidence",
+          "Remaining Risk"
+        ]
+      },
+      {
+        "path": ".codex/reports/repo-operating-system-report.md",
+        "cites": [
+          "Score",
+          "Priority Gaps",
+          "Recommended Next Actions"
+        ]
+      }
+    ],
+    "maturity_baseline": {
+      "current_baseline": "scaffolded",
+      "current_score_percent": 64,
+      "assessment_source": "mission baseline",
+      "latest_local_audit_command": "npm run repo:audit",
+      "latest_local_audit_interpretation": "Repo operating-system audit can show template coverage as mature while release readiness still depends on PR evidence, deploy smoke, rollback target confirmation, and continuous improvement loops."
+    },
+    "target_state": {
+      "name": "self_improving",
+      "success_conditions": [
+        "Every release-sensitive PR carries ready/done, verification, deploy, rollback, and residual-risk evidence.",
+        "Dirty worktrees are quarantined before unrelated growth begins.",
+        "Repo audits and contract validation run in CI and are reviewed before merge.",
+        "Credential-dependent smoke gaps and rollback target gaps are recorded instead of treated as passing evidence.",
+        "Reusable lessons from release blockers become repo contracts, runbooks, templates, or backlog items."
+      ]
+    },
+    "ratchet_policy": {
+      "rules": [
+        "Do not lower the baseline of a working system.",
+        "Prefer additive hardening over broad rewrites.",
+        "Version baseline improvements and keep them rollbackable.",
+        "Keep advisory validation strict enough to expose missing production-grade sections.",
+        "Treat missing evidence as an explicit risk, not a pass."
+      ]
+    },
+    "feedback_loops": [
+      {
+        "loop": "pull_request_review",
+        "trigger": "Every branch intended for merge.",
+        "evidence": "PR template, pr_evidence_manifest, CI status, and release-readiness report updates when release-sensitive."
+      },
+      {
+        "loop": "repo_operating_system_audit",
+        "trigger": "PR, main push, workflow dispatch, or local release-readiness pass.",
+        "evidence": "npm run repo:audit and npm run repo:report output."
+      },
+      {
+        "loop": "contract_validation",
+        "trigger": "Production profile, agile work item, PR evidence, rollback metadata, or PR template changes.",
+        "evidence": "npm run repo:contracts -- --strict."
+      },
+      {
+        "loop": "post_release_learning",
+        "trigger": "Production-sensitive rollout, blocked smoke, rollback, incident, or repeated mission blocker.",
+        "evidence": "Release notes, postmortem, scorecard, runbook update, or backlog item."
+      }
+    ],
+    "evidence_cadence": [
+      {
+        "cadence": "per_pr",
+        "required_evidence": [
+          "changed files",
+          "risk classification",
+          "verification commands",
+          "rollback action",
+          "residual risk"
+        ]
+      },
+      {
+        "cadence": "per_release",
+        "required_evidence": [
+          "affected Cloudflare services",
+          "last known-good rollback targets",
+          "post-deploy smoke",
+          "owner review"
+        ]
+      },
+      {
+        "cadence": "quarterly_or_major_change",
+        "required_evidence": [
+          "repo operating-system scorecard review",
+          "top recurring blockers",
+          "highest-leverage maturity ratchets"
+        ]
+      }
+    ],
+    "improvement_backlog": [
+      {
+        "item": "Make Cloudflare smoke executable from CI and controlled local ops contexts.",
+        "reason": "Current smoke validation is credential and environment dependent; blocked smoke must remain visible until URLs and credentials are available."
+      },
+      {
+        "item": "Capture actual last known-good Cloudflare Worker version IDs before production promotion.",
+        "reason": "Rollback metadata names the required target class, but provider access is needed for concrete target confirmation."
+      },
+      {
+        "item": "Keep PR evidence current after each pushed commit.",
+        "reason": "Previously green checks do not prove the final branch commit is releasable."
+      },
+      {
+        "item": "Promote repeated mission blockers into regression checks or scorecard evidence.",
+        "reason": "Historical or superseded dispatch blockers should not inflate active release pressure without evidence."
+      }
+    ],
+    "learning_capture": {
+      "destinations": [
+        "docs/platform/release-readiness-report.md",
+        ".jarvis/pr_evidence_manifest.json",
+        ".codex/reports/repo-operating-system-report.md",
+        "docs/reliability/production-readiness-review.md",
+        "docs/platform/deploy-and-rollback-policy.md"
+      ],
+      "rule": "When a release-readiness blocker repeats, capture the prevention mechanism or explain why it remains a human review item."
+    },
+    "metrics": [
+      {
+        "name": "dirty_worktree_quarantined_before_growth",
+        "target": "100% for mission-devops release-readiness nodes"
+      },
+      {
+        "name": "strict_repo_contract_validation",
+        "target": "0 warnings and 0 errors before merge"
+      },
+      {
+        "name": "required_release_evidence_present",
+        "target": "PR evidence covers verification, deploy or smoke status, rollback action, and unresolved risks"
+      },
+      {
+        "name": "credential_dependent_checks_labeled",
+        "target": "100% of unavailable smoke or deploy checks are marked blocked with next safe step"
+      }
+    ],
+    "rollback_policy": {
+      "metadata_only_action": "Revert the PR or restore the previous production profile, validator, quarantine manifest, PR evidence manifest, and release-readiness report revisions; no Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
+      "runtime_release_action_if_bundled": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare."
+    },
+    "contract_scope": "This continuous_improvement section makes the maturity ratchet, feedback loops, evidence cadence, learning capture, and backlog visible from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, deploy behavior, or ownership semantics."
   },
   "production_grade_contract": {
     "contract_type": "advisory_and_release_gate",
@@ -1397,9 +1718,9 @@
   },
   "metadata": {
     "created_by": "Codex mission node node-745e76479b19",
-    "mission_id": "mission-ff6100899322",
-    "last_updated_by": "Codex mission node node-b0fddb7a269f",
-    "last_updated_reason": "Added top-level reliability contract and advisory validation while preserving metadata-only runtime behavior.",
+    "mission_id": "mission-37decb31706c",
+    "last_updated_by": "Codex mission node node-0972c3bef4bd",
+    "last_updated_reason": "Added top-level continuous improvement contract, dirty-worktree quarantine evidence, and current release-readiness metadata while preserving metadata-only runtime behavior.",
     "owned_path": ".jarvis/production_grade_profile.json",
     "change_type": "metadata_only",
     "runtime_behavior_changed": false,
