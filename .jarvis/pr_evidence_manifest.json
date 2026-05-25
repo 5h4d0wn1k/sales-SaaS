@@ -190,8 +190,8 @@
     },
     "pull_request": {
       "known_url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
-      "status": "not_rechecked_for_unpushed_local_diff",
-      "checks_observed": "PR #1 is open and mergeable; previously pushed checks were green on 2026-05-24. Final local changes from this node must be committed, pushed, and observed in PR checks before merge."
+      "status": "open_mergeable_branch_pushed_ci_pending_or_running",
+      "checks_observed": "PR #1 is open and mergeable. This node pushed the release-readiness diff; GitGuardian completed successfully immediately after push, while CI and repo operating-system checks were queued or in progress. The final pushed commit must finish required PR checks successfully before merge."
     },
     "verification_evidence": [
       {
@@ -362,7 +362,7 @@
       ]
     },
     "unresolved_risks": [
-      "GitHub checks for the final pushed commit from this node must be observed before merge.",
+      "GitHub checks for the final pushed commit from this node must finish green before merge; immediate post-push evidence showed GitGuardian successful and CI/repo operating-system checks queued or in progress.",
       "Cloudflare staging or production deploy was not authorized or needed for this release-gate-only node.",
       "Cloudflare smoke remains blocked until environment-backed URLs and credentials are available.",
       "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without Cloudflare provider access for runtime releases.",
