@@ -22,6 +22,8 @@ class Finding:
 
 PROFILE_PATH = ".jarvis/production_grade_profile.json"
 WORK_ITEM_PATHS = ["agile_work_item.json", ".jarvis/agile_work_item.json"]
+DAILY_OBSERVATION_PATH = ".jarvis/daily_observation.json"
+LEARNING_MEMO_PROMOTION_PATH = ".jarvis/learning_memo_promotion.json"
 PR_EVIDENCE_MANIFEST_PATH = ".jarvis/pr_evidence_manifest.json"
 PR_TEMPLATE_PATH = ".github/PULL_REQUEST_TEMPLATE.md"
 PACKAGE_JSON_PATH = "package.json"
@@ -195,6 +197,16 @@ PROFILE_REQUIRED_CONTINUOUS_IMPROVEMENT_PATHS = [
     "continuous_improvement.target_state.name",
     "continuous_improvement.target_state.success_conditions",
     "continuous_improvement.ratchet_policy.rules",
+    "continuous_improvement.daily_observation.manifest_path",
+    "continuous_improvement.daily_observation.cadence",
+    "continuous_improvement.daily_observation.required_fields",
+    "continuous_improvement.daily_observation.promotion_target",
+    "continuous_improvement.daily_observation.runtime_behavior_changed",
+    "continuous_improvement.learning_memo_promotion.manifest_path",
+    "continuous_improvement.learning_memo_promotion.promotion_model",
+    "continuous_improvement.learning_memo_promotion.required_fields",
+    "continuous_improvement.learning_memo_promotion.source_observation_path",
+    "continuous_improvement.learning_memo_promotion.runtime_behavior_changed",
     "continuous_improvement.feedback_loops",
     "continuous_improvement.evidence_cadence",
     "continuous_improvement.improvement_backlog",
@@ -256,6 +268,65 @@ WORK_ITEM_REQUIRED_PATHS = [
     "evidence_requirements.done_evidence",
     "rollback_expectations.default_release_rollback_action",
     "pull_request_expectations.must_include",
+]
+
+DAILY_OBSERVATION_REQUIRED_PATHS = [
+    "schema_version",
+    "contract_name",
+    "surface_type",
+    "status",
+    "last_reviewed",
+    "runtime_behavior_changed",
+    "purpose",
+    "applies_to.workspace",
+    "applies_to.production_grade_profile_path",
+    "applies_to.learning_memo_promotion_path",
+    "applies_to.pr_evidence_manifest_path",
+    "observation_policy.cadence",
+    "observation_policy.required_fields",
+    "observation_policy.evidence_rules",
+    "observation_policy.promotion_trigger",
+    "daily_observation.date",
+    "daily_observation.mission_id",
+    "daily_observation.mission_node",
+    "daily_observation.observation",
+    "daily_observation.classification",
+    "daily_observation.evidence",
+    "daily_observation.action_taken",
+    "daily_observation.promotion_candidate",
+    "daily_observation.promotion_target",
+    "daily_observation.runtime_behavior_changed",
+    "rollback_policy.metadata_only_action",
+    "contract_scope",
+]
+
+LEARNING_MEMO_PROMOTION_REQUIRED_PATHS = [
+    "schema_version",
+    "contract_name",
+    "surface_type",
+    "status",
+    "last_reviewed",
+    "runtime_behavior_changed",
+    "purpose",
+    "applies_to.workspace",
+    "applies_to.production_grade_profile_path",
+    "applies_to.daily_observation_path",
+    "applies_to.pr_evidence_manifest_path",
+    "promotion_policy.promotion_model",
+    "promotion_policy.required_evidence",
+    "promotion_policy.promotion_destinations",
+    "promotion_policy.blocked_conditions",
+    "learning_memo_template.required_fields",
+    "current_promotion.promotion_id",
+    "current_promotion.source_observation_path",
+    "current_promotion.source_observation_date",
+    "current_promotion.lesson",
+    "current_promotion.evidence_refs",
+    "current_promotion.promoted_to",
+    "current_promotion.runtime_behavior_changed",
+    "current_promotion.rollback_note",
+    "current_promotion.status",
+    "contract_scope",
 ]
 
 PR_EVIDENCE_REQUIRED_PATHS = [
@@ -484,6 +555,51 @@ def check_expected_value(
     )
 
 
+def iter_path_references(value: Any) -> Iterable[str]:
+    if isinstance(value, str):
+        yield value
+        return
+    if not isinstance(value, list):
+        return
+
+    for item in value:
+        if isinstance(item, str):
+            yield item
+        elif isinstance(item, dict) and isinstance(item.get("path"), str):
+            yield item["path"]
+
+
+def check_path_reference(
+    relpath: str,
+    data: Any,
+    dotted_path: str,
+    expected_path: str,
+    findings: list[Finding],
+) -> None:
+    value = get_nested(data, dotted_path) if isinstance(data, dict) else None
+    observed_paths = set(iter_path_references(value))
+    if expected_path in observed_paths:
+        findings.append(
+            Finding(
+                "pass",
+                "contract.path_reference",
+                relpath,
+                f"`{dotted_path}` references `{expected_path}`.",
+            )
+        )
+        return
+
+    findings.append(
+        Finding(
+            "warn",
+            "contract.path_reference",
+            relpath,
+            f"`{dotted_path}` should reference `{expected_path}`.",
+            f"observed: {', '.join(sorted(observed_paths))}" if observed_paths else "observed none",
+        )
+    )
+
+
 def check_definition_criteria(relpath: str, data: Any, key: str, findings: list[Finding]) -> None:
     if data is None:
         return
@@ -707,6 +823,78 @@ def check_profile(root: Path, findings: list[Finding]) -> Any | None:
     check_expected_value(PROFILE_PATH, profile, "reliability.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "verification.runtime_behavior_changed", False, findings)
     check_expected_value(PROFILE_PATH, profile, "continuous_improvement.runtime_behavior_changed", False, findings)
+    check_expected_value(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.daily_observation.manifest_path",
+        DAILY_OBSERVATION_PATH,
+        findings,
+    )
+    check_expected_value(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.daily_observation.promotion_target",
+        LEARNING_MEMO_PROMOTION_PATH,
+        findings,
+    )
+    check_expected_value(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.daily_observation.runtime_behavior_changed",
+        False,
+        findings,
+    )
+    check_expected_value(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.learning_memo_promotion.manifest_path",
+        LEARNING_MEMO_PROMOTION_PATH,
+        findings,
+    )
+    check_expected_value(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.learning_memo_promotion.source_observation_path",
+        DAILY_OBSERVATION_PATH,
+        findings,
+    )
+    check_expected_value(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.learning_memo_promotion.runtime_behavior_changed",
+        False,
+        findings,
+    )
+    check_path_reference(PROFILE_PATH, profile, "repo_identity.source_of_truth", DAILY_OBSERVATION_PATH, findings)
+    check_path_reference(PROFILE_PATH, profile, "repo_identity.source_of_truth", LEARNING_MEMO_PROMOTION_PATH, findings)
+    check_path_reference(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.source_of_truth",
+        DAILY_OBSERVATION_PATH,
+        findings,
+    )
+    check_path_reference(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.source_of_truth",
+        LEARNING_MEMO_PROMOTION_PATH,
+        findings,
+    )
+    check_path_reference(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.learning_capture.destinations",
+        DAILY_OBSERVATION_PATH,
+        findings,
+    )
+    check_path_reference(
+        PROFILE_PATH,
+        profile,
+        "continuous_improvement.learning_capture.destinations",
+        LEARNING_MEMO_PROMOTION_PATH,
+        findings,
+    )
     check_schema_version(PROFILE_PATH, profile, 1, findings)
     check_rollback_action(PROFILE_PATH, profile, "release.rollback_action", findings)
     check_cloudflare_rollback_metadata(PROFILE_PATH, profile, "release.rollback_metadata", findings)
@@ -746,6 +934,90 @@ def check_work_item_contracts(root: Path, findings: list[Finding]) -> None:
                 "Canonical and mirrored agile work item contracts differ.",
             )
         )
+
+
+def check_daily_observation_contract(root: Path, findings: list[Finding]) -> None:
+    data = load_json(root, DAILY_OBSERVATION_PATH, findings)
+    check_required_paths(DAILY_OBSERVATION_PATH, data, DAILY_OBSERVATION_REQUIRED_PATHS, findings)
+    check_schema_version(DAILY_OBSERVATION_PATH, data, 1, findings)
+    check_expected_value(DAILY_OBSERVATION_PATH, data, "runtime_behavior_changed", False, findings)
+    check_expected_value(
+        DAILY_OBSERVATION_PATH,
+        data,
+        "applies_to.production_grade_profile_path",
+        PROFILE_PATH,
+        findings,
+    )
+    check_expected_value(
+        DAILY_OBSERVATION_PATH,
+        data,
+        "applies_to.learning_memo_promotion_path",
+        LEARNING_MEMO_PROMOTION_PATH,
+        findings,
+    )
+    check_expected_value(
+        DAILY_OBSERVATION_PATH,
+        data,
+        "applies_to.pr_evidence_manifest_path",
+        PR_EVIDENCE_MANIFEST_PATH,
+        findings,
+    )
+    check_expected_value(
+        DAILY_OBSERVATION_PATH,
+        data,
+        "daily_observation.promotion_target",
+        LEARNING_MEMO_PROMOTION_PATH,
+        findings,
+    )
+    check_expected_value(
+        DAILY_OBSERVATION_PATH,
+        data,
+        "daily_observation.runtime_behavior_changed",
+        False,
+        findings,
+    )
+
+
+def check_learning_memo_promotion_contract(root: Path, findings: list[Finding]) -> None:
+    data = load_json(root, LEARNING_MEMO_PROMOTION_PATH, findings)
+    check_required_paths(LEARNING_MEMO_PROMOTION_PATH, data, LEARNING_MEMO_PROMOTION_REQUIRED_PATHS, findings)
+    check_schema_version(LEARNING_MEMO_PROMOTION_PATH, data, 1, findings)
+    check_expected_value(LEARNING_MEMO_PROMOTION_PATH, data, "runtime_behavior_changed", False, findings)
+    check_expected_value(
+        LEARNING_MEMO_PROMOTION_PATH,
+        data,
+        "applies_to.production_grade_profile_path",
+        PROFILE_PATH,
+        findings,
+    )
+    check_expected_value(
+        LEARNING_MEMO_PROMOTION_PATH,
+        data,
+        "applies_to.daily_observation_path",
+        DAILY_OBSERVATION_PATH,
+        findings,
+    )
+    check_expected_value(
+        LEARNING_MEMO_PROMOTION_PATH,
+        data,
+        "applies_to.pr_evidence_manifest_path",
+        PR_EVIDENCE_MANIFEST_PATH,
+        findings,
+    )
+    check_expected_value(
+        LEARNING_MEMO_PROMOTION_PATH,
+        data,
+        "current_promotion.source_observation_path",
+        DAILY_OBSERVATION_PATH,
+        findings,
+    )
+    check_expected_value(
+        LEARNING_MEMO_PROMOTION_PATH,
+        data,
+        "current_promotion.runtime_behavior_changed",
+        False,
+        findings,
+    )
 
 
 def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> None:
@@ -947,6 +1219,8 @@ def main() -> int:
     findings: list[Finding] = []
     check_profile(root, findings)
     check_work_item_contracts(root, findings)
+    check_daily_observation_contract(root, findings)
+    check_learning_memo_promotion_contract(root, findings)
     check_pr_evidence_manifest(root, findings)
     check_pr_template(root, findings)
     check_package_script(root, findings)

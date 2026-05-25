@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.10",
+  "profile_version": "1.0.12",
   "status": "active",
-  "last_updated": "2026-05-24",
+  "last_updated": "2026-05-25",
   "repo_identity": {
     "name": "sales-aaas-platform",
     "workspace": "sales-saas",
@@ -28,8 +28,11 @@
       "AGENTS.md",
       "agile_work_item.json",
       ".jarvis/agile_work_item.json",
+      ".jarvis/daily_observation.json",
+      ".jarvis/learning_memo_promotion.json",
       ".jarvis/pr_evidence_manifest.json",
       ".jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
       "docs/platform/release-readiness-report.md",
       "README.md",
       "docs/product/platform-requirements.md",
@@ -846,7 +849,7 @@
   },
   "maturity": {
     "current_baseline": "scaffolded",
-    "current_score_percent": 64,
+    "current_score_percent": 73,
     "assessment_source": "mission baseline",
     "target": "self_improving",
     "target_description": "The repository should make production expectations explicit, keep delivery PR-first, require evidence before merge and release, and preserve rollback paths for launch-critical surfaces.",
@@ -879,9 +882,36 @@
         ]
       },
       {
+        "path": ".jarvis/daily_observation.json",
+        "cites": [
+          "observation_policy",
+          "daily_observation",
+          "promotion_target",
+          "contract_scope"
+        ]
+      },
+      {
+        "path": ".jarvis/learning_memo_promotion.json",
+        "cites": [
+          "promotion_policy",
+          "learning_memo_template",
+          "current_promotion",
+          "contract_scope"
+        ]
+      },
+      {
         "path": ".jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json",
         "cites": [
           "pre_existing_wip",
+          "quarantine_policy",
+          "rollback_note"
+        ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+        "cites": [
+          "pre_existing_wip",
+          "pull_request_context",
           "quarantine_policy",
           "rollback_note"
         ]
@@ -905,7 +935,7 @@
     ],
     "maturity_baseline": {
       "current_baseline": "scaffolded",
-      "current_score_percent": 64,
+      "current_score_percent": 73,
       "assessment_source": "mission baseline",
       "latest_local_audit_command": "npm run repo:audit",
       "latest_local_audit_interpretation": "Repo operating-system audit can show template coverage as mature while release readiness still depends on PR evidence, deploy smoke, rollback target confirmation, and continuous improvement loops."
@@ -917,6 +947,7 @@
         "Dirty worktrees are quarantined before unrelated growth begins.",
         "Repo audits and contract validation run in CI and are reviewed before merge.",
         "Credential-dependent smoke gaps and rollback target gaps are recorded instead of treated as passing evidence.",
+        "Daily observations and learning memo promotion decisions have explicit JSON evidence before they count as production-grade operating-system learning.",
         "Reusable lessons from release blockers become repo contracts, runbooks, templates, or backlog items."
       ]
     },
@@ -929,7 +960,51 @@
         "Treat missing evidence as an explicit risk, not a pass."
       ]
     },
+    "daily_observation": {
+      "manifest_path": ".jarvis/daily_observation.json",
+      "cadence": "daily_or_when_material_delivery_signal_exists",
+      "required_fields": [
+        "date",
+        "mission_id",
+        "mission_node",
+        "observation",
+        "evidence",
+        "classification",
+        "promotion_candidate",
+        "promotion_target",
+        "runtime_behavior_changed"
+      ],
+      "promotion_target": ".jarvis/learning_memo_promotion.json",
+      "runtime_behavior_changed": false
+    },
+    "learning_memo_promotion": {
+      "manifest_path": ".jarvis/learning_memo_promotion.json",
+      "promotion_model": "advisory_first_pr_first",
+      "required_fields": [
+        "promotion_id",
+        "source_observation_path",
+        "source_observation_date",
+        "lesson",
+        "evidence_refs",
+        "promoted_to",
+        "runtime_behavior_changed",
+        "rollback_note",
+        "status"
+      ],
+      "source_observation_path": ".jarvis/daily_observation.json",
+      "runtime_behavior_changed": false
+    },
     "feedback_loops": [
+      {
+        "loop": "daily_observation",
+        "trigger": "Daily review or any material delivery signal, blocker, release-readiness gap, or repeated mission pattern.",
+        "evidence": ".jarvis/daily_observation.json"
+      },
+      {
+        "loop": "learning_memo_promotion",
+        "trigger": "A daily observation identifies a reusable lesson that should change a contract, runbook, template, scorecard, or backlog.",
+        "evidence": ".jarvis/learning_memo_promotion.json"
+      },
       {
         "loop": "pull_request_review",
         "trigger": "Every branch intended for merge.",
@@ -952,6 +1027,15 @@
       }
     ],
     "evidence_cadence": [
+      {
+        "cadence": "per_day_or_material_signal",
+        "required_evidence": [
+          ".jarvis/daily_observation.json",
+          ".jarvis/learning_memo_promotion.json when promotion_candidate is true",
+          "runtime behavior impact statement",
+          "rollback note for promoted metadata"
+        ]
+      },
       {
         "cadence": "per_pr",
         "required_evidence": [
@@ -1000,6 +1084,8 @@
     ],
     "learning_capture": {
       "destinations": [
+        ".jarvis/daily_observation.json",
+        ".jarvis/learning_memo_promotion.json",
         "docs/platform/release-readiness-report.md",
         ".jarvis/pr_evidence_manifest.json",
         ".codex/reports/repo-operating-system-report.md",
@@ -1027,10 +1113,10 @@
       }
     ],
     "rollback_policy": {
-      "metadata_only_action": "Revert the PR or restore the previous production profile, validator, quarantine manifest, PR evidence manifest, and release-readiness report revisions; no Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
+      "metadata_only_action": "Revert the PR or restore the previous production profile, daily observation manifest, learning memo promotion manifest, validator, quarantine manifests, PR evidence manifest, and release-readiness report revisions; no Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
       "runtime_release_action_if_bundled": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare."
     },
-    "contract_scope": "This continuous_improvement section makes the maturity ratchet, feedback loops, evidence cadence, learning capture, and backlog visible from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, deploy behavior, or ownership semantics."
+    "contract_scope": "This continuous_improvement section makes the maturity ratchet, daily observation surface, learning memo promotion surface, feedback loops, evidence cadence, learning capture, and backlog visible from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, deploy behavior, or ownership semantics."
   },
   "production_grade_contract": {
     "contract_type": "advisory_and_release_gate",
@@ -1660,7 +1746,7 @@
     "rollback_metadata_required": [
       "release.rollback_action",
       "affected Cloudflare services: web, api, workflows, or explicit none for metadata-only changes",
-      "last known-good Worker version IDs or dashboard rollback targets for every affected Cloudflare service",
+      "last known-good concrete Worker version IDs or Cloudflare dashboard rollback target UUIDs for every affected Cloudflare service",
       "post-rollback smoke command",
       "rollback owner",
       "schema or data compatibility constraints"
@@ -1676,24 +1762,24 @@
       "service_targets": [
         {
           "service": "web",
-          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for the web surface.",
+          "required_target": "Last known-good concrete Cloudflare Worker version ID or Cloudflare dashboard rollback target UUID for the web surface.",
           "post_rollback_check": "Run npm run smoke:cloudflare and confirm the web health or route smoke result."
         },
         {
           "service": "api",
-          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for the api surface.",
+          "required_target": "Last known-good concrete Cloudflare Worker version ID or Cloudflare dashboard rollback target UUID for the api surface.",
           "post_rollback_check": "Run npm run smoke:cloudflare and confirm /health responds successfully."
         },
         {
           "service": "workflows",
-          "required_target": "Last known-good Cloudflare Worker version ID or dashboard rollback target for workflows.",
+          "required_target": "Last known-good concrete Cloudflare Worker version ID or Cloudflare dashboard rollback target UUID for workflows.",
           "post_rollback_check": "Run npm run smoke:cloudflare and confirm workflow smoke or health evidence when workflows are in scope."
         }
       ],
       "required_fields": [
         "release or PR identifier",
         "affected Cloudflare services: web, api, workflows, or explicit none for metadata-only changes",
-        "last known-good Worker version IDs or dashboard rollback targets for every affected Cloudflare service",
+        "last known-good concrete Worker version IDs or Cloudflare dashboard rollback target UUIDs for every affected Cloudflare service",
         "rollback owner",
         "post-rollback command: npm run smoke:cloudflare",
         "schema or data compatibility constraints"

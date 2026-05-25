@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "contract_name": "sales-saas-learning-memo-promotion",
+  "surface_type": "continuous_improvement_learning_memo_promotion",
+  "status": "active",
+  "last_reviewed": "2026-05-25",
+  "runtime_behavior_changed": false,
+  "purpose": "Define when an observation becomes a promoted learning memo and where that learning must be captured before it is treated as part of the production-grade operating system.",
+  "applies_to": {
+    "workspace": "sales-saas",
+    "production_grade_profile_path": ".jarvis/production_grade_profile.json",
+    "daily_observation_path": ".jarvis/daily_observation.json",
+    "pr_evidence_manifest_path": ".jarvis/pr_evidence_manifest.json"
+  },
+  "promotion_policy": {
+    "promotion_model": "advisory_first_pr_first",
+    "required_evidence": [
+      "source daily observation path",
+      "mission or PR context",
+      "evidence references",
+      "target contract, runbook, template, or backlog destination",
+      "runtime behavior impact statement",
+      "rollback note"
+    ],
+    "promotion_destinations": [
+      ".jarvis/production_grade_profile.json",
+      ".jarvis/pr_evidence_manifest.json",
+      "docs/platform/release-readiness-report.md",
+      "docs/platform/deploy-and-rollback-policy.md",
+      "docs/platform/service-ownership.md",
+      "docs/reliability/production-readiness-review.md",
+      ".codex/reports/repo-operating-system-report.md"
+    ],
+    "blocked_conditions": [
+      "Evidence is speculative or not tied to inspected repo state.",
+      "The proposed memo would weaken auth, billing, tenancy, audit, rate-limit, webhook, approval-gate, or rollback expectations.",
+      "The proposed memo requires runtime behavior changes but lacks a scoped work item, tests, rollout plan, and rollback plan."
+    ]
+  },
+  "learning_memo_template": {
+    "required_fields": [
+      "promotion_id",
+      "source_observation_path",
+      "source_observation_date",
+      "lesson",
+      "evidence_refs",
+      "promoted_to",
+      "runtime_behavior_changed",
+      "rollback_note",
+      "status"
+    ]
+  },
+  "current_promotion": {
+    "promotion_id": "2026-05-25-node-6f40795e0114-dirty-worktree-and-learning-loop",
+    "source_observation_path": ".jarvis/daily_observation.json",
+    "source_observation_date": "2026-05-25",
+    "lesson": "A release-readiness mission that resumes from a dirty branch should first preserve inherited WIP with a branch or evidence bundle, then promote repeated delivery lessons through explicit observation and learning memo surfaces.",
+    "evidence_refs": [
+      ".jarvis/daily_observation.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+      ".jarvis/production_grade_profile.json",
+      ".jarvis/pr_evidence_manifest.json",
+      ".codex/scripts/validate_repo_contracts.py",
+      "docs/platform/release-readiness-report.md"
+    ],
+    "promoted_to": [
+      "production_grade_profile.continuous_improvement.daily_observation",
+      "production_grade_profile.continuous_improvement.learning_memo_promotion",
+      "production_grade_profile.continuous_improvement.source_of_truth",
+      "pr_evidence_manifest.current_mission_evidence",
+      "advisory repo contract validation",
+      "release-readiness evidence"
+    ],
+    "runtime_behavior_changed": false,
+    "rollback_note": "Revert the metadata-only JSON manifests plus profile, validator, PR evidence, and release-readiness documentation changes. No Cloudflare worker rollback is required for this change by itself.",
+    "status": "promoted_to_advisory_contract"
+  },
+  "non_goals": [
+    "This file does not authorize automatic code changes from observations.",
+    "This file does not replace human review for protected surfaces.",
+    "This file does not deploy services or change Cloudflare configuration."
+  ],
+  "contract_scope": "This learning memo promotion manifest defines how daily observations become advisory production-grade operating-system evidence. It does not change runtime behavior, dependencies, migrations, workflow triggers, deploy behavior, billing behavior, auth behavior, tenancy logic, provider webhooks, approval gates, or shared API contracts."
+}

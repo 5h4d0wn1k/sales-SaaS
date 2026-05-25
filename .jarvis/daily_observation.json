@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "contract_name": "sales-saas-daily-observation",
+  "surface_type": "continuous_improvement_daily_observation",
+  "status": "active",
+  "last_reviewed": "2026-05-25",
+  "runtime_behavior_changed": false,
+  "purpose": "Capture daily, evidence-backed observations that can feed the self-improvement loop without changing runtime behavior.",
+  "applies_to": {
+    "workspace": "sales-saas",
+    "production_grade_profile_path": ".jarvis/production_grade_profile.json",
+    "learning_memo_promotion_path": ".jarvis/learning_memo_promotion.json",
+    "pr_evidence_manifest_path": ".jarvis/pr_evidence_manifest.json"
+  },
+  "observation_policy": {
+    "cadence": "daily_or_when_material_delivery_signal_exists",
+    "required_fields": [
+      "date",
+      "mission_id",
+      "mission_node",
+      "observation",
+      "evidence",
+      "classification",
+      "promotion_candidate",
+      "promotion_target",
+      "runtime_behavior_changed"
+    ],
+    "evidence_rules": [
+      "Base observations on inspected repo state, command output, CI evidence, or documented release blockers.",
+      "Distinguish active blockers from historical, superseded, or credential-blocked evidence.",
+      "Do not record secret values; references to host-managed env files may name paths only.",
+      "If the observation changes runtime behavior, it must leave this metadata-only surface and follow protected-surface review."
+    ],
+    "promotion_trigger": "Promote only when the observation identifies a reusable lesson, repeated blocker, missing contract surface, or release-readiness gap that should change a repo contract, runbook, template, or backlog."
+  },
+  "daily_observation": {
+    "date": "2026-05-25",
+    "mission_id": "mission-fe02ff14bef4",
+    "mission_node": "node-6f40795e0114",
+    "observation": "The release-readiness branch had uncommitted WIP from a prior mission callback loss while the production-grade profile was being ratcheted toward self-improving evidence loops.",
+    "classification": [
+      "dirty_worktree_quarantine",
+      "self_improvement_loop_gap",
+      "release_readiness_evidence_gap"
+    ],
+    "evidence": [
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+        "signal": "Captured the exact branch, upstream sync, PR context, modified files, untracked files, and quarantine policy before this node layered on new release-readiness edits."
+      },
+      {
+        "path": ".jarvis/production_grade_profile.json",
+        "signal": "continuous_improvement.source_of_truth now references daily observation, learning memo promotion, and both dirty-worktree quarantine manifests."
+      },
+      {
+        "path": ".jarvis/pr_evidence_manifest.json",
+        "signal": "current_mission_evidence carries PR-first release evidence, rollback metadata, verification expectations, and unresolved risks for the current node."
+      }
+    ],
+    "action_taken": "Preserve inherited WIP with a current dirty-worktree quarantine manifest, keep daily observation and learning memo promotion as explicit JSON surfaces, and wire current mission evidence into PR and release-readiness artifacts.",
+    "promotion_candidate": true,
+    "promotion_target": ".jarvis/learning_memo_promotion.json",
+    "runtime_behavior_changed": false
+  },
+  "non_goals": [
+    "This file does not run scheduled jobs.",
+    "This file does not change product runtime, API behavior, billing, auth, tenancy, provider dispatch, migrations, workflows, or deploy behavior.",
+    "This file does not replace PR evidence, release gates, or owner review."
+  ],
+  "rollback_policy": {
+    "metadata_only_action": "Revert this manifest and the associated production profile, PR evidence, release-readiness report, and validator changes.",
+    "runtime_release_action_if_bundled": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare."
+  },
+  "contract_scope": "This daily observation manifest makes evidence capture explicit for the continuous-improvement loop. It does not change runtime behavior, dependencies, migrations, workflow triggers, deploy behavior, billing behavior, auth behavior, tenancy logic, provider webhooks, approval gates, or shared API contracts."
+}

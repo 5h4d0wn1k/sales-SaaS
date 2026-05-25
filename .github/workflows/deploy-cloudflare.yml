@@ -20,7 +20,7 @@ on:
           - web
           - workflows
       release_rollback_action:
-        description: "release.rollback_action metadata; required for production deploys"
+        description: "release.rollback_action JSON with concrete Cloudflare rollback targets; required for production deploys"
         required: false
         type: string
 
@@ -34,27 +34,222 @@ jobs:
     env:
       RELEASE_ROLLBACK_ACTION: ${{ inputs.release_rollback_action }}
       TARGET_ENVIRONMENT: ${{ inputs.environment }}
+      TARGET_SERVICES: ${{ inputs.services }}
     steps:
-      - name: Require production rollback action
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Require concrete production rollback targets
         run: |
+          set -euo pipefail
+
           if [[ "$TARGET_ENVIRONMENT" != "production" ]]; then
-            echo "release.rollback_action is optional for $TARGET_ENVIRONMENT deploys." >> "$GITHUB_STEP_SUMMARY"
+            echo "release.rollback_action target metadata is optional for $TARGET_ENVIRONMENT deploys." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           if [[ -z "${RELEASE_ROLLBACK_ACTION//[[:space:]]/}" ]]; then
-            echo "::error title=Missing release.rollback_action::Production Cloudflare deploys require explicit release.rollback_action metadata."
-            echo "Provide the exact rollback command path for the affected Worker versions before retrying."
+            echo "::error title=Missing release.rollback_action::Production Cloudflare deploys require JSON release.rollback_action metadata with concrete Cloudflare rollback targets."
+            echo "Provide rollback targets for every service selected by the workflow_dispatch services input before retrying."
             exit 1
           fi
 
-          {
-            echo "### release.rollback_action"
-            echo
-            echo '```'
-            echo "$RELEASE_ROLLBACK_ACTION"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const metadataText = process.env.RELEASE_ROLLBACK_ACTION ?? "";
+          const targetServicesInput = process.env.TARGET_SERVICES ?? "";
+          const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+          const serviceConfig = {
+            web: "apps/web/wrangler.jsonc",
+            api: "apps/api/wrangler.jsonc",
+            workflows: "apps/workflows/wrangler.jsonc",
+          };
+          const requiredServices =
+            targetServicesInput === "all"
+              ? ["web", "api", "workflows"]
+              : [targetServicesInput].filter(Boolean);
+          const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+          const placeholderPattern =
+            /(^|[^a-z0-9])(?:todo|tbd|placeholder|sample|example|dummy|replace[-_ ]?me|previous[-_ ]?release|last[-_ ]?known[-_ ]?good|worker[-_ ]?version[-_ ]?id|dashboard[-_ ]?rollback[-_ ]?target|not[-_ ]?applicable|n\/a)([^a-z0-9]|$)|[<>]/i;
+          const errors = [];
+
+          const addError = (title, message) => {
+            errors.push({ title, message });
+          };
+
+          if (requiredServices.length === 0) {
+            addError(
+              "Missing services input",
+              "workflow_dispatch services input is required to determine affected Cloudflare rollback targets.",
+            );
+          }
+
+          const hasText = (value) => typeof value === "string" && value.trim().length > 0;
+          const extractUuid = (value) => {
+            if (!hasText(value)) {
+              return null;
+            }
+
+            const match = value.match(uuidPattern);
+            return match ? match[0] : null;
+          };
+
+          const flattenStringValues = (value, values = []) => {
+            if (typeof value === "string") {
+              values.push(value);
+              return values;
+            }
+
+            if (Array.isArray(value)) {
+              value.forEach((item) => flattenStringValues(item, values));
+              return values;
+            }
+
+            if (value && typeof value === "object") {
+              Object.values(value).forEach((item) => flattenStringValues(item, values));
+            }
+
+            return values;
+          };
+
+          let metadata;
+          try {
+            metadata = JSON.parse(metadataText);
+          } catch (error) {
+            addError(
+              "Invalid release.rollback_action",
+              `Production release.rollback_action must be a JSON object; parse failed: ${error.message}`,
+            );
+          }
+
+          if (!metadata || Array.isArray(metadata) || typeof metadata !== "object") {
+            addError(
+              "Invalid release.rollback_action",
+              "Production release.rollback_action must be a JSON object with rollback_owner, post_rollback_smoke_command, and targets or service_targets.",
+            );
+          }
+
+          if (metadata && typeof metadata === "object") {
+            if (!hasText(metadata.rollback_owner)) {
+              addError("Missing rollback owner", "release.rollback_action.rollback_owner is required.");
+            }
+
+            if (metadata.post_rollback_smoke_command !== "npm run smoke:cloudflare") {
+              addError(
+                "Missing post-rollback smoke",
+                "release.rollback_action.post_rollback_smoke_command must be exactly `npm run smoke:cloudflare`.",
+              );
+            }
+
+            for (const value of flattenStringValues(metadata)) {
+              if (placeholderPattern.test(value.toLowerCase())) {
+                addError(
+                  "Placeholder rollback metadata",
+                  `release.rollback_action contains placeholder rollback text: ${JSON.stringify(value)}`,
+                );
+              }
+            }
+          }
+
+          const objectTargets =
+            metadata && metadata.targets && !Array.isArray(metadata.targets) && typeof metadata.targets === "object"
+              ? metadata.targets
+              : {};
+          const listTargets = Array.isArray(metadata?.service_targets) ? metadata.service_targets : [];
+
+          const targetForService = (service) => {
+            if (objectTargets[service]) {
+              return objectTargets[service];
+            }
+
+            return listTargets.find(
+              (target) =>
+                target &&
+                typeof target === "object" &&
+                typeof target.service === "string" &&
+                target.service.trim().toLowerCase() === service,
+            );
+          };
+
+          const validatedTargets = [];
+
+          for (const service of requiredServices) {
+            if (!Object.hasOwn(serviceConfig, service)) {
+              addError("Unknown service", `Unsupported Cloudflare deploy service selected: ${service}`);
+              continue;
+            }
+
+            const target = targetForService(service);
+            if (!target || Array.isArray(target) || typeof target !== "object") {
+              addError(
+                "Missing service rollback target",
+                `release.rollback_action.targets.${service} or a matching service_targets item is required for production services=${targetServicesInput}.`,
+              );
+              continue;
+            }
+
+            const rollbackCommand = target.rollback_command ?? target.command ?? "";
+            const dashboardTarget = target.dashboard_rollback_target ?? target.dashboard_target ?? target.target ?? "";
+            const versionId = target.worker_version_id ?? target.version_id ?? target.target_version_id ?? "";
+            const concreteId =
+              extractUuid(versionId) ?? extractUuid(rollbackCommand) ?? extractUuid(dashboardTarget);
+
+            if (!concreteId) {
+              addError(
+                "Missing concrete Cloudflare target",
+                `release.rollback_action.targets.${service} must include a concrete Cloudflare Worker version ID or dashboard target UUID.`,
+              );
+            }
+
+            const commandReferencesTarget =
+              hasText(rollbackCommand) &&
+              rollbackCommand.includes("wrangler rollback") &&
+              concreteId &&
+              rollbackCommand.includes(concreteId) &&
+              rollbackCommand.includes(serviceConfig[service]);
+            const dashboardReferencesTarget =
+              hasText(dashboardTarget) &&
+              concreteId &&
+              dashboardTarget.includes(concreteId) &&
+              /cloudflare|dash\.cloudflare\.com/i.test(dashboardTarget);
+
+            if (!commandReferencesTarget && !dashboardReferencesTarget) {
+              addError(
+                "Missing actionable rollback path",
+                `release.rollback_action.targets.${service} must include either a wrangler rollback command with ${serviceConfig[service]} and the target ID, or a Cloudflare dashboard rollback target containing the target ID.`,
+              );
+            }
+
+            if (concreteId) {
+              validatedTargets.push(`${service}: ${concreteId}`);
+            }
+          }
+
+          if (errors.length > 0) {
+            for (const error of errors) {
+              console.log(`::error title=${error.title}::${error.message}`);
+            }
+            process.exit(1);
+          }
+
+          const summary = [
+            "### release.rollback_action",
+            "",
+            "Validated concrete Cloudflare rollback targets before production verification:",
+            "",
+            ...validatedTargets.map((target) => `- ${target}`),
+            "",
+            `Post-rollback smoke: \`${metadata.post_rollback_smoke_command}\``,
+          ].join("\n");
+
+          if (summaryPath) {
+            fs.appendFileSync(summaryPath, `${summary}\n`);
+          } else {
+            console.log(summary);
+          }
+          NODE
 
   verify:
     name: Verify Before Deploy
@@ -122,7 +317,7 @@ jobs:
           TARGET_ENVIRONMENT: ${{ inputs.environment }}
         run: |
           if [[ "$TARGET_ENVIRONMENT" == "production" ]]; then
-            echo "If smoke checks or manual verification fail, run the approved release.rollback_action:"
+            echo "If smoke checks or manual verification fail, use the approved release.rollback_action metadata:"
             echo "$RELEASE_ROLLBACK_ACTION"
           else
             echo "If smoke checks or manual verification fail, redeploy the last known-good staging Worker version or restore the previous artifact/config revision."
