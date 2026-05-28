@@ -3,7 +3,7 @@
   "contract_name": "sales-saas-learning-memo-promotion",
   "surface_type": "continuous_improvement_learning_memo_promotion",
   "status": "active",
-  "last_reviewed": "2026-05-25",
+  "last_reviewed": "2026-05-28",
   "runtime_behavior_changed": false,
   "purpose": "Define when an observation becomes a promoted learning memo and where that learning must be captured before it is treated as part of the production-grade operating system.",
   "applies_to": {
@@ -51,28 +51,33 @@
     ]
   },
   "current_promotion": {
-    "promotion_id": "2026-05-25-node-6f40795e0114-dirty-worktree-and-learning-loop",
+    "promotion_id": "2026-05-28-node-14a456b29140-dirty-wip-quarantine-before-refresh",
     "source_observation_path": ".jarvis/daily_observation.json",
-    "source_observation_date": "2026-05-25",
-    "lesson": "A release-readiness mission that resumes from a dirty branch should first preserve inherited WIP with a branch or evidence bundle, then promote repeated delivery lessons through explicit observation and learning memo surfaces.",
+    "source_observation_date": "2026-05-28",
+    "lesson": "A retried release-readiness node that inherits dirty metadata must first preserve the exact pre-edit diff and provenance, then refresh current-node PR evidence and learning-loop surfaces on the same PR branch. Historical green checks are useful context, but the final pushed commit still needs fresh PR evidence and checks before merge.",
     "evidence_refs": [
       ".jarvis/daily_observation.json",
-      ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
-      ".jarvis/production_grade_profile.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
       ".jarvis/pr_evidence_manifest.json",
+      ".jarvis/production_grade_profile.json",
       ".codex/scripts/validate_repo_contracts.py",
-      "docs/platform/release-readiness-report.md"
+      "docs/platform/release-readiness-report.md",
+      "agile_work_item.json",
+      ".jarvis/agile_work_item.json"
     ],
     "promoted_to": [
+      "dirty_worktree_quarantine.current_node_bundle",
+      "daily_observation.current_mission_context",
+      "learning_memo_promotion.current_promotion",
+      "pr_evidence_manifest.current_mission_evidence",
       "production_grade_profile.continuous_improvement.daily_observation",
       "production_grade_profile.continuous_improvement.learning_memo_promotion",
-      "production_grade_profile.continuous_improvement.source_of_truth",
-      "pr_evidence_manifest.current_mission_evidence",
-      "advisory repo contract validation",
-      "release-readiness evidence"
+      "release_readiness_report.current_node_evidence",
+      "advisory repo contract validation"
     ],
     "runtime_behavior_changed": false,
-    "rollback_note": "Revert the metadata-only JSON manifests plus profile, validator, PR evidence, and release-readiness documentation changes. No Cloudflare worker rollback is required for this change by itself.",
+    "rollback_note": "Revert the metadata-only JSON manifests, quarantine patch bundle, production profile, PR evidence, release-readiness report, and advisory validator changes from this node. No Cloudflare worker rollback is required for this change by itself.",
     "status": "promoted_to_advisory_contract"
   },
   "non_goals": [

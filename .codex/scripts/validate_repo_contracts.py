@@ -346,6 +346,18 @@ PR_EVIDENCE_REQUIRED_PATHS = [
     "release.rollback_metadata.metadata_only_exception",
     "release.rollback_metadata_required",
     "deploy_evidence.required_for_release",
+    "current_mission_evidence.mission_id",
+    "current_mission_evidence.mission_node",
+    "current_mission_evidence.branch",
+    "current_mission_evidence.captured_at",
+    "current_mission_evidence.runtime_behavior_changed",
+    "current_mission_evidence.scope",
+    "current_mission_evidence.dirty_worktree_quarantine.manifest_path",
+    "current_mission_evidence.dirty_worktree_quarantine.patch_bundle_path",
+    "current_mission_evidence.dirty_worktree_quarantine.captured_before_new_edits",
+    "current_mission_evidence.verification_evidence",
+    "current_mission_evidence.rollback_metadata",
+    "current_mission_evidence.unresolved_risks",
 ]
 
 REQUIRED_CLOUDFLARE_ROLLBACK_SERVICES = {"web", "api", "workflows"}
@@ -551,6 +563,45 @@ def check_expected_value(
             relpath,
             f"`{dotted_path}` must be `{json.dumps(expected)}`.",
             f"observed {value!r}",
+        )
+    )
+
+
+def check_aligned_values(
+    left_relpath: str,
+    left_data: Any,
+    left_path: str,
+    right_relpath: str,
+    right_data: Any,
+    right_path: str,
+    label: str,
+    findings: list[Finding],
+) -> None:
+    left_value = get_nested(left_data, left_path) if isinstance(left_data, dict) else None
+    right_value = get_nested(right_data, right_path) if isinstance(right_data, dict) else None
+    if not has_value(left_value) or not has_value(right_value):
+        return
+
+    relpath = f"{left_relpath}, {right_relpath}"
+    if left_value == right_value:
+        findings.append(
+            Finding(
+                "pass",
+                "contract.cross_surface_alignment",
+                relpath,
+                f"{label} is aligned.",
+                f"{left_path} == {right_path} == {left_value!r}",
+            )
+        )
+        return
+
+    findings.append(
+        Finding(
+            "warn",
+            "contract.cross_surface_alignment",
+            relpath,
+            f"{label} should be aligned across current mission evidence surfaces.",
+            f"{left_path}={left_value!r}; {right_path}={right_value!r}",
         )
     )
 
@@ -936,7 +987,7 @@ def check_work_item_contracts(root: Path, findings: list[Finding]) -> None:
         )
 
 
-def check_daily_observation_contract(root: Path, findings: list[Finding]) -> None:
+def check_daily_observation_contract(root: Path, findings: list[Finding]) -> Any | None:
     data = load_json(root, DAILY_OBSERVATION_PATH, findings)
     check_required_paths(DAILY_OBSERVATION_PATH, data, DAILY_OBSERVATION_REQUIRED_PATHS, findings)
     check_schema_version(DAILY_OBSERVATION_PATH, data, 1, findings)
@@ -976,9 +1027,10 @@ def check_daily_observation_contract(root: Path, findings: list[Finding]) -> Non
         False,
         findings,
     )
+    return data
 
 
-def check_learning_memo_promotion_contract(root: Path, findings: list[Finding]) -> None:
+def check_learning_memo_promotion_contract(root: Path, findings: list[Finding]) -> Any | None:
     data = load_json(root, LEARNING_MEMO_PROMOTION_PATH, findings)
     check_required_paths(LEARNING_MEMO_PROMOTION_PATH, data, LEARNING_MEMO_PROMOTION_REQUIRED_PATHS, findings)
     check_schema_version(LEARNING_MEMO_PROMOTION_PATH, data, 1, findings)
@@ -1018,9 +1070,10 @@ def check_learning_memo_promotion_contract(root: Path, findings: list[Finding]) 
         False,
         findings,
     )
+    return data
 
 
-def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> None:
+def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> Any | None:
     data = load_json(root, PR_EVIDENCE_MANIFEST_PATH, findings)
     check_required_paths(PR_EVIDENCE_MANIFEST_PATH, data, PR_EVIDENCE_REQUIRED_PATHS, findings)
     check_schema_version(PR_EVIDENCE_MANIFEST_PATH, data, 1, findings)
@@ -1029,6 +1082,65 @@ def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> None:
         PR_EVIDENCE_MANIFEST_PATH,
         data,
         "release.rollback_metadata",
+        findings,
+    )
+    return data
+
+
+def check_current_mission_alignment(
+    daily_observation: Any,
+    learning_memo_promotion: Any,
+    pr_evidence_manifest: Any,
+    findings: list[Finding],
+) -> None:
+    check_aligned_values(
+        DAILY_OBSERVATION_PATH,
+        daily_observation,
+        "daily_observation.mission_id",
+        PR_EVIDENCE_MANIFEST_PATH,
+        pr_evidence_manifest,
+        "current_mission_evidence.mission_id",
+        "Current mission id",
+        findings,
+    )
+    check_aligned_values(
+        DAILY_OBSERVATION_PATH,
+        daily_observation,
+        "daily_observation.mission_node",
+        PR_EVIDENCE_MANIFEST_PATH,
+        pr_evidence_manifest,
+        "current_mission_evidence.mission_node",
+        "Current mission node",
+        findings,
+    )
+    check_aligned_values(
+        DAILY_OBSERVATION_PATH,
+        daily_observation,
+        "daily_observation.date",
+        PR_EVIDENCE_MANIFEST_PATH,
+        pr_evidence_manifest,
+        "current_mission_evidence.captured_at",
+        "Current evidence capture date",
+        findings,
+    )
+    check_aligned_values(
+        DAILY_OBSERVATION_PATH,
+        daily_observation,
+        "daily_observation.date",
+        LEARNING_MEMO_PROMOTION_PATH,
+        learning_memo_promotion,
+        "current_promotion.source_observation_date",
+        "Learning memo source observation date",
+        findings,
+    )
+    check_aligned_values(
+        DAILY_OBSERVATION_PATH,
+        daily_observation,
+        "daily_observation.runtime_behavior_changed",
+        PR_EVIDENCE_MANIFEST_PATH,
+        pr_evidence_manifest,
+        "current_mission_evidence.runtime_behavior_changed",
+        "Runtime behavior change statement",
         findings,
     )
 
@@ -1219,9 +1331,15 @@ def main() -> int:
     findings: list[Finding] = []
     check_profile(root, findings)
     check_work_item_contracts(root, findings)
-    check_daily_observation_contract(root, findings)
-    check_learning_memo_promotion_contract(root, findings)
-    check_pr_evidence_manifest(root, findings)
+    daily_observation = check_daily_observation_contract(root, findings)
+    learning_memo_promotion = check_learning_memo_promotion_contract(root, findings)
+    pr_evidence_manifest = check_pr_evidence_manifest(root, findings)
+    check_current_mission_alignment(
+        daily_observation,
+        learning_memo_promotion,
+        pr_evidence_manifest,
+        findings,
+    )
     check_pr_template(root, findings)
     check_package_script(root, findings)
     check_repo_os_workflow(root, findings)

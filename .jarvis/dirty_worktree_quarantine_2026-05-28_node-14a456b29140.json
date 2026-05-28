@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "manifest_name": "sales-saas-dirty-worktree-quarantine",
+  "status": "active",
+  "captured_at": "2026-05-28",
+  "mission_id": "mission-b1d6f7df7d24",
+  "mission_node": "node-14a456b29140",
+  "workspace": "sales-saas",
+  "branch": "node-57f374c2e811-agile-work-item",
+  "upstream": "origin/node-57f374c2e811-agile-work-item",
+  "head_before_this_node": "159a5d8f2057653aaf7a78ab586a37d84f2efd45",
+  "upstream_sync_before_this_node": {
+    "command": "git rev-list --left-right --count HEAD...@{upstream}",
+    "result": "0 ahead, 0 behind"
+  },
+  "pull_request_context": {
+    "command": "gh pr view --json number,url,state,headRefName,baseRefName,mergeable,statusCheckRollup",
+    "url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+    "state": "OPEN",
+    "head_ref": "node-57f374c2e811-agile-work-item",
+    "base_ref": "main",
+    "mergeable_at_capture": "MERGEABLE",
+    "checks_at_capture": [
+      "Type Check: SUCCESS at 2026-05-25T01:44:56Z",
+      "Repo Operating System audit: SUCCESS at 2026-05-25T01:38:07Z",
+      "Unit Tests: SUCCESS at 2026-05-25T01:41:53Z",
+      "Build: SUCCESS at 2026-05-25T01:49:15Z",
+      "GitGuardian Security Checks: SUCCESS at 2026-05-25T01:37:38Z"
+    ],
+    "checks_caveat": "Checks apply to commit 159a5d8 before this node's local metadata edits. The final pushed commit must be observed again before merge."
+  },
+  "pre_existing_wip": {
+    "captured_before_new_edits": true,
+    "patch_bundle_path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+    "patch_bundle_bytes": 37619,
+    "git_status_command": "git status --short --branch",
+    "git_status_result": [
+      "## node-57f374c2e811-agile-work-item...origin/node-57f374c2e811-agile-work-item",
+      " M .codex/scripts/validate_repo_contracts.py",
+      " M .jarvis/daily_observation.json",
+      " M .jarvis/learning_memo_promotion.json",
+      " M .jarvis/pr_evidence_manifest.json",
+      " M .jarvis/production_grade_profile.json"
+    ],
+    "diff_stat_command": "git diff --stat",
+    "diff_stat_summary": [
+      ".codex/scripts/validate_repo_contracts.py | 127 ++++++++++++++++++-",
+      ".jarvis/daily_observation.json | 30 ++---",
+      ".jarvis/learning_memo_promotion.json | 24 ++--",
+      ".jarvis/pr_evidence_manifest.json | 202 +++++++++---------------------",
+      ".jarvis/production_grade_profile.json | 9 +-",
+      "5 files changed, 215 insertions(+), 177 deletions(-)"
+    ],
+    "modified_files": [
+      ".codex/scripts/validate_repo_contracts.py",
+      ".jarvis/daily_observation.json",
+      ".jarvis/learning_memo_promotion.json",
+      ".jarvis/pr_evidence_manifest.json",
+      ".jarvis/production_grade_profile.json"
+    ],
+    "untracked_files_before_quarantine": [],
+    "wip_summary": "Inherited unstaged release-readiness WIP from a prior mission callback retry refreshed current-node evidence alignment in advisory validation, daily observation, learning memo promotion, PR evidence, and production-grade profile metadata."
+  },
+  "quarantine_policy": [
+    "Do not discard, overwrite, hide, or revert inherited user/Ayushman/senior-dev changes.",
+    "Use the patch bundle to reconstruct the exact dirty diff that existed before node-14a456b29140 made additional release-readiness edits.",
+    "Keep subsequent edits in the same PR-first release-readiness scope unless explicitly decomposed into child work items.",
+    "Treat previous PR checks as historical evidence only; observe checks again after this node's final commit is pushed."
+  ],
+  "runtime_behavior_changed": false,
+  "dependencies_changed": false,
+  "migrations_changed": false,
+  "workflows_changed": false,
+  "deploy_workflow_behavior_changed": false,
+  "rollback_note": "This quarantine bundle is metadata-only. Roll back by reverting this manifest, its patch bundle, and any later metadata edits from node-14a456b29140, or by closing/reverting the PR. No Cloudflare service rollback is required unless this metadata is bundled with runtime service changes."
+}

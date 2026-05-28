@@ -3,7 +3,7 @@
   "manifest_name": "sales-saas-pr-evidence-manifest",
   "manifest_type": "pull_request_release_evidence_contract",
   "status": "active",
-  "last_reviewed": "2026-05-25",
+  "last_reviewed": "2026-05-28",
   "purpose": "Define the PR evidence, release path, deploy smoke evidence, and rollback metadata required before release-sensitive changes land or promote.",
   "applies_to": {
     "repository": "sales-saas",
@@ -139,22 +139,32 @@
     "credential_blocker_policy": "If Cloudflare credentials or environment variables are unavailable, record the missing prerequisite and do not claim deploy or smoke success."
   },
   "current_mission_evidence": {
-    "mission_id": "mission-fe02ff14bef4",
-    "mission_node": "node-6f40795e0114",
+    "mission_id": "mission-b1d6f7df7d24",
+    "mission_node": "node-14a456b29140",
     "branch": "node-57f374c2e811-agile-work-item",
-    "base_head_before_metadata_edits": "a0ea033",
-    "captured_at": "2026-05-25",
+    "base_head_before_metadata_edits": "159a5d8",
+    "captured_at": "2026-05-28",
     "runtime_behavior_changed": false,
-    "deploy_workflow_behavior_changed": true,
-    "scope": "Preserve inherited dirty WIP with a current quarantine manifest, keep agile ready/done and self-improvement contracts explicit, and harden .github/workflows/deploy-cloudflare.yml production workflow_dispatch rollback metadata validation so release_rollback_action must be structured JSON with concrete Cloudflare rollback targets for each selected service.",
+    "deploy_workflow_behavior_changed": false,
+    "dependencies_changed": false,
+    "migrations_changed": false,
+    "shared_contracts_changed": false,
+    "scope": "Quarantine inherited dirty release-readiness WIP with a pre-edit patch bundle, refresh current-node PR evidence, ready/done review metadata, daily observation, learning memo promotion, production profile, and release-readiness report. Runtime behavior, workflows, deploy behavior, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, and shared API contracts remain unchanged.",
     "affected_runtime_services": [],
-    "affected_release_gate_services": [
-      "web",
-      "api",
-      "workflows"
+    "affected_release_gate_services": [],
+    "owned_surfaces": [
+      "agile_work_item.json",
+      ".jarvis/agile_work_item.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+      ".jarvis/pr_evidence_manifest.json",
+      ".jarvis/daily_observation.json",
+      ".jarvis/learning_memo_promotion.json",
+      ".jarvis/production_grade_profile.json",
+      ".codex/scripts/validate_repo_contracts.py",
+      ".github/PULL_REQUEST_TEMPLATE.md",
+      "docs/platform/release-readiness-report.md"
     ],
-    "release_readiness_report": "docs/platform/release-readiness-report.md",
-    "dirty_worktree_quarantine": ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
     "ready_done_contract": {
       "canonical_path": "agile_work_item.json",
       "mirror_path": ".jarvis/agile_work_item.json",
@@ -171,68 +181,34 @@
         "continuous_improvement.source_of_truth"
       ]
     },
-    "workflow_dispatch_validation": {
-      "workflow": ".github/workflows/deploy-cloudflare.yml",
-      "input": "release_rollback_action",
-      "format": "JSON object",
-      "selected_services_input": "services",
-      "all_service_expansion": [
-        "web",
-        "api",
-        "workflows"
+    "dirty_worktree_quarantine": {
+      "manifest_path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+      "patch_bundle_path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+      "captured_before_new_edits": true,
+      "pre_existing_modified_files": [
+        ".codex/scripts/validate_repo_contracts.py",
+        ".jarvis/daily_observation.json",
+        ".jarvis/learning_memo_promotion.json",
+        ".jarvis/pr_evidence_manifest.json",
+        ".jarvis/production_grade_profile.json"
       ],
-      "fails_before_verify_or_deploy": true,
-      "accepted_target_forms": [
-        "wrangler rollback command containing the concrete target UUID and the service wrangler config path",
-        "Cloudflare dashboard rollback target containing the concrete target UUID"
-      ],
-      "post_rollback_smoke_command": "npm run smoke:cloudflare"
+      "policy": "Preserve the inherited dirty diff before changing the same release-readiness metadata surfaces; do not discard or hide user/Ayushman/senior-dev WIP."
     },
     "pull_request": {
       "known_url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
-      "status": "open_mergeable_branch_pushed_ci_pending_or_running",
-      "checks_observed": "PR #1 is open and mergeable. This node pushed the release-readiness diff; GitGuardian completed successfully immediately after push, while CI and repo operating-system checks were queued or in progress. The final pushed commit must finish required PR checks successfully before merge."
+      "status": "open_mergeable_existing_pr_branch_update_prepared",
+      "checks_observed": "PR #1 is open and mergeable. Observed checks are historical for commit 159a5d8 on 2026-05-25; after this node's final commit is pushed, CI, repo operating-system audit, and GitGuardian checks must be observed again before merge."
     },
     "verification_evidence": [
       {
-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
-        "status": "passed_expected_failure",
-        "scope": "Acceptance: production workflow_dispatch without rollback metadata fails before verify/deploy."
-      },
-      {
-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='{\"rollback_owner\":\"DevOps\",\"post_rollback_smoke_command\":\"npm run smoke:cloudflare\",\"targets\":{\"api\":{\"rollback_command\":\"npx wrangler rollback <API_VERSION_ID> --config apps/api/wrangler.jsonc --env production\"}}}' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
-        "status": "passed_expected_failure",
-        "scope": "Acceptance: production workflow_dispatch with placeholder rollback metadata fails before verify/deploy."
-      },
-      {
-        "command": "TARGET_SERVICES=all RELEASE_ROLLBACK_ACTION='<web-and-api-targets-only-json>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
-        "status": "passed_expected_failure",
-        "scope": "Acceptance: services=all fails when workflows is missing a service-specific rollback target."
-      },
-      {
-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='<api-target-json-with-worker-version-id-22222222-2222-4222-8222-222222222222>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+        "command": "git diff --binary --output=.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
         "status": "passed",
-        "scope": "Acceptance: service-specific rollback target metadata passes validation before verify/deploy."
+        "scope": "Dirty-worktree quarantine: captured the inherited pre-edit unstaged diff before this node changed the same metadata surfaces."
       },
       {
-        "command": "TARGET_SERVICES=all RELEASE_ROLLBACK_ACTION='<web-api-workflows-target-json-with-worker-version-ids>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+        "command": "node -e \"const fs=require('fs'); for (const p of process.argv.slice(1)) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')\" agile_work_item.json .jarvis/agile_work_item.json .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json .jarvis/pr_evidence_manifest.json .jarvis/daily_observation.json .jarvis/learning_memo_promotion.json .jarvis/production_grade_profile.json",
         "status": "passed",
-        "scope": "Acceptance: services=all passes only when web, api, and workflows each provide concrete rollback targets."
-      },
-      {
-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='<api-service-targets-json-with-worker-version-id-22222222-2222-4222-8222-222222222222>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
-        "status": "passed",
-        "scope": "Acceptance: service_targets list form passes when it provides a concrete rollback target for the selected service."
-      },
-      {
-        "command": "git diff --check",
-        "status": "passed",
-        "scope": "Whitespace and patch hygiene."
-      },
-      {
-        "command": "node -e \"for (const path of ['.jarvis/production_grade_profile.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json','.jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json','agile_work_item.json','.jarvis/agile_work_item.json']) JSON.parse(require('fs').readFileSync(path,'utf8')); console.log('json parse ok')\"",
-        "status": "passed",
-        "scope": "Machine-readable JSON parsing for production profile, PR evidence, daily observation, learning memo promotion, quarantine manifests, and agile work item contracts."
+        "scope": "Machine-readable JSON parsing for owned manifests."
       },
       {
         "command": "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
@@ -242,47 +218,42 @@
       {
         "command": "python3 -m py_compile .codex/scripts/validate_repo_contracts.py",
         "status": "passed",
-        "scope": "Python syntax gate for the inherited advisory validator changes present in this worktree."
+        "scope": "Python syntax gate for the advisory validator."
       },
       {
-        "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/deploy-cloudflare.yml')); print('yaml parse ok')\"",
+        "command": "git diff --check",
         "status": "passed",
-        "scope": "Workflow YAML syntax parse."
-      },
-      {
-        "command": "npx --yes actionlint@latest .github/workflows/deploy-cloudflare.yml",
-        "status": "blocked",
-        "scope": "GitHub Actions lint substitute check. The npm package has no executable in this environment; PyYAML parse and extracted validator execution covered syntax and behavior."
+        "scope": "Whitespace and patch hygiene."
       },
       {
         "command": "npm run repo:contracts -- --strict",
         "status": "passed",
-        "scope": "Strict advisory validation for production-grade profile, self-improvement surfaces, agile work item, PR evidence, rollback metadata, and PR template. Result: 345 pass, 0 warn, 0 error."
+        "scope": "Strict advisory validation after current-node PR evidence and dirty-worktree quarantine alignment: 362 pass, 0 warn, 0 error."
       },
       {
         "command": "npm run repo:audit",
         "status": "passed",
-        "scope": "Repo operating-system audit. Result: score 100%, no priority gaps, git_dirty true while release-readiness edits remain local."
+        "scope": "Repo operating-system audit: score 100%, 20/20 mature checks, no priority gaps, git_dirty true while this PR-ready diff remains local."
       },
       {
-        "command": "npm run typecheck",
+        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'",
         "status": "passed",
-        "scope": "Required medium-risk lint/type gate across workspaces."
+        "scope": "Required medium-risk type gate across workspaces under Node v22.22.3 and npm 11.10.1."
       },
       {
-        "command": "npm run test",
+        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run test'",
         "status": "passed",
-        "scope": "Required automated test suite. Final result: root 24, API 63, web 19, database 1, shared 2 tests passed."
+        "scope": "Required automated test suite: root 24, API 63, web 19, database 1, and shared 2 tests passed."
       },
       {
-        "command": "npm run build",
+        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'",
         "status": "passed",
-        "scope": "Required build and release bundle gate."
+        "scope": "Required build gate, including API, web, workflows, database, and shared package builds."
       },
       {
-        "command": "npm run verify:core",
+        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run verify:core'",
         "status": "passed",
-        "scope": "Required core verification aggregate; reran typecheck, test, and build successfully."
+        "scope": "Required core verification aggregate reran typecheck, test, and build successfully."
       },
       {
         "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
@@ -312,15 +283,15 @@
       {
         "command": "npm run smoke:cloudflare",
         "status": "blocked",
-        "scope": "Credential-dependent Cloudflare smoke. Result: WEB_APP_URL is required."
+        "scope": "Credential-dependent Cloudflare smoke from the repo verification contract. Result: WEB_APP_URL is required."
       }
     ],
     "deploy_evidence": [
       {
         "check": "release_bundle_creation",
         "status": "passed",
-        "command": "npm run build; npx -y -p node@22 -p npm@11.10.1 -c 'npm run build:cf-worker --workspace @sales/web'",
-        "evidence": "Workspace build passed, including the Next.js production build and API, workflows, database, and shared package builds. OpenNext Cloudflare worker bundle generation also passed under Node 22."
+        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'; npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
+        "evidence": "Workspace build passed and OpenNext generated the Cloudflare web worker bundle. This node does not change runtime source or deploy workflow behavior."
       },
       {
         "check": "cloudflare_shadow_deploy_attempt",
@@ -329,45 +300,44 @@
         "evidence": "Dry-runs passed for web, API, and workflows with Wrangler 4.87.0. No production deploy was performed."
       },
       {
-        "check": "cloudflare_shadow_smoke",
+        "check": "cloudflare_smoke",
         "status": "blocked",
         "command": "npm run smoke:cloudflare",
-        "evidence": "Blocked because /etc/cynik/apps/sales-saas.env is not readable and WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN are unset."
+        "evidence": "Blocked because /etc/cynik/apps/sales-saas.env is not readable in this session and WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN are unset. The script exited with WEB_APP_URL is required."
       },
       {
         "check": "service_restart_validation",
         "status": "not_applicable",
-        "evidence": "No runtime service restart is required or authorized for a GitHub Actions validation change."
+        "evidence": "No runtime service restart is required or authorized for this metadata-only change."
       },
       {
         "check": "rollback_target_confirmation",
-        "status": "validation_hardened_actual_targets_unconfirmed",
-        "evidence": "The workflow now requires concrete per-service target UUIDs before production verification. Actual last known-good Cloudflare Worker version IDs still require provider access during a real production promotion."
+        "status": "metadata_only_no_service_targets_required",
+        "evidence": "No Cloudflare service is affected by this node. Runtime releases still require concrete last known-good Worker version IDs or Cloudflare dashboard rollback targets before production promotion."
       }
     ],
     "rollback_metadata": {
-      "release_or_pr_identifier": "mission-fe02ff14bef4 / node-6f40795e0114 / PR #1",
+      "release_or_pr_identifier": "mission-b1d6f7df7d24 / node-14a456b29140 / PR #1",
       "affected_cloudflare_services": [],
-      "rollback_owner": "DevOps release owner for the PR.",
-      "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, shared API contract, dependency, worker bundle, route, or runtime behavior change.",
-      "metadata_only_rollback_action": "Revert the PR or restore the previous versions of .github/workflows/deploy-cloudflare.yml, .codex/scripts/validate_repo_contracts.py, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, .jarvis/learning_memo_promotion.json, .jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json, and docs/platform/release-readiness-report.md.",
-      "production_service_rollback_action_if_bundled_with_runtime_changes": "Use the approved release.rollback_action JSON targets for each affected service, redeploy the last known-good Cloudflare worker versions for web, api, and workflows as applicable, then rerun npm run smoke:cloudflare.",
+      "rollback_owner": "DevOps owner for this metadata-only mission node; PR reviewer confirms before merge.",
+      "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, shared API contract, dependency, worker bundle, route, workflow, or runtime behavior change.",
+      "metadata_only_rollback_action": "Revert this node's changes to agile_work_item.json, .jarvis/agile_work_item.json, .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json, .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, .jarvis/learning_memo_promotion.json, .codex/scripts/validate_repo_contracts.py, and docs/platform/release-readiness-report.md. No Cloudflare service rollback is required for this metadata-only change.",
+      "production_service_rollback_action_if_bundled_with_runtime_changes": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows as applicable, then rerun npm run smoke:cloudflare.",
       "post_rollback_validation": [
-        "python3 -c YAML parse for .github/workflows/deploy-cloudflare.yml",
-        "node -e JSON parse for changed .jarvis contract files and agile work item contracts",
+        "node -e JSON parse for owned manifest files",
         "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
+        "python3 -m py_compile .codex/scripts/validate_repo_contracts.py",
         "npm run repo:contracts -- --strict",
         "npm run verify:core",
         "npm run smoke:cloudflare when runtime services were deployed or rolled back"
       ]
     },
     "unresolved_risks": [
-      "GitHub checks for the final pushed commit from this node must finish green before merge; immediate post-push evidence showed GitGuardian successful and CI/repo operating-system checks queued or in progress.",
-      "Cloudflare staging or production deploy was not authorized or needed for this release-gate-only node.",
-      "Cloudflare smoke remains blocked until environment-backed URLs and credentials are available.",
-      "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without Cloudflare provider access for runtime releases.",
-      "actionlint could not be run from npm in this environment; workflow YAML was parsed and the embedded validator behavior was exercised directly.",
-      "Default host node is v18.19.1; Cloudflare packaging and dry-runs used node@22 and npm@11.10.1 to match the repo toolchain and CI setup-node target."
+      "New remote PR checks must be observed after this branch update is pushed; historical green checks on 159a5d8 do not prove the final commit is releasable.",
+      "PR review must confirm the metadata-only diff did not unintentionally change runtime or deploy workflow behavior.",
+      "Cloudflare smoke is credential and environment dependent; if unavailable, the blocked reason must stay visible instead of being treated as pass evidence.",
+      "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without provider access, but no Cloudflare services are affected by this metadata-only node.",
+      "Dependency vulnerability remediation remains out of scope for this metadata-only node; this node did not change package manifests or lockfiles."
     ]
   },
   "non_goals": [

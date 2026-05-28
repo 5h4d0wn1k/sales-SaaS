@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.12",
+  "profile_version": "1.0.14",
   "status": "active",
-  "last_updated": "2026-05-25",
+  "last_updated": "2026-05-28",
   "repo_identity": {
     "name": "sales-aaas-platform",
     "workspace": "sales-saas",
@@ -33,6 +33,8 @@
       ".jarvis/pr_evidence_manifest.json",
       ".jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json",
       ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
       "docs/platform/release-readiness-report.md",
       "README.md",
       "docs/product/platform-requirements.md",
@@ -914,6 +916,22 @@
           "pull_request_context",
           "quarantine_policy",
           "rollback_note"
+        ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+        "cites": [
+          "pre_existing_wip",
+          "patch_bundle_path",
+          "pull_request_context",
+          "quarantine_policy",
+          "rollback_note"
+        ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+        "cites": [
+          "pre-edit dirty diff for node-14a456b29140"
         ]
       },
       {
@@ -1805,8 +1823,9 @@
   "metadata": {
     "created_by": "Codex mission node node-745e76479b19",
     "mission_id": "mission-37decb31706c",
-    "last_updated_by": "Codex mission node node-0972c3bef4bd",
-    "last_updated_reason": "Added top-level continuous improvement contract, dirty-worktree quarantine evidence, and current release-readiness metadata while preserving metadata-only runtime behavior.",
+    "last_updated_by": "Codex mission node node-14a456b29140",
+    "last_updated_mission_id": "mission-b1d6f7df7d24",
+    "last_updated_reason": "Quarantined inherited dirty release-readiness WIP with a pre-edit patch bundle, refreshed current-node PR evidence, daily observation, learning memo promotion, and release-readiness reporting while preserving metadata-only runtime behavior.",
     "owned_path": ".jarvis/production_grade_profile.json",
     "change_type": "metadata_only",
     "runtime_behavior_changed": false,

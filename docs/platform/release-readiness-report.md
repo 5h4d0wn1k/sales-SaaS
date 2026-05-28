@@ -1,190 +1,154 @@
 # Release Readiness Report
 
-- Mission: `mission-fe02ff14bef4`
-- Node: `node-6f40795e0114`
+- Mission: `mission-b1d6f7df7d24`
+- Node: `node-14a456b29140`
 - Workspace: `sales-saas`
 - Branch: `node-57f374c2e811-agile-work-item`
-- Base HEAD before this pass: `a0ea033`
-- Date: `2026-05-25`
+- PR: https://github.com/5h4d0wn1k/sales-SaaS/pull/1
+- Base HEAD before this pass: `159a5d8`
+- Date: `2026-05-28`
 - Risk: `medium` per mission verification contract.
 - Runtime behavior changed: `false`
-- Deploy workflow behavior changed: `true`
+- Deploy workflow behavior changed: `false`
 
 ## Scope
 
-This pass first quarantines the inherited dirty worktree state in
-`.jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json`, then
-keeps the agile ready/done contract, PR evidence manifest, daily observation
-manifest, and learning memo promotion manifest aligned to the current mission.
+This pass preserves the inherited dirty release-readiness WIP before changing
+the same metadata surfaces:
 
-It also preserves and finishes hardening the production metadata gate in
-`.github/workflows/deploy-cloudflare.yml`. Production `workflow_dispatch` runs
-now require `release_rollback_action` to be structured JSON with concrete
-Cloudflare rollback targets for every service selected by the `services` input.
-`services=all` expands to `web`, `api`, and `workflows`; single-service
-dispatches require only that service target.
+- Quarantine manifest:
+  `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json`
+- Pre-edit patch bundle:
+  `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`
+
+It then refreshes current mission evidence across the agile ready/done contract,
+PR evidence manifest, daily observation, learning memo promotion, production
+grade profile, advisory contract validator, and this report.
 
 Application runtime code, worker bundles, routes, migrations, billing behavior,
 auth behavior, tenancy logic, provider webhooks, approval gates, plan keys,
-dependencies, and shared API contracts are unchanged.
+dependencies, shared API contracts, and deploy workflow behavior are unchanged.
 
-Inherited local release-readiness edits from prior nodes remain present in the
-worktree and were not discarded by this pass:
+## Delivery Blockers
 
-- `.jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json`
-- `.jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json`
-- `.jarvis/daily_observation.json`
-- `.jarvis/learning_memo_promotion.json`
-- `.jarvis/pr_evidence_manifest.json`
-- `.jarvis/production_grade_profile.json` continuous-improvement wiring
-- `.codex/scripts/validate_repo_contracts.py` advisory contract validation
-  for those self-improvement surfaces
+- Dirty-worktree blocker is quarantined with a recoverable patch bundle and
+  provenance manifest.
+- PR #1 was observed open and mergeable, but its historical green checks apply
+  to commit `159a5d8` from 2026-05-25. The final commit from this node still
+  needs fresh PR checks before merge.
+- Cloudflare smoke is blocked in this session because `/etc/cynik/apps/sales-saas.env`
+  is not readable and smoke environment variables are unset.
+- Actual last known-good Cloudflare Worker rollback target IDs remain
+  unconfirmed without provider access; this is acceptable for this metadata-only
+  pass but remains required before runtime production promotion.
 
-Those inherited surfaces were revalidated by `npm run repo:contracts -- --strict`
-as part of this pass.
+## CI/CD And Release Path
 
-Cloudflare's current Workers rollback docs describe rollback to a previously
-deployed Worker version through Wrangler or the dashboard, and note that
-rollback creates a new active deployment from the selected version. This gate
-therefore treats a concrete Worker version UUID or Cloudflare dashboard target
-UUID as required release metadata before production verification can start.
-
-Source: https://developers.cloudflare.com/workers/configuration/versions-and-deployments/rollbacks/
+- CI exists at `.github/workflows/ci.yml` with typecheck, unit/workspace tests,
+  build, and Cloudflare dry-run validation on self-hosted runners.
+- Deploy exists at `.github/workflows/deploy-cloudflare.yml` with
+  `workflow_dispatch`, environment selection, core verification before deploy,
+  deploy concurrency, post-deploy smoke, and production rollback metadata
+  validation.
+- Repo operating-system checks exist at
+  `.github/workflows/repo-operating-system.yml` and run advisory contract
+  validation.
+- PR evidence and rollback expectations are encoded in
+  `.jarvis/pr_evidence_manifest.json` and `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ## Rollback Metadata Contract
 
-Production `release_rollback_action` must be a JSON object with:
+Runtime releases must carry a concrete `release.rollback_action` for each
+affected Cloudflare service: `web`, `api`, and `workflows`, or explicitly state
+that no service is affected for metadata-only changes.
 
-- `rollback_owner`
-- `post_rollback_smoke_command` exactly `npm run smoke:cloudflare`
-- `targets.web`, `targets.api`, and/or `targets.workflows` matching the selected
-  deployment services, or matching `service_targets` entries for those services
+Cloudflare's Workers rollback docs state that rollback can use Wrangler or the
+dashboard, creates a new active deployment from the selected version, and does
+not roll back connected resources such as KV, D1, R2, queues, or Durable Object
+migrations. The report therefore treats concrete Worker version IDs or
+dashboard rollback target UUIDs as required release metadata before production
+promotion.
 
-Each service target must include a concrete UUID through one of these paths:
-
-- a `rollback_command` containing `wrangler rollback`, the target UUID, and the
-  service Wrangler config path
-- a Cloudflare dashboard rollback target containing the target UUID
-
-Placeholder text such as `todo`, `tbd`, `previous_release`,
-`last known-good`, `<API_VERSION_ID>`, or generic "dashboard rollback target"
-is rejected before the `verify` and `deploy` jobs can run.
-
-## Acceptance Evidence
-
-| Check | Result |
-| --- | --- |
-| Production dispatch with empty `release_rollback_action` | Failed validation before verify/deploy. |
-| Production dispatch with placeholder rollback command using `<API_VERSION_ID>` | Failed validation before verify/deploy. |
-| `services=all` with only `web` and `api` targets | Failed validation because `workflows` target was missing. |
-| `services=api` with concrete API Worker version UUID and API Wrangler config path | Passed validation. |
-| `services=all` with concrete `web`, `api`, and `workflows` Worker version UUIDs and config paths | Passed validation. |
-
-The acceptance checks executed the validator extracted directly from
-`.github/workflows/deploy-cloudflare.yml`.
+Source: https://developers.cloudflare.com/workers/configuration/versions-and-deployments/rollbacks/
 
 ## Verification Evidence
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Missing metadata acceptance | `TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='' node < <(awk ... .github/workflows/deploy-cloudflare.yml)` | Passed expected failure. |
-| Placeholder metadata acceptance | `TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='{"rollback_owner":"DevOps","post_rollback_smoke_command":"npm run smoke:cloudflare","targets":{"api":{"rollback_command":"npx wrangler rollback <API_VERSION_ID> --config apps/api/wrangler.jsonc --env production"}}}' node < <(awk ... .github/workflows/deploy-cloudflare.yml)` | Passed expected failure. |
-| Missing service target acceptance | `TARGET_SERVICES=all RELEASE_ROLLBACK_ACTION='<web-and-api-targets-only-json>' node < <(awk ... .github/workflows/deploy-cloudflare.yml)` | Passed expected failure. |
-| Single-service concrete target acceptance | `TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='<api-target-json-with-worker-version-id-22222222-2222-4222-8222-222222222222>' node < <(awk ... .github/workflows/deploy-cloudflare.yml)` | Passed. |
-| All-service concrete target acceptance | `TARGET_SERVICES=all RELEASE_ROLLBACK_ACTION='<web-api-workflows-target-json-with-worker-version-ids>' node < <(awk ... .github/workflows/deploy-cloudflare.yml)` | Passed. |
-| `service_targets` concrete target acceptance | `TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='<api-service-targets-json-with-worker-version-id-22222222-2222-4222-8222-222222222222>' node < <(awk ... .github/workflows/deploy-cloudflare.yml)` | Passed. |
-| Whitespace check | `git diff --check` | Passed. |
-| JSON parse gate | `node -e "for (const path of ['.jarvis/production_grade_profile.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json','.jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json','agile_work_item.json','.jarvis/agile_work_item.json']) JSON.parse(require('fs').readFileSync(path,'utf8')); console.log('json parse ok')"` | Passed. |
+| Dirty WIP patch bundle | `git diff --binary --output=.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch` | Passed. |
+| JSON parse gate | `node -e "const fs=require('fs'); for (const p of process.argv.slice(1)) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')" agile_work_item.json .jarvis/agile_work_item.json .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json .jarvis/pr_evidence_manifest.json .jarvis/daily_observation.json .jarvis/learning_memo_promotion.json .jarvis/production_grade_profile.json` | Passed. |
 | Agile mirror check | `cmp -s agile_work_item.json .jarvis/agile_work_item.json` | Passed. |
-| Python syntax gate | `python3 -m py_compile .codex/scripts/validate_repo_contracts.py` | Passed for inherited validator changes present in this worktree. |
-| Workflow YAML parse | `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/deploy-cloudflare.yml')); print('yaml parse ok')"` | Passed. |
-| GitHub Actions lint attempt | `npx --yes actionlint@latest .github/workflows/deploy-cloudflare.yml` | Blocked: npm package has no executable in this environment. |
-| Repo contract validation | `npm run repo:contracts -- --strict` | Passed: `345 pass, 0 warn, 0 error`. |
-| Repo operating-system audit | `npm run repo:audit` | Passed: score `100%`, no priority gaps; `git_dirty=true` because the release-readiness diff is still local. |
-| Typecheck | `npm run typecheck` | Passed across API, web, workflows, database, and shared workspaces. |
-| Automated tests | `npm run test` | Passed: root `24`, API `63`, web `19`, database `1`, shared `2` tests. |
-| Build / release bundle | `npm run build` | Passed, including Next.js production build and workspace builds. |
-| Core verification | `npm run verify:core` | Passed; reran typecheck, test, and build. |
-| Cloudflare web worker bundle | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` | Passed under Node `v22.22.3` and npm `11.10.1`; OpenNext generated `.open-next/worker.js`. |
+| Python syntax gate | `python3 -m py_compile .codex/scripts/validate_repo_contracts.py` | Passed. |
+| Whitespace check | `git diff --check` | Passed. |
+| Strict repo contracts | `npm run repo:contracts -- --strict` | Passed: `362 pass, 0 warn, 0 error`. |
+| Repo audit | `npm run repo:audit` | Passed: score `100%`, 20/20 mature checks, no priority gaps; `git_dirty=true` because this PR diff is local. |
+| Typecheck | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'` | Passed under Node `v22.22.3` and npm `11.10.1`. |
+| Automated tests | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run test'` | Passed: root `24`, API `63`, web `19`, database `1`, shared `2` tests. |
+| Build | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'` | Passed. |
+| Core verification | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run verify:core'` | Passed; reran typecheck, test, and build. |
+| Cloudflare web worker bundle | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` | Passed; OpenNext generated `.open-next/worker.js`. |
 | Cloudflare web dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/web/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
 | Cloudflare API dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/api/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
 | Cloudflare workflows dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/workflows/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
-| Smoke environment check | `if [ -r /etc/cynik/apps/sales-saas.env ]; then echo env-file-readable; else echo env-file-not-readable; fi; for name in WEB_APP_URL API_HEALTHCHECK_URL WORKFLOWS_HEALTHCHECK_URL WORKFLOWS_HEALTHCHECK_TOKEN CLOUDFLARE_API_TOKEN; do if [ -n "${!name:-}" ]; then echo "$name=set"; else echo "$name=unset"; fi; done` | Blocked: env file not readable; all listed smoke variables unset. |
+| Smoke environment check | `if [ -r /etc/cynik/apps/sales-saas.env ]; then echo env-file-readable; else echo env-file-not-readable; fi; ...` | Blocked: env file not readable; smoke variables unset. |
 | Cloudflare smoke | `npm run smoke:cloudflare` | Blocked: `WEB_APP_URL is required`. |
+| Bridge self-test | `rg -n "bridge self|self-test|selftest|bridge" .codex scripts package.json docs .jarvis -g '!node_modules'` | Blocked: no repository bridge self-test command exists. |
 
 ## Deploy Evidence
 
-- Release bundle creation passed through `npm run build`.
-- Cloudflare shadow deploy dry-runs passed for web, API, and workflows after
-  building the OpenNext Cloudflare worker bundle under Node 22.
-- Shadow smoke was blocked because Cloudflare smoke URLs and credentials are
-  unavailable in this session.
-- Service restart validation was not applicable for a GitHub Actions validation
-  change.
-- Rollback target confirmation was hardened at the workflow gate; actual
-  last known-good Worker version IDs still require Cloudflare provider access
-  during a real production promotion.
+- Release bundle creation passed via `npm run build` and
+  `npm run build:cf-worker --workspace @sales/web`.
+- Shadow deploy dry-runs passed for `web`, `api`, and `workflows` with Wrangler
+  `4.87.0`; no production deploy was performed.
+- Shadow smoke is blocked until Cloudflare smoke URLs and credentials are
+  available to the session.
+- Service restart validation is not applicable for this metadata-only pass.
+- Rollback target confirmation is metadata-only for this node; runtime releases
+  still require concrete Cloudflare Worker version IDs or dashboard rollback
+  targets before production promotion.
 
 ## Rollout And Abort Rules
 
-This change should land through branch, PR evidence, checks, review, and release
-gate. It should not trigger a production deploy by itself.
+This change should land through the existing branch and PR #1. It should not
+trigger a production deploy by itself.
 
-Abort or hold release if any of the following are observed:
+Abort or hold merge if any of the following occur:
 
-- Production workflow dispatch accepts empty rollback metadata.
-- Production workflow dispatch accepts placeholder rollback metadata.
-- Production workflow dispatch accepts `services=all` without `web`, `api`, and
-  `workflows` targets.
-- Strict repo contract validation, typecheck, tests, build, or `verify:core`
-  fail because of this diff.
-- Cloudflare smoke remains blocked for a runtime-impacting release and no
-  approved substitute is documented.
+- Fresh PR checks after this node's final pushed commit fail.
+- Strict repo contract validation returns warnings or errors.
+- Cloudflare smoke remains blocked for a runtime-impacting release without an
+  approved substitute.
+- A reviewer finds that the metadata-only diff accidentally changes runtime,
+  deployment workflow, dependency, migration, billing, auth, tenancy, webhook,
+  approval-gate, or shared-contract behavior.
 
 ## Rollback
 
-For this release-gate-only change, rollback is to revert the PR or restore the
-previous versions of:
+For this metadata-only change, rollback is to revert the PR commit or restore
+the previous versions of:
 
-- `.github/workflows/deploy-cloudflare.yml`
-- `.codex/scripts/validate_repo_contracts.py`
-- `.jarvis/production_grade_profile.json`
-- `.jarvis/pr_evidence_manifest.json`
+- `agile_work_item.json`
+- `.jarvis/agile_work_item.json`
+- `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json`
+- `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`
 - `.jarvis/daily_observation.json`
 - `.jarvis/learning_memo_promotion.json`
-- `.jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json`
+- `.jarvis/pr_evidence_manifest.json`
+- `.jarvis/production_grade_profile.json`
+- `.codex/scripts/validate_repo_contracts.py`
 - `docs/platform/release-readiness-report.md`
 
 No Cloudflare worker rollback is required for this change by itself. If bundled
-with runtime service changes, use the approved `release.rollback_action` JSON
-targets for each affected service, redeploy the last known-good Cloudflare
-worker versions for `web`, `api`, and `workflows` as applicable, then rerun
+with runtime service changes, redeploy the last known-good Cloudflare worker
+versions for `web`, `api`, and `workflows`, then rerun
 `npm run smoke:cloudflare`.
-
-Cloudflare rollback does not change connected resources such as KV, D1, R2, or
-queues, so schema, binding, or resource changes still need explicit compatibility
-review even when Worker code rollback is available.
-
-Post-rollback validation:
-
-- Workflow YAML parse for `.github/workflows/deploy-cloudflare.yml`
-- JSON parse for `.jarvis/pr_evidence_manifest.json`
-- `npm run repo:contracts -- --strict`
-- `npm run verify:core`
-- `npm run smoke:cloudflare` when runtime services were deployed or rolled back
 
 ## Remaining Risk
 
-- GitHub PR checks for the final pushed commit must be observed before merge.
-- Cloudflare smoke did not execute because required environment values are
-  unavailable in this session.
-- No production deploy, service restart, or runtime rollback target
-  confirmation was authorized or needed by this pass.
-- Actual last known-good Cloudflare Worker version IDs or dashboard rollback
-  targets remain unconfirmed without Cloudflare provider access for runtime
-  releases.
-- `actionlint` could not be run from npm here; workflow YAML parsing and direct
-  extracted-validator execution covered syntax and intended behavior.
-- The host default `node` is `v18.19.1`; Cloudflare packaging and dry-run
-  verification used `node@22` and `npm@11.10.1`, matching the repo toolchain and
-  CI setup-node target.
+- Fresh remote PR checks must be observed after push.
+- Cloudflare smoke did not execute because required environment values are not
+  available in this session.
+- Actual last known-good Worker rollback target IDs are unconfirmed without
+  Cloudflare provider access.
+- Dependency vulnerability remediation is out of scope; this node did not
+  change package manifests or lockfiles.

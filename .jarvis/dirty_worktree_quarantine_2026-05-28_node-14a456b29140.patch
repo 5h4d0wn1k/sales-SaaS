@@ -1,0 +1,621 @@
+diff --git a/.codex/scripts/validate_repo_contracts.py b/.codex/scripts/validate_repo_contracts.py
+index aaf74b8..4e7d67e 100644
+--- a/.codex/scripts/validate_repo_contracts.py
++++ b/.codex/scripts/validate_repo_contracts.py
+@@ -346,6 +346,15 @@ PR_EVIDENCE_REQUIRED_PATHS = [
+     "release.rollback_metadata.metadata_only_exception",
+     "release.rollback_metadata_required",
+     "deploy_evidence.required_for_release",
++    "current_mission_evidence.mission_id",
++    "current_mission_evidence.mission_node",
++    "current_mission_evidence.branch",
++    "current_mission_evidence.captured_at",
++    "current_mission_evidence.runtime_behavior_changed",
++    "current_mission_evidence.scope",
++    "current_mission_evidence.verification_evidence",
++    "current_mission_evidence.rollback_metadata",
++    "current_mission_evidence.unresolved_risks",
+ ]
+ 
+ REQUIRED_CLOUDFLARE_ROLLBACK_SERVICES = {"web", "api", "workflows"}
+@@ -555,6 +564,45 @@ def check_expected_value(
+     )
+ 
+ 
++def check_aligned_values(
++    left_relpath: str,
++    left_data: Any,
++    left_path: str,
++    right_relpath: str,
++    right_data: Any,
++    right_path: str,
++    label: str,
++    findings: list[Finding],
++) -> None:
++    left_value = get_nested(left_data, left_path) if isinstance(left_data, dict) else None
++    right_value = get_nested(right_data, right_path) if isinstance(right_data, dict) else None
++    if not has_value(left_value) or not has_value(right_value):
++        return
++
++    relpath = f"{left_relpath}, {right_relpath}"
++    if left_value == right_value:
++        findings.append(
++            Finding(
++                "pass",
++                "contract.cross_surface_alignment",
++                relpath,
++                f"{label} is aligned.",
++                f"{left_path} == {right_path} == {left_value!r}",
++            )
++        )
++        return
++
++    findings.append(
++        Finding(
++            "warn",
++            "contract.cross_surface_alignment",
++            relpath,
++            f"{label} should be aligned across current mission evidence surfaces.",
++            f"{left_path}={left_value!r}; {right_path}={right_value!r}",
++        )
++    )
++
++
+ def iter_path_references(value: Any) -> Iterable[str]:
+     if isinstance(value, str):
+         yield value
+@@ -936,7 +984,7 @@ def check_work_item_contracts(root: Path, findings: list[Finding]) -> None:
+         )
+ 
+ 
+-def check_daily_observation_contract(root: Path, findings: list[Finding]) -> None:
++def check_daily_observation_contract(root: Path, findings: list[Finding]) -> Any | None:
+     data = load_json(root, DAILY_OBSERVATION_PATH, findings)
+     check_required_paths(DAILY_OBSERVATION_PATH, data, DAILY_OBSERVATION_REQUIRED_PATHS, findings)
+     check_schema_version(DAILY_OBSERVATION_PATH, data, 1, findings)
+@@ -976,9 +1024,10 @@ def check_daily_observation_contract(root: Path, findings: list[Finding]) -> Non
+         False,
+         findings,
+     )
++    return data
+ 
+ 
+-def check_learning_memo_promotion_contract(root: Path, findings: list[Finding]) -> None:
++def check_learning_memo_promotion_contract(root: Path, findings: list[Finding]) -> Any | None:
+     data = load_json(root, LEARNING_MEMO_PROMOTION_PATH, findings)
+     check_required_paths(LEARNING_MEMO_PROMOTION_PATH, data, LEARNING_MEMO_PROMOTION_REQUIRED_PATHS, findings)
+     check_schema_version(LEARNING_MEMO_PROMOTION_PATH, data, 1, findings)
+@@ -1018,9 +1067,10 @@ def check_learning_memo_promotion_contract(root: Path, findings: list[Finding])
+         False,
+         findings,
+     )
++    return data
+ 
+ 
+-def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> None:
++def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> Any | None:
+     data = load_json(root, PR_EVIDENCE_MANIFEST_PATH, findings)
+     check_required_paths(PR_EVIDENCE_MANIFEST_PATH, data, PR_EVIDENCE_REQUIRED_PATHS, findings)
+     check_schema_version(PR_EVIDENCE_MANIFEST_PATH, data, 1, findings)
+@@ -1031,6 +1081,65 @@ def check_pr_evidence_manifest(root: Path, findings: list[Finding]) -> None:
+         "release.rollback_metadata",
+         findings,
+     )
++    return data
++
++
++def check_current_mission_alignment(
++    daily_observation: Any,
++    learning_memo_promotion: Any,
++    pr_evidence_manifest: Any,
++    findings: list[Finding],
++) -> None:
++    check_aligned_values(
++        DAILY_OBSERVATION_PATH,
++        daily_observation,
++        "daily_observation.mission_id",
++        PR_EVIDENCE_MANIFEST_PATH,
++        pr_evidence_manifest,
++        "current_mission_evidence.mission_id",
++        "Current mission id",
++        findings,
++    )
++    check_aligned_values(
++        DAILY_OBSERVATION_PATH,
++        daily_observation,
++        "daily_observation.mission_node",
++        PR_EVIDENCE_MANIFEST_PATH,
++        pr_evidence_manifest,
++        "current_mission_evidence.mission_node",
++        "Current mission node",
++        findings,
++    )
++    check_aligned_values(
++        DAILY_OBSERVATION_PATH,
++        daily_observation,
++        "daily_observation.date",
++        PR_EVIDENCE_MANIFEST_PATH,
++        pr_evidence_manifest,
++        "current_mission_evidence.captured_at",
++        "Current evidence capture date",
++        findings,
++    )
++    check_aligned_values(
++        DAILY_OBSERVATION_PATH,
++        daily_observation,
++        "daily_observation.date",
++        LEARNING_MEMO_PROMOTION_PATH,
++        learning_memo_promotion,
++        "current_promotion.source_observation_date",
++        "Learning memo source observation date",
++        findings,
++    )
++    check_aligned_values(
++        DAILY_OBSERVATION_PATH,
++        daily_observation,
++        "daily_observation.runtime_behavior_changed",
++        PR_EVIDENCE_MANIFEST_PATH,
++        pr_evidence_manifest,
++        "current_mission_evidence.runtime_behavior_changed",
++        "Runtime behavior change statement",
++        findings,
++    )
+ 
+ 
+ def check_pr_template(root: Path, findings: list[Finding]) -> None:
+@@ -1219,9 +1328,15 @@ def main() -> int:
+     findings: list[Finding] = []
+     check_profile(root, findings)
+     check_work_item_contracts(root, findings)
+-    check_daily_observation_contract(root, findings)
+-    check_learning_memo_promotion_contract(root, findings)
+-    check_pr_evidence_manifest(root, findings)
++    daily_observation = check_daily_observation_contract(root, findings)
++    learning_memo_promotion = check_learning_memo_promotion_contract(root, findings)
++    pr_evidence_manifest = check_pr_evidence_manifest(root, findings)
++    check_current_mission_alignment(
++        daily_observation,
++        learning_memo_promotion,
++        pr_evidence_manifest,
++        findings,
++    )
+     check_pr_template(root, findings)
+     check_package_script(root, findings)
+     check_repo_os_workflow(root, findings)
+diff --git a/.jarvis/daily_observation.json b/.jarvis/daily_observation.json
+index b994008..5607fd3 100644
+--- a/.jarvis/daily_observation.json
++++ b/.jarvis/daily_observation.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-daily-observation",
+   "surface_type": "continuous_improvement_daily_observation",
+   "status": "active",
+-  "last_reviewed": "2026-05-25",
++  "last_reviewed": "2026-05-27",
+   "runtime_behavior_changed": false,
+   "purpose": "Capture daily, evidence-backed observations that can feed the self-improvement loop without changing runtime behavior.",
+   "applies_to": {
+@@ -34,30 +34,30 @@
+     "promotion_trigger": "Promote only when the observation identifies a reusable lesson, repeated blocker, missing contract surface, or release-readiness gap that should change a repo contract, runbook, template, or backlog."
+   },
+   "daily_observation": {
+-    "date": "2026-05-25",
+-    "mission_id": "mission-fe02ff14bef4",
+-    "mission_node": "node-6f40795e0114",
+-    "observation": "The release-readiness branch had uncommitted WIP from a prior mission callback loss while the production-grade profile was being ratcheted toward self-improving evidence loops.",
++    "date": "2026-05-27",
++    "mission_id": "mission-6afece524ca3",
++    "mission_node": "node-562875198f0b",
++    "observation": "A QA semantic pass found strict repo-contract validation green, but the current PR evidence and learning-loop surfaces still pointed at the previous mission node. Current-node evidence must be refreshed even when the validator has no warnings.",
+     "classification": [
+-      "dirty_worktree_quarantine",
+-      "self_improvement_loop_gap",
+-      "release_readiness_evidence_gap"
++      "qa_contract_tightening",
++      "current_mission_evidence_alignment",
++      "metadata_only_evidence_refresh"
+     ],
+     "evidence": [
+       {
+-        "path": ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+-        "signal": "Captured the exact branch, upstream sync, PR context, modified files, untracked files, and quarantine policy before this node layered on new release-readiness edits."
++        "path": ".jarvis/pr_evidence_manifest.json",
++        "signal": "current_mission_evidence was refreshed to mission-6afece524ca3 / node-562875198f0b, with metadata-only scope, verification evidence, rollback note, and unresolved risks."
+       },
+       {
+-        "path": ".jarvis/production_grade_profile.json",
+-        "signal": "continuous_improvement.source_of_truth now references daily observation, learning memo promotion, and both dirty-worktree quarantine manifests."
++        "path": ".codex/scripts/validate_repo_contracts.py",
++        "signal": "The advisory validator now requires current_mission_evidence basics so PR evidence cannot drop the current mission, verification, rollback, or residual-risk fields silently."
+       },
+       {
+-        "path": ".jarvis/pr_evidence_manifest.json",
+-        "signal": "current_mission_evidence carries PR-first release evidence, rollback metadata, verification expectations, and unresolved risks for the current node."
++        "path": "agile_work_item.json",
++        "signal": "The canonical agile ready/done contract remains mirrored at .jarvis/agile_work_item.json and was not changed by this QA tightening pass."
+       }
+     ],
+-    "action_taken": "Preserve inherited WIP with a current dirty-worktree quarantine manifest, keep daily observation and learning memo promotion as explicit JSON surfaces, and wire current mission evidence into PR and release-readiness artifacts.",
++    "action_taken": "Refresh current-node daily observation, learning memo promotion, PR evidence, production profile metadata, and advisory validator requirements without changing runtime behavior, workflows, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, or shared API contracts.",
+     "promotion_candidate": true,
+     "promotion_target": ".jarvis/learning_memo_promotion.json",
+     "runtime_behavior_changed": false
+diff --git a/.jarvis/learning_memo_promotion.json b/.jarvis/learning_memo_promotion.json
+index a7397f1..9ce0729 100644
+--- a/.jarvis/learning_memo_promotion.json
++++ b/.jarvis/learning_memo_promotion.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-learning-memo-promotion",
+   "surface_type": "continuous_improvement_learning_memo_promotion",
+   "status": "active",
+-  "last_reviewed": "2026-05-25",
++  "last_reviewed": "2026-05-27",
+   "runtime_behavior_changed": false,
+   "purpose": "Define when an observation becomes a promoted learning memo and where that learning must be captured before it is treated as part of the production-grade operating system.",
+   "applies_to": {
+@@ -51,28 +51,28 @@
+     ]
+   },
+   "current_promotion": {
+-    "promotion_id": "2026-05-25-node-6f40795e0114-dirty-worktree-and-learning-loop",
++    "promotion_id": "2026-05-27-node-562875198f0b-current-node-evidence-alignment",
+     "source_observation_path": ".jarvis/daily_observation.json",
+-    "source_observation_date": "2026-05-25",
+-    "lesson": "A release-readiness mission that resumes from a dirty branch should first preserve inherited WIP with a branch or evidence bundle, then promote repeated delivery lessons through explicit observation and learning memo surfaces.",
++    "source_observation_date": "2026-05-27",
++    "lesson": "Advisory contract validation can pass while current-node evidence is stale. Metadata-only QA passes should refresh mission, node, verification, rollback, and residual-risk evidence or explicitly record that no current-node metadata mutation was needed.",
+     "evidence_refs": [
+       ".jarvis/daily_observation.json",
+-      ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+-      ".jarvis/production_grade_profile.json",
+       ".jarvis/pr_evidence_manifest.json",
++      ".jarvis/production_grade_profile.json",
+       ".codex/scripts/validate_repo_contracts.py",
+-      "docs/platform/release-readiness-report.md"
++      "agile_work_item.json",
++      ".jarvis/agile_work_item.json"
+     ],
+     "promoted_to": [
++      "daily_observation.current_mission_context",
++      "learning_memo_promotion.current_promotion",
++      "pr_evidence_manifest.current_mission_evidence",
+       "production_grade_profile.continuous_improvement.daily_observation",
+       "production_grade_profile.continuous_improvement.learning_memo_promotion",
+-      "production_grade_profile.continuous_improvement.source_of_truth",
+-      "pr_evidence_manifest.current_mission_evidence",
+-      "advisory repo contract validation",
+-      "release-readiness evidence"
++      "advisory repo contract validation"
+     ],
+     "runtime_behavior_changed": false,
+-    "rollback_note": "Revert the metadata-only JSON manifests plus profile, validator, PR evidence, and release-readiness documentation changes. No Cloudflare worker rollback is required for this change by itself.",
++    "rollback_note": "Revert the metadata-only JSON manifest, production profile, PR evidence, and advisory validator changes from this node. No Cloudflare worker rollback is required for this change by itself.",
+     "status": "promoted_to_advisory_contract"
+   },
+   "non_goals": [
+diff --git a/.jarvis/pr_evidence_manifest.json b/.jarvis/pr_evidence_manifest.json
+index 0b087c4..b5debfa 100644
+--- a/.jarvis/pr_evidence_manifest.json
++++ b/.jarvis/pr_evidence_manifest.json
+@@ -3,7 +3,7 @@
+   "manifest_name": "sales-saas-pr-evidence-manifest",
+   "manifest_type": "pull_request_release_evidence_contract",
+   "status": "active",
+-  "last_reviewed": "2026-05-25",
++  "last_reviewed": "2026-05-27",
+   "purpose": "Define the PR evidence, release path, deploy smoke evidence, and rollback metadata required before release-sensitive changes land or promote.",
+   "applies_to": {
+     "repository": "sales-saas",
+@@ -139,22 +139,29 @@
+     "credential_blocker_policy": "If Cloudflare credentials or environment variables are unavailable, record the missing prerequisite and do not claim deploy or smoke success."
+   },
+   "current_mission_evidence": {
+-    "mission_id": "mission-fe02ff14bef4",
+-    "mission_node": "node-6f40795e0114",
++    "mission_id": "mission-6afece524ca3",
++    "mission_node": "node-562875198f0b",
+     "branch": "node-57f374c2e811-agile-work-item",
+-    "base_head_before_metadata_edits": "a0ea033",
+-    "captured_at": "2026-05-25",
++    "base_head_before_metadata_edits": "159a5d8",
++    "captured_at": "2026-05-27",
+     "runtime_behavior_changed": false,
+-    "deploy_workflow_behavior_changed": true,
+-    "scope": "Preserve inherited dirty WIP with a current quarantine manifest, keep agile ready/done and self-improvement contracts explicit, and harden .github/workflows/deploy-cloudflare.yml production workflow_dispatch rollback metadata validation so release_rollback_action must be structured JSON with concrete Cloudflare rollback targets for each selected service.",
++    "deploy_workflow_behavior_changed": false,
++    "dependencies_changed": false,
++    "migrations_changed": false,
++    "shared_contracts_changed": false,
++    "scope": "Tighten current-node PR evidence, daily observation, learning memo, production profile, and advisory repo-contract validation surfaces after QA found stale current mission evidence. Runtime behavior, workflows, deploy behavior, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, and shared API contracts remain unchanged.",
+     "affected_runtime_services": [],
+-    "affected_release_gate_services": [
+-      "web",
+-      "api",
+-      "workflows"
++    "affected_release_gate_services": [],
++    "owned_surfaces": [
++      "agile_work_item.json",
++      ".jarvis/agile_work_item.json",
++      ".jarvis/pr_evidence_manifest.json",
++      ".jarvis/daily_observation.json",
++      ".jarvis/learning_memo_promotion.json",
++      ".jarvis/production_grade_profile.json",
++      ".codex/scripts/validate_repo_contracts.py",
++      ".github/PULL_REQUEST_TEMPLATE.md"
+     ],
+-    "release_readiness_report": "docs/platform/release-readiness-report.md",
+-    "dirty_worktree_quarantine": ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+     "ready_done_contract": {
+       "canonical_path": "agile_work_item.json",
+       "mirror_path": ".jarvis/agile_work_item.json",
+@@ -171,68 +178,16 @@
+         "continuous_improvement.source_of_truth"
+       ]
+     },
+-    "workflow_dispatch_validation": {
+-      "workflow": ".github/workflows/deploy-cloudflare.yml",
+-      "input": "release_rollback_action",
+-      "format": "JSON object",
+-      "selected_services_input": "services",
+-      "all_service_expansion": [
+-        "web",
+-        "api",
+-        "workflows"
+-      ],
+-      "fails_before_verify_or_deploy": true,
+-      "accepted_target_forms": [
+-        "wrangler rollback command containing the concrete target UUID and the service wrangler config path",
+-        "Cloudflare dashboard rollback target containing the concrete target UUID"
+-      ],
+-      "post_rollback_smoke_command": "npm run smoke:cloudflare"
+-    },
+     "pull_request": {
+       "known_url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+-      "status": "open_mergeable_branch_pushed_ci_pending_or_running",
+-      "checks_observed": "PR #1 is open and mergeable. This node pushed the release-readiness diff; GitGuardian completed successfully immediately after push, while CI and repo operating-system checks were queued or in progress. The final pushed commit must finish required PR checks successfully before merge."
++      "status": "local_metadata_diff_ready_for_pr_update",
++      "checks_observed": "This node has not pushed a commit or observed fresh remote PR checks. The branch must flow through PR review and CI before merge."
+     },
+     "verification_evidence": [
+       {
+-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+-        "status": "passed_expected_failure",
+-        "scope": "Acceptance: production workflow_dispatch without rollback metadata fails before verify/deploy."
+-      },
+-      {
+-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='{\"rollback_owner\":\"DevOps\",\"post_rollback_smoke_command\":\"npm run smoke:cloudflare\",\"targets\":{\"api\":{\"rollback_command\":\"npx wrangler rollback <API_VERSION_ID> --config apps/api/wrangler.jsonc --env production\"}}}' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+-        "status": "passed_expected_failure",
+-        "scope": "Acceptance: production workflow_dispatch with placeholder rollback metadata fails before verify/deploy."
+-      },
+-      {
+-        "command": "TARGET_SERVICES=all RELEASE_ROLLBACK_ACTION='<web-and-api-targets-only-json>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+-        "status": "passed_expected_failure",
+-        "scope": "Acceptance: services=all fails when workflows is missing a service-specific rollback target."
+-      },
+-      {
+-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='<api-target-json-with-worker-version-id-22222222-2222-4222-8222-222222222222>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+-        "status": "passed",
+-        "scope": "Acceptance: service-specific rollback target metadata passes validation before verify/deploy."
+-      },
+-      {
+-        "command": "TARGET_SERVICES=all RELEASE_ROLLBACK_ACTION='<web-api-workflows-target-json-with-worker-version-ids>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+-        "status": "passed",
+-        "scope": "Acceptance: services=all passes only when web, api, and workflows each provide concrete rollback targets."
+-      },
+-      {
+-        "command": "TARGET_SERVICES=api RELEASE_ROLLBACK_ACTION='<api-service-targets-json-with-worker-version-id-22222222-2222-4222-8222-222222222222>' node < <(awk 'index($0,\"node <<'\\''NODE'\\''\"){flag=1;next} flag && $0==\"          NODE\"{flag=0;exit} flag {sub(/^          /,\"\"); print}' .github/workflows/deploy-cloudflare.yml)",
+-        "status": "passed",
+-        "scope": "Acceptance: service_targets list form passes when it provides a concrete rollback target for the selected service."
+-      },
+-      {
+-        "command": "git diff --check",
+-        "status": "passed",
+-        "scope": "Whitespace and patch hygiene."
+-      },
+-      {
+-        "command": "node -e \"for (const path of ['.jarvis/production_grade_profile.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/dirty_worktree_quarantine_2026-05-24_node-0972c3bef4bd.json','.jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json','agile_work_item.json','.jarvis/agile_work_item.json']) JSON.parse(require('fs').readFileSync(path,'utf8')); console.log('json parse ok')\"",
++        "command": "node -e \"const fs=require('fs'); for (const p of process.argv.slice(1)) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')\" agile_work_item.json .jarvis/agile_work_item.json .jarvis/pr_evidence_manifest.json .jarvis/daily_observation.json .jarvis/learning_memo_promotion.json .jarvis/production_grade_profile.json",
+         "status": "passed",
+-        "scope": "Machine-readable JSON parsing for production profile, PR evidence, daily observation, learning memo promotion, quarantine manifests, and agile work item contracts."
++        "scope": "Machine-readable JSON parsing for owned manifests."
+       },
+       {
+         "command": "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
+@@ -242,132 +197,99 @@
+       {
+         "command": "python3 -m py_compile .codex/scripts/validate_repo_contracts.py",
+         "status": "passed",
+-        "scope": "Python syntax gate for the inherited advisory validator changes present in this worktree."
+-      },
+-      {
+-        "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/deploy-cloudflare.yml')); print('yaml parse ok')\"",
+-        "status": "passed",
+-        "scope": "Workflow YAML syntax parse."
+-      },
+-      {
+-        "command": "npx --yes actionlint@latest .github/workflows/deploy-cloudflare.yml",
+-        "status": "blocked",
+-        "scope": "GitHub Actions lint substitute check. The npm package has no executable in this environment; PyYAML parse and extracted validator execution covered syntax and behavior."
++        "scope": "Python syntax gate for the advisory validator."
+       },
+       {
+         "command": "npm run repo:contracts -- --strict",
+-        "status": "passed",
+-        "scope": "Strict advisory validation for production-grade profile, self-improvement surfaces, agile work item, PR evidence, rollback metadata, and PR template. Result: 345 pass, 0 warn, 0 error."
++        "status": "failed_expected_before_pr_evidence_alignment",
++        "scope": "New cross-surface validator check identified stale PR evidence before this manifest was refreshed: 356 pass, 3 warn, 0 error."
+       },
+       {
+-        "command": "npm run repo:audit",
++        "command": "npm run repo:contracts -- --strict",
+         "status": "passed",
+-        "scope": "Repo operating-system audit. Result: score 100%, no priority gaps, git_dirty true while release-readiness edits remain local."
++        "scope": "Strict advisory validation after current-node PR evidence alignment: 359 pass, 0 warn, 0 error."
+       },
+       {
+         "command": "npm run typecheck",
+-        "status": "passed",
+-        "scope": "Required medium-risk lint/type gate across workspaces."
+-      },
+-      {
+-        "command": "npm run test",
+-        "status": "passed",
+-        "scope": "Required automated test suite. Final result: root 24, API 63, web 19, database 1, shared 2 tests passed."
++        "status": "blocked_before_dependency_hydration",
++        "scope": "Initial exact gate failed before this metadata change could be evaluated because the local node_modules tree was incomplete: Hono, Drizzle, Vitest, and provider SDK modules were missing."
+       },
+       {
+-        "command": "npm run build",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm ci --foreground-scripts'",
+         "status": "passed",
+-        "scope": "Required build and release bundle gate."
++        "scope": "Hydrated dependencies from package-lock.json under the repo-declared Node 22/npm 11 toolchain after plain npm ci failed during parallel postinstall script setup."
+       },
+       {
+-        "command": "npm run verify:core",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run typecheck'",
+         "status": "passed",
+-        "scope": "Required core verification aggregate; reran typecheck, test, and build successfully."
++        "scope": "Required medium-risk type gate across workspaces."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run test'",
+         "status": "passed",
+-        "scope": "Cloudflare web worker release bundle generation under Node v22.22.3 and npm 11.10.1; OpenNext generated .open-next/worker.js."
++        "scope": "Required automated test suite: root 24, API 63, web 19, database 1, and shared 2 tests passed."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/web/wrangler.jsonc'",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'",
+         "status": "passed",
+-        "scope": "Cloudflare web Worker shadow deploy dry-run with Wrangler 4.87.0."
++        "scope": "Required build gate."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/api/wrangler.jsonc'",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run verify:core'",
+         "status": "passed",
+-        "scope": "Cloudflare API Worker shadow deploy dry-run with Wrangler 4.87.0."
+-      },
+-      {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/workflows/wrangler.jsonc'",
+-        "status": "passed",
+-        "scope": "Cloudflare workflows Worker shadow deploy dry-run with Wrangler 4.87.0."
+-      },
+-      {
+-        "command": "if [ -r /etc/cynik/apps/sales-saas.env ]; then echo env-file-readable; else echo env-file-not-readable; fi; for name in WEB_APP_URL API_HEALTHCHECK_URL WORKFLOWS_HEALTHCHECK_URL WORKFLOWS_HEALTHCHECK_TOKEN CLOUDFLARE_API_TOKEN; do if [ -n \"${!name:-}\" ]; then echo \"$name=set\"; else echo \"$name=unset\"; fi; done",
+-        "status": "blocked",
+-        "scope": "Host-managed smoke environment access. Result: env-file-not-readable; WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN unset."
++        "scope": "Required core verification aggregate reran typecheck, test, and build successfully."
+       },
+       {
+         "command": "npm run smoke:cloudflare",
+         "status": "blocked",
+-        "scope": "Credential-dependent Cloudflare smoke. Result: WEB_APP_URL is required."
++        "scope": "Credential-dependent Cloudflare smoke from the repo verification contract. Result: /etc/cynik/apps/sales-saas.env is not readable, required environment variables are unset, and the script exits with WEB_APP_URL is required."
+       }
+     ],
+     "deploy_evidence": [
+       {
+-        "check": "release_bundle_creation",
+-        "status": "passed",
+-        "command": "npm run build; npx -y -p node@22 -p npm@11.10.1 -c 'npm run build:cf-worker --workspace @sales/web'",
+-        "evidence": "Workspace build passed, including the Next.js production build and API, workflows, database, and shared package builds. OpenNext Cloudflare worker bundle generation also passed under Node 22."
+-      },
+-      {
+-        "check": "cloudflare_shadow_deploy_attempt",
+-        "status": "passed",
+-        "command": "Wrangler deploy --dry-run for apps/web/wrangler.jsonc, apps/api/wrangler.jsonc, and apps/workflows/wrangler.jsonc under Node 22/npm 11.10.1.",
+-        "evidence": "Dry-runs passed for web, API, and workflows with Wrangler 4.87.0. No production deploy was performed."
++        "check": "metadata_only_deploy_posture",
++        "status": "not_applicable",
++        "command": "No deploy command run.",
++        "evidence": "This node changes advisory metadata and validation only; no Cloudflare service, worker bundle, route, or deploy workflow behavior is changed."
+       },
+       {
+-        "check": "cloudflare_shadow_smoke",
++        "check": "cloudflare_smoke",
+         "status": "blocked",
+         "command": "npm run smoke:cloudflare",
+-        "evidence": "Blocked because /etc/cynik/apps/sales-saas.env is not readable and WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN are unset."
++        "evidence": "Blocked because /etc/cynik/apps/sales-saas.env is not readable in this session and WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN are unset. The script exited with WEB_APP_URL is required."
+       },
+       {
+         "check": "service_restart_validation",
+         "status": "not_applicable",
+-        "evidence": "No runtime service restart is required or authorized for a GitHub Actions validation change."
++        "evidence": "No runtime service restart is required or authorized for this metadata-only change."
+       },
+       {
+         "check": "rollback_target_confirmation",
+-        "status": "validation_hardened_actual_targets_unconfirmed",
+-        "evidence": "The workflow now requires concrete per-service target UUIDs before production verification. Actual last known-good Cloudflare Worker version IDs still require provider access during a real production promotion."
++        "status": "metadata_only_no_service_targets_required",
++        "evidence": "No Cloudflare service is affected by this node. Runtime releases still require concrete last known-good Worker version IDs or Cloudflare dashboard rollback targets before production promotion."
+       }
+     ],
+     "rollback_metadata": {
+-      "release_or_pr_identifier": "mission-fe02ff14bef4 / node-6f40795e0114 / PR #1",
++      "release_or_pr_identifier": "mission-6afece524ca3 / node-562875198f0b",
+       "affected_cloudflare_services": [],
+-      "rollback_owner": "DevOps release owner for the PR.",
+-      "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, shared API contract, dependency, worker bundle, route, or runtime behavior change.",
+-      "metadata_only_rollback_action": "Revert the PR or restore the previous versions of .github/workflows/deploy-cloudflare.yml, .codex/scripts/validate_repo_contracts.py, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, .jarvis/learning_memo_promotion.json, .jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json, and docs/platform/release-readiness-report.md.",
+-      "production_service_rollback_action_if_bundled_with_runtime_changes": "Use the approved release.rollback_action JSON targets for each affected service, redeploy the last known-good Cloudflare worker versions for web, api, and workflows as applicable, then rerun npm run smoke:cloudflare.",
++      "rollback_owner": "Builder owner for this metadata-only mission node; PR reviewer confirms before merge.",
++      "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, shared API contract, dependency, worker bundle, route, workflow, or runtime behavior change.",
++      "metadata_only_rollback_action": "Revert this node's changes to .codex/scripts/validate_repo_contracts.py, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, and .jarvis/learning_memo_promotion.json. No Cloudflare service rollback is required for this metadata-only change.",
++      "production_service_rollback_action_if_bundled_with_runtime_changes": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows as applicable, then rerun npm run smoke:cloudflare.",
+       "post_rollback_validation": [
+-        "python3 -c YAML parse for .github/workflows/deploy-cloudflare.yml",
+-        "node -e JSON parse for changed .jarvis contract files and agile work item contracts",
++        "node -e JSON parse for owned manifest files",
+         "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
++        "python3 -m py_compile .codex/scripts/validate_repo_contracts.py",
+         "npm run repo:contracts -- --strict",
+         "npm run verify:core",
+         "npm run smoke:cloudflare when runtime services were deployed or rolled back"
+       ]
+     },
+     "unresolved_risks": [
+-      "GitHub checks for the final pushed commit from this node must finish green before merge; immediate post-push evidence showed GitGuardian successful and CI/repo operating-system checks queued or in progress.",
+-      "Cloudflare staging or production deploy was not authorized or needed for this release-gate-only node.",
+-      "Cloudflare smoke remains blocked until environment-backed URLs and credentials are available.",
+-      "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without Cloudflare provider access for runtime releases.",
+-      "actionlint could not be run from npm in this environment; workflow YAML was parsed and the embedded validator behavior was exercised directly.",
+-      "Default host node is v18.19.1; Cloudflare packaging and dry-runs used node@22 and npm@11.10.1 to match the repo toolchain and CI setup-node target."
++      "The local metadata diff still needs to be pushed or attached to a PR and reviewed before merge.",
++      "Cloudflare smoke is credential and environment dependent; if unavailable, the blocked reason must stay visible instead of being treated as pass evidence.",
++      "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without provider access, but no Cloudflare services are affected by this metadata-only node.",
++      "npm ci reported dependency audit findings in the existing lockfile dependency tree: 17 moderate, 9 high, and 1 critical vulnerability. This node did not change dependencies and did not remediate audit findings."
+     ]
+   },
+   "non_goals": [
+diff --git a/.jarvis/production_grade_profile.json b/.jarvis/production_grade_profile.json
+index 84ab705..30d2f01 100644
+--- a/.jarvis/production_grade_profile.json
++++ b/.jarvis/production_grade_profile.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 1,
+-  "profile_version": "1.0.12",
++  "profile_version": "1.0.13",
+   "status": "active",
+-  "last_updated": "2026-05-25",
++  "last_updated": "2026-05-27",
+   "repo_identity": {
+     "name": "sales-aaas-platform",
+     "workspace": "sales-saas",
+@@ -1805,8 +1805,9 @@
+   "metadata": {
+     "created_by": "Codex mission node node-745e76479b19",
+     "mission_id": "mission-37decb31706c",
+-    "last_updated_by": "Codex mission node node-0972c3bef4bd",
+-    "last_updated_reason": "Added top-level continuous improvement contract, dirty-worktree quarantine evidence, and current release-readiness metadata while preserving metadata-only runtime behavior.",
++    "last_updated_by": "Codex mission node node-562875198f0b",
++    "last_updated_mission_id": "mission-6afece524ca3",
++    "last_updated_reason": "Aligned current-node PR evidence with daily observation and learning memo promotion, and tightened advisory validation so stale current mission evidence is surfaced by strict repo-contract checks.",
+     "owned_path": ".jarvis/production_grade_profile.json",
+     "change_type": "metadata_only",
+     "runtime_behavior_changed": false,

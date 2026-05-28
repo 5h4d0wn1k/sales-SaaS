@@ -3,7 +3,7 @@
   "contract_name": "sales-saas-agile-work-item",
   "contract_type": "sdlc_work_item_contract",
   "status": "active",
-  "last_reviewed": "2026-05-13",
+  "last_reviewed": "2026-05-28",
   "canonical_path": "agile_work_item.json",
   "mirrors": [
     ".jarvis/agile_work_item.json"

@@ -3,7 +3,7 @@
   "contract_name": "sales-saas-daily-observation",
   "surface_type": "continuous_improvement_daily_observation",
   "status": "active",
-  "last_reviewed": "2026-05-25",
+  "last_reviewed": "2026-05-28",
   "runtime_behavior_changed": false,
   "purpose": "Capture daily, evidence-backed observations that can feed the self-improvement loop without changing runtime behavior.",
   "applies_to": {
@@ -34,30 +34,39 @@
     "promotion_trigger": "Promote only when the observation identifies a reusable lesson, repeated blocker, missing contract surface, or release-readiness gap that should change a repo contract, runbook, template, or backlog."
   },
   "daily_observation": {
-    "date": "2026-05-25",
-    "mission_id": "mission-fe02ff14bef4",
-    "mission_node": "node-6f40795e0114",
-    "observation": "The release-readiness branch had uncommitted WIP from a prior mission callback loss while the production-grade profile was being ratcheted toward self-improving evidence loops.",
+    "date": "2026-05-28",
+    "mission_id": "mission-b1d6f7df7d24",
+    "mission_node": "node-14a456b29140",
+    "observation": "A retried DevOps release-readiness node inherited unstaged metadata WIP on an existing PR branch. The safe path is to preserve the exact pre-edit patch bundle and provenance manifest before refreshing current-node PR evidence, rollback notes, and learning-loop metadata.",
     "classification": [
       "dirty_worktree_quarantine",
-      "self_improvement_loop_gap",
-      "release_readiness_evidence_gap"
+      "pr_first_release_readiness",
+      "current_mission_evidence_alignment",
+      "self_improvement_loop"
     ],
     "evidence": [
       {
-        "path": ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
-        "signal": "Captured the exact branch, upstream sync, PR context, modified files, untracked files, and quarantine policy before this node layered on new release-readiness edits."
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+        "signal": "Records the branch, upstream sync, PR context, modified files, patch bundle, and quarantine policy captured before this node edited the inherited dirty surfaces."
       },
       {
-        "path": ".jarvis/production_grade_profile.json",
-        "signal": "continuous_improvement.source_of_truth now references daily observation, learning memo promotion, and both dirty-worktree quarantine manifests."
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+        "signal": "Preserves the exact pre-edit unstaged diff for .codex validator and .jarvis release-readiness metadata surfaces."
       },
       {
         "path": ".jarvis/pr_evidence_manifest.json",
-        "signal": "current_mission_evidence carries PR-first release evidence, rollback metadata, verification expectations, and unresolved risks for the current node."
+        "signal": "current_mission_evidence is refreshed for mission-b1d6f7df7d24 / node-14a456b29140 with metadata-only scope, verification evidence, deploy posture, rollback metadata, and unresolved risks."
+      },
+      {
+        "path": "docs/platform/release-readiness-report.md",
+        "signal": "The release-readiness report names the dirty-worktree quarantine, CI/CD and deploy posture, rollback rules, verification evidence, and remaining blockers for this node."
+      },
+      {
+        "path": "agile_work_item.json",
+        "signal": "The canonical agile ready/done contract remains mirrored at .jarvis/agile_work_item.json and was re-reviewed for this mission."
       }
     ],
-    "action_taken": "Preserve inherited WIP with a current dirty-worktree quarantine manifest, keep daily observation and learning memo promotion as explicit JSON surfaces, and wire current mission evidence into PR and release-readiness artifacts.",
+    "action_taken": "Create a current dirty-worktree quarantine bundle, refresh current-node daily observation, learning memo promotion, PR evidence, production profile metadata, and release-readiness report without changing runtime behavior, workflows, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, or shared API contracts.",
     "promotion_candidate": true,
     "promotion_target": ".jarvis/learning_memo_promotion.json",
     "runtime_behavior_changed": false
