@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "manifest_name": "sales-saas-current-retry-dirty-worktree-quarantine",
+  "status": "active",
+  "captured_at": "2026-05-31",
+  "mission_id": "mission-5d78617f1cfc",
+  "mission_node": "node-69dc9a7823dc",
+  "workspace": "sales-saas",
+  "branch": "node-57f374c2e811-agile-work-item",
+  "upstream": "origin/node-57f374c2e811-agile-work-item",
+  "head_before_this_node": "8d2e6e5b383da663976993258613b66b9652622c",
+  "upstream_sync_before_this_node": {
+    "command": "git rev-list --left-right --count HEAD...@{upstream}",
+    "result": "0 ahead, 0 behind"
+  },
+  "pull_request_context": {
+    "command": "gh pr view 1 --json number,state,isDraft,mergeable,headRefName,baseRefName,url,statusCheckRollup",
+    "url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+    "state": "OPEN",
+    "is_draft": false,
+    "head_ref": "node-57f374c2e811-agile-work-item",
+    "base_ref": "main",
+    "mergeable_at_capture": "MERGEABLE",
+    "checks_caveat": "Checks observed on PR #1 completed on 2026-05-28 and apply only to the previously pushed branch commit. They must rerun after this current dirty worktree is committed and pushed."
+  },
+  "pre_existing_wip": {
+    "captured_before_current_node_metadata_updates": true,
+    "tracked_patch_bundle_path": ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.patch",
+    "tracked_patch_bundle_bytes": 71582,
+    "tracked_patch_bundle_sha256": "1871b5b60a1de0ba4d057fc8b924b07a34907d0b7111b3512e7481be7e4dd2ad",
+    "git_status_command": "git status --short --branch",
+    "git_status_result": [
+      "## node-57f374c2e811-agile-work-item...origin/node-57f374c2e811-agile-work-item",
+      " M .codex/scripts/validate_repo_contracts.py",
+      " M .jarvis/agile_work_item.json",
+      " M .jarvis/daily_observation.json",
+      " M .jarvis/learning_memo_promotion.json",
+      " M .jarvis/pr_evidence_manifest.json",
+      " M .jarvis/production_grade_profile.json",
+      " M agile_work_item.json",
+      " M docs/platform/release-readiness-report.md",
+      " M docs/reliability/production-readiness-review.md",
+      "?? .gitattributes",
+      "?? .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
+      "?? .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch"
+    ],
+    "diff_stat_command": "git diff --stat",
+    "diff_stat_summary": [
+      ".codex/scripts/validate_repo_contracts.py       |  54 +++++++",
+      ".jarvis/agile_work_item.json                    |   2 +-",
+      ".jarvis/daily_observation.json                  |  45 ++++--",
+      ".jarvis/learning_memo_promotion.json            |  26 ++--",
+      ".jarvis/pr_evidence_manifest.json               | 146 +++++++++++--------",
+      ".jarvis/production_grade_profile.json           |  75 ++++++++--",
+      "agile_work_item.json                            |   2 +-",
+      "docs/platform/release-readiness-report.md       | 179 ++++++++++++------------",
+      "docs/reliability/production-readiness-review.md | 120 ++++++++++++++++",
+      "9 files changed, 466 insertions(+), 183 deletions(-)"
+    ],
+    "modified_files": [
+      ".codex/scripts/validate_repo_contracts.py",
+      ".jarvis/agile_work_item.json",
+      ".jarvis/daily_observation.json",
+      ".jarvis/learning_memo_promotion.json",
+      ".jarvis/pr_evidence_manifest.json",
+      ".jarvis/production_grade_profile.json",
+      "agile_work_item.json",
+      "docs/platform/release-readiness-report.md",
+      "docs/reliability/production-readiness-review.md"
+    ],
+    "untracked_files_before_current_quarantine": [
+      {
+        "path": ".gitattributes",
+        "bytes": 265,
+        "sha256": "df0fdcc0c2be7ddca2a9d397e824439c2c4b5b16f4c635695496a3e024afc490",
+        "role": "Narrow archived-patch whitespace policy from inherited WIP."
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
+        "bytes": 5522,
+        "sha256": "90b9e59c55963227c5b698d57fd2ba1d0328a69f7eb7cc901078ba1692c47b9c",
+        "role": "Prior retry dirty-worktree quarantine manifest."
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
+        "bytes": 51416,
+        "sha256": "43fc00ed2130a769323f25b99af0c83a8d43f78e098ec843b75e0ef970e15f73",
+        "role": "Prior retry tracked WIP patch bundle."
+      }
+    ],
+    "wip_summary": "Inherited local WIP already contained advisory release-readiness hardening across agile ready/done, PR evidence, rollback metadata, daily observation, learning memo promotion, production-grade profile, production-readiness review, release-readiness report, validator logic, and archived-patch Git attributes. This current-node manifest packages that WIP before current mission evidence is refreshed."
+  },
+  "quarantine_policy": [
+    "Do not discard, overwrite, hide, stash away, or revert inherited user/Ayushman/senior-dev changes.",
+    "Preserve the current tracked patch bundle and prior retry quarantine artifacts as PR-visible evidence.",
+    "Commit the packaged metadata changes to the existing PR branch when validation passes, then require fresh PR checks before merge.",
+    "Treat historical green PR checks as context only, not final release evidence.",
+    "Keep this node metadata-only; no runtime, deploy workflow, dependency, migration, billing, auth, tenancy, provider webhook, approval gate, or shared API contract behavior is intentionally changed."
+  ],
+  "runtime_behavior_changed": false,
+  "dependencies_changed": false,
+  "migrations_changed": false,
+  "workflows_changed": false,
+  "deploy_workflow_behavior_changed": false,
+  "rollback_note": "This quarantine bundle is metadata-only. Roll back by reverting this manifest, its patch bundle, the inherited node-b5eac29f5c60 quarantine files if this node is the first commit that tracks them, and the related release-readiness metadata/docs. No Cloudflare service rollback is required unless this metadata is bundled with runtime service changes."
+}

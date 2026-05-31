@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "manifest_name": "sales-saas-dirty-worktree-quarantine",
+  "status": "active",
+  "captured_at": "2026-05-30",
+  "mission_id": "mission-fc353dca8ffb",
+  "mission_node": "node-b5eac29f5c60",
+  "workspace": "sales-saas",
+  "branch": "node-57f374c2e811-agile-work-item",
+  "upstream": "origin/node-57f374c2e811-agile-work-item",
+  "head_before_this_node": "8d2e6e5b383da663976993258613b66b9652622c",
+  "upstream_sync_before_this_node": {
+    "command": "git rev-list --left-right --count HEAD...@{upstream}",
+    "result": "0 ahead, 0 behind"
+  },
+  "pull_request_context": {
+    "command": "gh pr view 1 --json number,state,isDraft,mergeable,headRefName,baseRefName,url,statusCheckRollup",
+    "url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+    "state": "OPEN",
+    "is_draft": false,
+    "head_ref": "node-57f374c2e811-agile-work-item",
+    "base_ref": "main",
+    "mergeable_at_capture": "MERGEABLE",
+    "checks_at_capture": [
+      "Type Check: SUCCESS at 2026-05-28T01:49:19Z",
+      "Repo Operating System audit: SUCCESS at 2026-05-28T01:42:34Z",
+      "Unit Tests: SUCCESS at 2026-05-28T01:42:10Z",
+      "Build: SUCCESS at 2026-05-28T01:46:33Z",
+      "GitGuardian Security Checks: SUCCESS at 2026-05-28T01:39:04Z"
+    ],
+    "checks_caveat": "Checks apply to the previously pushed branch commit. They must be observed again after this dirty worktree is committed and pushed."
+  },
+  "pre_existing_wip": {
+    "captured_before_new_edits": true,
+    "patch_bundle_path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
+    "patch_bundle_bytes": 51416,
+    "patch_bundle_sha256": "43fc00ed2130a769323f25b99af0c83a8d43f78e098ec843b75e0ef970e15f73",
+    "local_export_bundle": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60",
+    "git_status_command": "git status --short --branch",
+    "git_status_result": [
+      "## node-57f374c2e811-agile-work-item...origin/node-57f374c2e811-agile-work-item",
+      " M .codex/scripts/validate_repo_contracts.py",
+      " M .jarvis/agile_work_item.json",
+      " M .jarvis/daily_observation.json",
+      " M .jarvis/learning_memo_promotion.json",
+      " M .jarvis/pr_evidence_manifest.json",
+      " M .jarvis/production_grade_profile.json",
+      " M agile_work_item.json",
+      " M docs/platform/release-readiness-report.md",
+      " M docs/reliability/production-readiness-review.md",
+      "?? .gitattributes"
+    ],
+    "diff_stat_command": "git diff --stat",
+    "diff_stat_summary": [
+      ".codex/scripts/validate_repo_contracts.py       |  50 ++++++++",
+      ".jarvis/agile_work_item.json                    |   2 +-",
+      ".jarvis/daily_observation.json                  |  29 +++--",
+      ".jarvis/learning_memo_promotion.json            |  13 ++-",
+      ".jarvis/pr_evidence_manifest.json               |  60 +++++-----",
+      ".jarvis/production_grade_profile.json           |  30 +++--",
+      "agile_work_item.json                            |   2 +-",
+      "docs/platform/release-readiness-report.md       | 144 ++++++++++++------------",
+      "docs/reliability/production-readiness-review.md |  57 ++++++++++",
+      "9 files changed, 260 insertions(+), 127 deletions(-)"
+    ],
+    "modified_files": [
+      ".codex/scripts/validate_repo_contracts.py",
+      ".jarvis/agile_work_item.json",
+      ".jarvis/daily_observation.json",
+      ".jarvis/learning_memo_promotion.json",
+      ".jarvis/pr_evidence_manifest.json",
+      ".jarvis/production_grade_profile.json",
+      "agile_work_item.json",
+      "docs/platform/release-readiness-report.md",
+      "docs/reliability/production-readiness-review.md"
+    ],
+    "untracked_files_before_quarantine": [
+      ".gitattributes"
+    ],
+    "untracked_file_snapshots": [
+      {
+        "path": ".gitattributes",
+        "sha256": "629a49d0a37d9e25fd6da38d3e0b93b0c6d7e60f9af41fdaf7b1772b48bb0552",
+        "content": "# Archived quarantine patch bundles preserve exact captured diffs.\n# Disable whitespace scanning so branch checks do not require mutating evidence.\n.jarvis/dirty_worktree_quarantine_*.patch -whitespace\n"
+      }
+    ],
+    "wip_summary": "Inherited retry WIP already hardens the agile ready/done contract, PR evidence, rollback metadata, daily observation, learning memo promotion, production-grade profile, release-readiness report, production-readiness review, and archived patch whitespace validation."
+  },
+  "quarantine_policy": [
+    "Do not discard, overwrite, hide, or revert inherited user/Ayushman/senior-dev changes.",
+    "Use the patch bundle to reconstruct the exact tracked dirty diff that existed before node-b5eac29f5c60 made additional release-readiness edits.",
+    "Use the untracked file snapshot to reconstruct the inherited .gitattributes content observed before this node extended it.",
+    "Keep subsequent hardening additive, PR-first, and evidence-backed.",
+    "Treat previous PR checks as historical evidence only; observe checks again after this node's final commit is pushed."
+  ],
+  "runtime_behavior_changed": false,
+  "dependencies_changed": false,
+  "migrations_changed": false,
+  "workflows_changed": false,
+  "deploy_workflow_behavior_changed": false,
+  "rollback_note": "This quarantine bundle is metadata-only. Roll back by reverting this manifest, its patch bundle, and any later metadata edits from node-b5eac29f5c60, or by closing/reverting the PR. No Cloudflare service rollback is required unless this metadata is bundled with runtime service changes."
+}

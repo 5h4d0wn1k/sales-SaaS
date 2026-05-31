@@ -1,0 +1,1084 @@
+diff --git a/.codex/scripts/validate_repo_contracts.py b/.codex/scripts/validate_repo_contracts.py
+index 5d29fe5..d942d41 100644
+--- a/.codex/scripts/validate_repo_contracts.py
++++ b/.codex/scripts/validate_repo_contracts.py
+@@ -28,6 +28,12 @@ PR_EVIDENCE_MANIFEST_PATH = ".jarvis/pr_evidence_manifest.json"
+ PR_TEMPLATE_PATH = ".github/PULL_REQUEST_TEMPLATE.md"
+ PACKAGE_JSON_PATH = "package.json"
+ REPO_OS_WORKFLOW_PATH = ".github/workflows/repo-operating-system.yml"
++GIT_ATTRIBUTES_PATH = ".gitattributes"
++ARCHIVED_PATCH_ATTRIBUTE_TOKEN = "-whitespace"
++ARCHIVED_PATCH_ATTRIBUTE_RULES = [
++    ".jarvis/dirty_worktree_quarantine_*.patch",
++    ".codex/reports/dirty-worktree-quarantine/*/*.patch",
++]
+ 
+ PROFILE_REQUIRED_SECTIONS = [
+     "ownership",
+@@ -1247,6 +1253,53 @@ def check_repo_os_workflow(root: Path, findings: list[Finding]) -> None:
+         )
+ 
+ 
++def check_gitattributes(root: Path, findings: list[Finding]) -> None:
++    relpath = GIT_ATTRIBUTES_PATH
++    path = root / relpath
++    if not path.exists():
++        findings.append(
++            Finding(
++                "warn",
++                "gitattributes.missing",
++                relpath,
++                "Git attributes should document archived patch evidence whitespace handling.",
++            )
++        )
++        return
++
++    rules_found = set()
++    for line in read_text(path).splitlines():
++        stripped = line.strip()
++        if not stripped or stripped.startswith("#"):
++            continue
++        tokens = stripped.split()
++        if tokens and tokens[0] in ARCHIVED_PATCH_ATTRIBUTE_RULES and ARCHIVED_PATCH_ATTRIBUTE_TOKEN in tokens[1:]:
++            rules_found.add(tokens[0])
++
++    for pattern in ARCHIVED_PATCH_ATTRIBUTE_RULES:
++        if pattern in rules_found:
++            findings.append(
++                Finding(
++                    "pass",
++                    "gitattributes.archived_patch_whitespace",
++                    relpath,
++                    "Archived dirty-worktree patch evidence disables whitespace scanning.",
++                    f"{pattern} {ARCHIVED_PATCH_ATTRIBUTE_TOKEN}",
++                )
++            )
++            continue
++
++        findings.append(
++            Finding(
++                "warn",
++                "gitattributes.archived_patch_whitespace",
++                relpath,
++                "Archived dirty-worktree patch evidence should disable whitespace scanning.",
++                f"expected `{pattern} {ARCHIVED_PATCH_ATTRIBUTE_TOKEN}`",
++            )
++        )
++
++
+ def build_payload(root: Path, findings: list[Finding]) -> dict[str, Any]:
+     totals = {
+         "pass": sum(1 for item in findings if item.level == "pass"),
+@@ -1343,6 +1396,7 @@ def main() -> int:
+     check_pr_template(root, findings)
+     check_package_script(root, findings)
+     check_repo_os_workflow(root, findings)
++    check_gitattributes(root, findings)
+ 
+     payload = build_payload(root, findings)
+     if args.format == "json":
+diff --git a/.jarvis/agile_work_item.json b/.jarvis/agile_work_item.json
+index bf75caf..f03fc63 100644
+--- a/.jarvis/agile_work_item.json
++++ b/.jarvis/agile_work_item.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-agile-work-item",
+   "contract_type": "sdlc_work_item_contract",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-30",
+   "canonical_path": "agile_work_item.json",
+   "mirrors": [
+     ".jarvis/agile_work_item.json"
+diff --git a/.jarvis/daily_observation.json b/.jarvis/daily_observation.json
+index 48e555f..6a07474 100644
+--- a/.jarvis/daily_observation.json
++++ b/.jarvis/daily_observation.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-daily-observation",
+   "surface_type": "continuous_improvement_daily_observation",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-30",
+   "runtime_behavior_changed": false,
+   "purpose": "Capture daily, evidence-backed observations that can feed the self-improvement loop without changing runtime behavior.",
+   "applies_to": {
+@@ -34,39 +34,56 @@
+     "promotion_trigger": "Promote only when the observation identifies a reusable lesson, repeated blocker, missing contract surface, or release-readiness gap that should change a repo contract, runbook, template, or backlog."
+   },
+   "daily_observation": {
+-    "date": "2026-05-28",
+-    "mission_id": "mission-b1d6f7df7d24",
+-    "mission_node": "node-14a456b29140",
+-    "observation": "A retried DevOps release-readiness node inherited unstaged metadata WIP on an existing PR branch. The safe path is to preserve the exact pre-edit patch bundle and provenance manifest before refreshing current-node PR evidence, rollback notes, and learning-loop metadata.",
++    "date": "2026-05-30",
++    "mission_id": "mission-fc353dca8ffb",
++    "mission_node": "node-b5eac29f5c60",
++    "observation": "Retry node node-b5eac29f5c60 inherited an already-dirty release-readiness branch. The safe first action was to quarantine that exact WIP into .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json and .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch, with a local .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60 export, before making follow-on metadata edits.",
+     "classification": [
+       "dirty_worktree_quarantine",
++      "retry_node_recovery",
+       "pr_first_release_readiness",
+-      "current_mission_evidence_alignment",
++      "archived_patch_evidence",
+       "self_improvement_loop"
+     ],
+     "evidence": [
+       {
+-        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+-        "signal": "Records the branch, upstream sync, PR context, modified files, patch bundle, and quarantine policy captured before this node edited the inherited dirty surfaces."
++        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++        "signal": "Manifest describing the inherited dirty worktree, branch, upstream, base HEAD, captured files, hashes, untracked .gitattributes snapshot, PR context, and metadata-only rollback posture."
+       },
+       {
+-        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+-        "signal": "Preserves the exact pre-edit unstaged diff for .codex validator and .jarvis release-readiness metadata surfaces."
++        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
++        "signal": "Binary-capable git diff of inherited tracked WIP captured before this node made further edits."
++      },
++      {
++        "path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/manifest.json",
++        "signal": "Local export manifest under ignored .codex/reports for Telegram or operator handoff."
++      },
++      {
++        "path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/untracked.gitattributes",
++        "signal": "Local export copy of the inherited untracked .gitattributes file captured before this node extended it."
++      },
++      {
++        "path": ".gitattributes",
++        "signal": "Limits whitespace-scan exceptions to archived dirty-worktree patch evidence under .jarvis and .codex/reports/dirty-worktree-quarantine."
+       },
+       {
+         "path": ".jarvis/pr_evidence_manifest.json",
+-        "signal": "current_mission_evidence is refreshed for mission-b1d6f7df7d24 / node-14a456b29140 with metadata-only scope, verification evidence, deploy posture, rollback metadata, and unresolved risks."
++        "signal": "Current mission evidence points at this retry node, the canonical quarantine bundle, PR #1 posture, deploy evidence requirements, rollback metadata, and unresolved risks."
++      },
++      {
++        "path": ".codex/scripts/validate_repo_contracts.py",
++        "signal": "Strict advisory validation checks the archived patch whitespace policy for both .jarvis and .codex quarantine evidence paths."
+       },
+       {
+         "path": "docs/platform/release-readiness-report.md",
+-        "signal": "The release-readiness report names the dirty-worktree quarantine, CI/CD and deploy posture, rollback rules, verification evidence, and remaining blockers for this node."
++        "signal": "Release-readiness report records dirty-worktree quarantine, verification gates, deploy posture, smoke blockers, and rollback notes for this node."
+       },
+       {
+         "path": "agile_work_item.json",
+-        "signal": "The canonical agile ready/done contract remains mirrored at .jarvis/agile_work_item.json and was re-reviewed for this mission."
++        "signal": "The canonical agile ready/done contract remains mirrored at .jarvis/agile_work_item.json for PR review."
+       }
+     ],
+-    "action_taken": "Create a current dirty-worktree quarantine bundle, refresh current-node daily observation, learning memo promotion, PR evidence, production profile metadata, and release-readiness report without changing runtime behavior, workflows, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, or shared API contracts.",
++    "action_taken": "Captured the inherited dirty worktree in a PR-visible .jarvis quarantine bundle plus a local .codex/reports export, refreshed current-node release-readiness metadata, extended advisory archived-patch whitespace validation, and preserved PR-first evidence without changing runtime behavior.",
+     "promotion_candidate": true,
+     "promotion_target": ".jarvis/learning_memo_promotion.json",
+     "runtime_behavior_changed": false
+diff --git a/.jarvis/learning_memo_promotion.json b/.jarvis/learning_memo_promotion.json
+index 8cbe60f..e69c187 100644
+--- a/.jarvis/learning_memo_promotion.json
++++ b/.jarvis/learning_memo_promotion.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-learning-memo-promotion",
+   "surface_type": "continuous_improvement_learning_memo_promotion",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-30",
+   "runtime_behavior_changed": false,
+   "purpose": "Define when an observation becomes a promoted learning memo and where that learning must be captured before it is treated as part of the production-grade operating system.",
+   "applies_to": {
+@@ -51,33 +51,39 @@
+     ]
+   },
+   "current_promotion": {
+-    "promotion_id": "2026-05-28-node-14a456b29140-dirty-wip-quarantine-before-refresh",
++    "promotion_id": "2026-05-30-node-b5eac29f5c60-dirty-worktree-quarantine-before-growth",
+     "source_observation_path": ".jarvis/daily_observation.json",
+-    "source_observation_date": "2026-05-28",
+-    "lesson": "A retried release-readiness node that inherits dirty metadata must first preserve the exact pre-edit diff and provenance, then refresh current-node PR evidence and learning-loop surfaces on the same PR branch. Historical green checks are useful context, but the final pushed commit still needs fresh PR evidence and checks before merge.",
++    "source_observation_date": "2026-05-30",
++    "lesson": "Retry-safe release-readiness work must quarantine inherited dirty state before making unrelated or follow-on edits. Evidence patches should preserve exact bytes, and whitespace gates should use narrow, validated attributes for archived evidence paths instead of rewriting the archive.",
+     "evidence_refs": [
+       ".jarvis/daily_observation.json",
+-      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+-      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
++      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
++      ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/manifest.json",
++      ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/README.md",
++      ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/untracked.gitattributes",
++      ".gitattributes",
+       ".jarvis/pr_evidence_manifest.json",
+       ".jarvis/production_grade_profile.json",
+       ".codex/scripts/validate_repo_contracts.py",
+       "docs/platform/release-readiness-report.md",
++      "docs/reliability/production-readiness-review.md",
+       "agile_work_item.json",
+       ".jarvis/agile_work_item.json"
+     ],
+     "promoted_to": [
+-      "dirty_worktree_quarantine.current_node_bundle",
++      "dirty_worktree_quarantine.retry_bundle",
++      "git_attributes.archived_patch_whitespace_policy",
+       "daily_observation.current_mission_context",
+       "learning_memo_promotion.current_promotion",
+       "pr_evidence_manifest.current_mission_evidence",
+-      "production_grade_profile.continuous_improvement.daily_observation",
+-      "production_grade_profile.continuous_improvement.learning_memo_promotion",
++      "production_grade_profile.continuous_improvement.source_of_truth",
+       "release_readiness_report.current_node_evidence",
++      "production_readiness_review.current_node_evidence",
+       "advisory repo contract validation"
+     ],
+     "runtime_behavior_changed": false,
+-    "rollback_note": "Revert the metadata-only JSON manifests, quarantine patch bundle, production profile, PR evidence, release-readiness report, and advisory validator changes from this node. No Cloudflare worker rollback is required for this change by itself.",
++    "rollback_note": "Revert the metadata-only JSON manifests, canonical .jarvis quarantine bundle, local .codex/reports export if present, .gitattributes archived-patch rules, production profile, PR evidence, release-readiness notes, and advisory validator changes from this node. No Cloudflare worker rollback is required for this change by itself.",
+     "status": "promoted_to_advisory_contract"
+   },
+   "non_goals": [
+diff --git a/.jarvis/pr_evidence_manifest.json b/.jarvis/pr_evidence_manifest.json
+index 340a6c3..76caab6 100644
+--- a/.jarvis/pr_evidence_manifest.json
++++ b/.jarvis/pr_evidence_manifest.json
+@@ -3,7 +3,7 @@
+   "manifest_name": "sales-saas-pr-evidence-manifest",
+   "manifest_type": "pull_request_release_evidence_contract",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-30",
+   "purpose": "Define the PR evidence, release path, deploy smoke evidence, and rollback metadata required before release-sensitive changes land or promote.",
+   "applies_to": {
+     "repository": "sales-saas",
+@@ -139,31 +139,33 @@
+     "credential_blocker_policy": "If Cloudflare credentials or environment variables are unavailable, record the missing prerequisite and do not claim deploy or smoke success."
+   },
+   "current_mission_evidence": {
+-    "mission_id": "mission-b1d6f7df7d24",
+-    "mission_node": "node-14a456b29140",
++    "mission_id": "mission-fc353dca8ffb",
++    "mission_node": "node-b5eac29f5c60",
+     "branch": "node-57f374c2e811-agile-work-item",
+-    "base_head_before_metadata_edits": "159a5d8",
+-    "captured_at": "2026-05-28",
++    "upstream": "origin/node-57f374c2e811-agile-work-item",
++    "base_head_before_metadata_edits": "8d2e6e5b383da663976993258613b66b9652622c",
++    "captured_at": "2026-05-30",
+     "runtime_behavior_changed": false,
+     "deploy_workflow_behavior_changed": false,
+     "dependencies_changed": false,
+     "migrations_changed": false,
+     "shared_contracts_changed": false,
+-    "scope": "Quarantine inherited dirty release-readiness WIP with a pre-edit patch bundle, refresh current-node PR evidence, ready/done review metadata, daily observation, learning memo promotion, production profile, and release-readiness report. Runtime behavior, workflows, deploy behavior, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, and shared API contracts remain unchanged.",
++    "scope": "Retry mission-fc353dca8ffb / node-b5eac29f5c60: quarantine the inherited dirty worktree into .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json and .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch, refresh ready/done, PR evidence, rollback metadata, daily observation, learning memo, production profile, validator, and release-readiness notes. Runtime behavior, workflows, deploy behavior, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, plan keys, worker source, routes, and shared API contracts remain unchanged.",
+     "affected_runtime_services": [],
+     "affected_release_gate_services": [],
+     "owned_surfaces": [
+       "agile_work_item.json",
+       ".jarvis/agile_work_item.json",
+-      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+-      ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
++      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
+       ".jarvis/pr_evidence_manifest.json",
+       ".jarvis/daily_observation.json",
+       ".jarvis/learning_memo_promotion.json",
+       ".jarvis/production_grade_profile.json",
+       ".codex/scripts/validate_repo_contracts.py",
+-      ".github/PULL_REQUEST_TEMPLATE.md",
+-      "docs/platform/release-readiness-report.md"
++      ".gitattributes",
++      "docs/platform/release-readiness-report.md",
++      "docs/reliability/production-readiness-review.md"
+     ],
+     "ready_done_contract": {
+       "canonical_path": "agile_work_item.json",
+@@ -182,31 +184,53 @@
+       ]
+     },
+     "dirty_worktree_quarantine": {
+-      "manifest_path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+-      "patch_bundle_path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
++      "manifest_path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++      "patch_bundle_path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
++      "local_export_manifest_path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/manifest.json",
++      "local_export_readme_path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/README.md",
++      "local_export_status_path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/git-status-short.txt",
++      "local_export_diff_stat_path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/git-diff-stat.txt",
++      "local_export_untracked_copy_path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/untracked.gitattributes",
+       "captured_before_new_edits": true,
+       "pre_existing_modified_files": [
+         ".codex/scripts/validate_repo_contracts.py",
++        ".jarvis/agile_work_item.json",
+         ".jarvis/daily_observation.json",
+         ".jarvis/learning_memo_promotion.json",
+         ".jarvis/pr_evidence_manifest.json",
+-        ".jarvis/production_grade_profile.json"
++        ".jarvis/production_grade_profile.json",
++        "agile_work_item.json",
++        "docs/platform/release-readiness-report.md",
++        "docs/reliability/production-readiness-review.md"
+       ],
+-      "policy": "Preserve the inherited dirty diff before changing the same release-readiness metadata surfaces; do not discard or hide user/Ayushman/senior-dev WIP."
++      "pre_existing_untracked_files": [
++        ".gitattributes"
++      ],
++      "policy": "Preserve archived patch bytes as evidence. The .gitattributes rules disable whitespace scanning only for .jarvis/dirty_worktree_quarantine_*.patch and .codex/reports/dirty-worktree-quarantine/*/*.patch so branch checks do not require mutating captured evidence."
+     },
+     "pull_request": {
+       "known_url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+-      "status": "open_mergeable_existing_pr_branch_update_prepared",
+-      "checks_observed": "PR #1 is open and mergeable. Observed checks are historical for commit 159a5d8 on 2026-05-25; after this node's final commit is pushed, CI, repo operating-system audit, and GitGuardian checks must be observed again before merge."
++      "status": "open_mergeable_existing_pr_branch_local_update_prepared",
++      "checks_observed": "Verified with gh pr view on 2026-05-30: PR #1 is open, targets main, head branch is node-57f374c2e811-agile-work-item, and mergeable is MERGEABLE. Status checks shown by GitHub were successful on 2026-05-28; they are stale for this local unpushed retry diff and must rerun after push before merge."
+     },
+     "verification_evidence": [
+       {
+-        "command": "git diff --binary --output=.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
++        "command": "git diff --binary --output=.codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/tracked-wip.patch",
+         "status": "passed",
+-        "scope": "Dirty-worktree quarantine: captured the inherited pre-edit unstaged diff before this node changed the same metadata surfaces."
++        "scope": "Dirty-worktree quarantine: captured inherited tracked WIP before this node changed the same metadata surfaces."
+       },
+       {
+-        "command": "node -e \"const fs=require('fs'); for (const p of process.argv.slice(1)) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')\" agile_work_item.json .jarvis/agile_work_item.json .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json .jarvis/pr_evidence_manifest.json .jarvis/daily_observation.json .jarvis/learning_memo_promotion.json .jarvis/production_grade_profile.json",
++        "command": "cp .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/tracked-wip.patch .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
++        "status": "passed",
++        "scope": "PR-visible quarantine: copied the pre-edit patch into .jarvis so the evidence bundle can travel with the branch/PR."
++      },
++      {
++        "command": "gh pr view 1 --json number,state,isDraft,mergeable,headRefName,baseRefName,url,statusCheckRollup",
++        "status": "passed",
++        "scope": "PR-first posture check: PR #1 is open and mergeable; remote status checks are from 2026-05-28 and must rerun after push."
++      },
++      {
++        "command": "node -e \"const fs=require('fs'); for (const p of ['agile_work_item.json','.jarvis/agile_work_item.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/production_grade_profile.json','.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json']) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')\"",
+         "status": "passed",
+         "scope": "Machine-readable JSON parsing for owned manifests."
+       },
+@@ -221,77 +245,72 @@
+         "scope": "Python syntax gate for the advisory validator."
+       },
+       {
+-        "command": "git diff --check",
++        "command": "git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/tracked-wip.patch",
+         "status": "passed",
+-        "scope": "Whitespace and patch hygiene."
++        "scope": "Archived patch attribute validation; both evidence patch paths report whitespace: unset."
+       },
+       {
+-        "command": "npm run repo:contracts -- --strict",
++        "command": "GIT_INDEX_FILE=<temp> git read-tree HEAD && GIT_INDEX_FILE=<temp> git add <changed files> && GIT_INDEX_FILE=<temp> git diff --cached --check",
+         "status": "passed",
+-        "scope": "Strict advisory validation after current-node PR evidence and dirty-worktree quarantine alignment: 362 pass, 0 warn, 0 error."
++        "scope": "Temporary-index whitespace gate for tracked modifications plus new untracked PR evidence files without mutating the real index."
+       },
+       {
+-        "command": "npm run repo:audit",
++        "command": "git diff --check",
+         "status": "passed",
+-        "scope": "Repo operating-system audit: score 100%, 20/20 mature checks, no priority gaps, git_dirty true while this PR-ready diff remains local."
++        "scope": "Current tracked worktree whitespace gate."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'",
++        "command": "git diff --check origin/main...HEAD",
+         "status": "passed",
+-        "scope": "Required medium-risk type gate across workspaces under Node v22.22.3 and npm 11.10.1."
++        "scope": "Branch-level historical whitespace gate."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run test'",
++        "command": "npm run repo:contracts -- --strict",
+         "status": "passed",
+-        "scope": "Required automated test suite: root 24, API 63, web 19, database 1, and shared 2 tests passed."
++        "scope": "Strict advisory validation: 364 pass, 0 warn, 0 error."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'",
+         "status": "passed",
+-        "scope": "Required build gate, including API, web, workflows, database, and shared package builds."
++        "scope": "Required medium-risk type gate across workspaces under Node v22.22.3 and npm 11.10.1."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run verify:core'",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'",
+         "status": "passed",
+-        "scope": "Required core verification aggregate reran typecheck, test, and build successfully."
++        "scope": "Required automated test suite: root 24, API 63, web 19, database 1, and shared 2 tests passed."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build'",
+         "status": "passed",
+-        "scope": "Cloudflare web worker release bundle generation under Node v22.22.3 and npm 11.10.1; OpenNext generated .open-next/worker.js."
++        "scope": "Required build gate, including API, web, workflows, database, and shared package builds."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/web/wrangler.jsonc'",
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run verify:core'",
+         "status": "passed",
+-        "scope": "Cloudflare web Worker shadow deploy dry-run with Wrangler 4.87.0."
++        "scope": "Required core verification aggregate reran typecheck, test, and build successfully."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/api/wrangler.jsonc'",
++        "command": "npm run repo:audit",
+         "status": "passed",
+-        "scope": "Cloudflare API Worker shadow deploy dry-run with Wrangler 4.87.0."
++        "scope": "Repo operating-system audit: score 100%, 20/20 mature checks, no priority gaps, git_dirty true while this PR-ready diff remains local."
+       },
+       {
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/workflows/wrangler.jsonc'",
++        "command": "npm run repo:report",
+         "status": "passed",
+-        "scope": "Cloudflare workflows Worker shadow deploy dry-run with Wrangler 4.87.0."
++        "scope": "Repo report regenerated under ignored .codex/reports/repo-operating-system-report.md."
+       },
+       {
+-        "command": "if [ -r /etc/cynik/apps/sales-saas.env ]; then echo env-file-readable; else echo env-file-not-readable; fi; for name in WEB_APP_URL API_HEALTHCHECK_URL WORKFLOWS_HEALTHCHECK_URL WORKFLOWS_HEALTHCHECK_TOKEN CLOUDFLARE_API_TOKEN; do if [ -n \"${!name:-}\" ]; then echo \"$name=set\"; else echo \"$name=unset\"; fi; done",
++        "command": "jq -r '.scripts | keys[]' package.json | rg -i 'bridge|self|smoke'",
+         "status": "blocked",
+-        "scope": "Host-managed smoke environment access. Result: env-file-not-readable; WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN unset."
+-      },
+-      {
+-        "command": "npm run smoke:cloudflare",
+-        "status": "blocked",
+-        "scope": "Credential-dependent Cloudflare smoke from the repo verification contract. Result: WEB_APP_URL is required."
++        "scope": "Bridge self-test discovery: package scripts expose smoke:cloudflare but no runnable bridge self-test command in this repository."
+       }
+     ],
+     "deploy_evidence": [
+       {
+         "check": "release_bundle_creation",
+         "status": "passed",
+-        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'; npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
+-        "evidence": "Workspace build passed and OpenNext generated the Cloudflare web worker bundle. This node does not change runtime source or deploy workflow behavior."
++        "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
++        "evidence": "OpenNext Cloudflare build completed and saved .open-next/worker.js. No production deploy was performed."
+       },
+       {
+         "check": "cloudflare_shadow_deploy_attempt",
+@@ -299,16 +318,23 @@
+         "command": "Wrangler deploy --dry-run for apps/web/wrangler.jsonc, apps/api/wrangler.jsonc, and apps/workflows/wrangler.jsonc under Node 22/npm 11.10.1.",
+         "evidence": "Dry-runs passed for web, API, and workflows with Wrangler 4.87.0. No production deploy was performed."
+       },
++      {
++        "check": "cloudflare_smoke_environment",
++        "status": "blocked",
++        "command": "test -r /etc/cynik/apps/sales-saas.env; environment variable check for WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN",
++        "evidence": "/etc/cynik/apps/sales-saas.env is not readable in this session; all required smoke variables checked were unset."
++      },
+       {
+         "check": "cloudflare_smoke",
+         "status": "blocked",
+         "command": "npm run smoke:cloudflare",
+-        "evidence": "Blocked because /etc/cynik/apps/sales-saas.env is not readable in this session and WEB_APP_URL, API_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_URL, WORKFLOWS_HEALTHCHECK_TOKEN, and CLOUDFLARE_API_TOKEN are unset. The script exited with WEB_APP_URL is required."
++        "evidence": "Blocked with WEB_APP_URL is required. This is an environment/credential blocker, not evidence of runtime failure."
+       },
+       {
+         "check": "service_restart_validation",
+         "status": "not_applicable",
+-        "evidence": "No runtime service restart is required or authorized for this metadata-only change."
++        "command": "git diff --name-only | rg '^(apps/(web|api|workflows)|packages/(database|shared)|\\.github/workflows|package-lock\\.json|package\\.json)'",
++        "evidence": "No runtime, package, or workflow paths were changed by this node. No service restart was required or authorized."
+       },
+       {
+         "check": "rollback_target_confirmation",
+@@ -317,27 +343,29 @@
+       }
+     ],
+     "rollback_metadata": {
+-      "release_or_pr_identifier": "mission-b1d6f7df7d24 / node-14a456b29140 / PR #1",
++      "release_or_pr_identifier": "mission-fc353dca8ffb / node-b5eac29f5c60 / PR #1",
+       "affected_cloudflare_services": [],
+       "rollback_owner": "DevOps owner for this metadata-only mission node; PR reviewer confirms before merge.",
+-      "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, shared API contract, dependency, worker bundle, route, workflow, or runtime behavior change.",
+-      "metadata_only_rollback_action": "Revert this node's changes to agile_work_item.json, .jarvis/agile_work_item.json, .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json, .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, .jarvis/learning_memo_promotion.json, .codex/scripts/validate_repo_contracts.py, and docs/platform/release-readiness-report.md. No Cloudflare service rollback is required for this metadata-only change.",
++      "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, shared API contract, dependency, worker bundle, route, workflow, deploy workflow, or runtime behavior change.",
++      "metadata_only_rollback_action": "Revert this node's changes to agile_work_item.json, .jarvis/agile_work_item.json, .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json, .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, .jarvis/learning_memo_promotion.json, .jarvis/production_grade_profile.json, .codex/scripts/validate_repo_contracts.py, .gitattributes, docs/platform/release-readiness-report.md, docs/reliability/production-readiness-review.md. Remove the local .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60 export if present. No Cloudflare service rollback is required for this metadata-only change.",
+       "production_service_rollback_action_if_bundled_with_runtime_changes": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows as applicable, then rerun npm run smoke:cloudflare.",
+       "post_rollback_validation": [
+         "node -e JSON parse for owned manifest files",
+         "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
+         "python3 -m py_compile .codex/scripts/validate_repo_contracts.py",
++        "git diff --check origin/main...HEAD",
+         "npm run repo:contracts -- --strict",
+         "npm run verify:core",
+         "npm run smoke:cloudflare when runtime services were deployed or rolled back"
+       ]
+     },
+     "unresolved_risks": [
+-      "New remote PR checks must be observed after this branch update is pushed; historical green checks on 159a5d8 do not prove the final commit is releasable.",
+-      "PR review must confirm the metadata-only diff did not unintentionally change runtime or deploy workflow behavior.",
+-      "Cloudflare smoke is credential and environment dependent; if unavailable, the blocked reason must stay visible instead of being treated as pass evidence.",
++      "New remote PR checks must be observed after this branch update is pushed; historical green checks from 2026-05-28 do not prove the final local retry diff is releasable.",
++      "Cloudflare smoke is blocked in this session because the host env file is unreadable and required URLs/tokens are unset.",
++      "No repository bridge self-test command exists; this remains a bridge self-upgrade gate gap outside the app runtime.",
+       "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without provider access, but no Cloudflare services are affected by this metadata-only node.",
+-      "Dependency vulnerability remediation remains out of scope for this metadata-only node; this node did not change package manifests or lockfiles."
++      "The local default Node is v18.19.1 while the repo contract requires Node 22.x; verification used Node v22.22.3/npm 11.10.1 through npx.",
++      "The archived patch whitespace exception is intentionally narrow; reviewers should reject expanding it beyond .jarvis and .codex dirty-worktree quarantine patch evidence files without a separate rationale."
+     ]
+   },
+   "non_goals": [
+diff --git a/.jarvis/production_grade_profile.json b/.jarvis/production_grade_profile.json
+index 792b436..a76d749 100644
+--- a/.jarvis/production_grade_profile.json
++++ b/.jarvis/production_grade_profile.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 1,
+-  "profile_version": "1.0.14",
++  "profile_version": "1.0.16",
+   "status": "active",
+-  "last_updated": "2026-05-28",
++  "last_updated": "2026-05-30",
+   "repo_identity": {
+     "name": "sales-aaas-platform",
+     "workspace": "sales-saas",
+@@ -35,6 +35,7 @@
+       ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
++      ".gitattributes",
+       "docs/platform/release-readiness-report.md",
+       "README.md",
+       "docs/product/platform-requirements.md",
+@@ -51,7 +52,9 @@
+       "docs/reliability/postmortem-template.md",
+       "scripts/cloudflare-smoke.sh",
+       ".github/workflows/ci.yml",
+-      ".github/workflows/deploy-cloudflare.yml"
++      ".github/workflows/deploy-cloudflare.yml",
++      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch"
+     ]
+   },
+   "workspace": {
+@@ -931,7 +934,15 @@
+       {
+         "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+         "cites": [
+-          "pre-edit dirty diff for node-14a456b29140"
++          "pre-edit dirty diff for node-14a456b29140",
++          "archived patch evidence for whitespace policy"
++        ]
++      },
++      {
++        "path": ".gitattributes",
++        "cites": [
++          "archived dirty-worktree patch whitespace policy",
++          ".jarvis/dirty_worktree_quarantine_*.patch -whitespace"
+         ]
+       },
+       {
+@@ -949,6 +960,25 @@
+           "Priority Gaps",
+           "Recommended Next Actions"
+         ]
++      },
++      {
++        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++        "cites": [
++          "dirty_worktree_quarantine",
++          "captured_before_new_edits",
++          "rollback_note",
++          "pre_existing_wip",
++          "patch_bundle_path",
++          "pull_request_context",
++          "quarantine_policy"
++        ]
++      },
++      {
++        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
++        "cites": [
++          "pre-edit dirty diff for node-b5eac29f5c60",
++          "archived patch evidence for whitespace policy"
++        ]
+       }
+     ],
+     "maturity_baseline": {
+@@ -956,17 +986,21 @@
+       "current_score_percent": 73,
+       "assessment_source": "mission baseline",
+       "latest_local_audit_command": "npm run repo:audit",
+-      "latest_local_audit_interpretation": "Repo operating-system audit can show template coverage as mature while release readiness still depends on PR evidence, deploy smoke, rollback target confirmation, and continuous improvement loops."
++      "latest_local_audit_interpretation": "Repo operating-system audit can show template coverage as mature while release readiness still depends on PR evidence, deploy smoke, rollback target confirmation, and continuous improvement loops.",
++      "latest_quarantine_bundle": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++      "latest_retry_node": "mission-fc353dca8ffb / node-b5eac29f5c60"
+     },
+     "target_state": {
+       "name": "self_improving",
+       "success_conditions": [
+         "Every release-sensitive PR carries ready/done, verification, deploy, rollback, and residual-risk evidence.",
+         "Dirty worktrees are quarantined before unrelated growth begins.",
++        "Archived quarantine patch bundles keep evidence fidelity while a narrow Git attribute prevents whitespace gates from requiring archive mutation.",
+         "Repo audits and contract validation run in CI and are reviewed before merge.",
+         "Credential-dependent smoke gaps and rollback target gaps are recorded instead of treated as passing evidence.",
+         "Daily observations and learning memo promotion decisions have explicit JSON evidence before they count as production-grade operating-system learning.",
+-        "Reusable lessons from release blockers become repo contracts, runbooks, templates, or backlog items."
++        "Reusable lessons from release blockers become repo contracts, runbooks, templates, or backlog items.",
++        "Retry nodes quarantine inherited dirty worktree state into an evidence bundle before any follow-on metadata or hardening edits."
+       ]
+     },
+     "ratchet_policy": {
+@@ -975,7 +1009,9 @@
+         "Prefer additive hardening over broad rewrites.",
+         "Version baseline improvements and keep them rollbackable.",
+         "Keep advisory validation strict enough to expose missing production-grade sections.",
+-        "Treat missing evidence as an explicit risk, not a pass."
++        "Validate evidence-file exceptions explicitly instead of relying on undocumented branch-check bypasses.",
++        "Treat missing evidence as an explicit risk, not a pass.",
++        "Captured dirty-worktree evidence must stay byte-preserving; formatting gates can only exclude narrowly documented archive paths with validator coverage."
+       ]
+     },
+     "daily_observation": {
+@@ -1098,6 +1134,10 @@
+       {
+         "item": "Promote repeated mission blockers into regression checks or scorecard evidence.",
+         "reason": "Historical or superseded dispatch blockers should not inflate active release pressure without evidence."
++      },
++      {
++        "item": "Add a first-class dirty-worktree quarantine command or script.",
++        "reason": "This retry required manual capture of status, stat, patch, and untracked-file evidence; a repo-local command would make future mission recovery deterministic and easier to review."
+       }
+     ],
+     "learning_capture": {
+@@ -1105,10 +1145,13 @@
+         ".jarvis/daily_observation.json",
+         ".jarvis/learning_memo_promotion.json",
+         "docs/platform/release-readiness-report.md",
++        ".gitattributes",
+         ".jarvis/pr_evidence_manifest.json",
+         ".codex/reports/repo-operating-system-report.md",
+         "docs/reliability/production-readiness-review.md",
+-        "docs/platform/deploy-and-rollback-policy.md"
++        "docs/platform/deploy-and-rollback-policy.md",
++        ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
++        ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch"
+       ],
+       "rule": "When a release-readiness blocker repeats, capture the prevention mechanism or explain why it remains a human review item."
+     },
+@@ -1128,10 +1171,18 @@
+       {
+         "name": "credential_dependent_checks_labeled",
+         "target": "100% of unavailable smoke or deploy checks are marked blocked with next safe step"
++      },
++      {
++        "name": "archived_patch_whitespace_policy_validated",
++        "target": ".jarvis/dirty_worktree_quarantine_*.patch is the only documented archived patch whitespace exclusion and repo contracts validate it"
++      },
++      {
++        "name": "retry_dirty_worktree_quarantine_evidence_bundle",
++        "target": "Every retry node with inherited WIP records manifest, patch, status, diff stat, untracked-file evidence, and rollback note before edits."
+       }
+     ],
+     "rollback_policy": {
+-      "metadata_only_action": "Revert the PR or restore the previous production profile, daily observation manifest, learning memo promotion manifest, validator, quarantine manifests, PR evidence manifest, and release-readiness report revisions; no Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
++      "metadata_only_action": "Revert the PR or restore the previous production profile, daily observation manifest, learning memo promotion manifest, PR evidence manifest, validator, .gitattributes archived-patch rules, .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json, .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch, and release-readiness report revisions; remove the local .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60 export if present. No Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
+       "runtime_release_action_if_bundled": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare."
+     },
+     "contract_scope": "This continuous_improvement section makes the maturity ratchet, daily observation surface, learning memo promotion surface, feedback loops, evidence cadence, learning capture, and backlog visible from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, deploy behavior, or ownership semantics."
+@@ -1823,9 +1874,9 @@
+   "metadata": {
+     "created_by": "Codex mission node node-745e76479b19",
+     "mission_id": "mission-37decb31706c",
+-    "last_updated_by": "Codex mission node node-14a456b29140",
+-    "last_updated_mission_id": "mission-b1d6f7df7d24",
+-    "last_updated_reason": "Quarantined inherited dirty release-readiness WIP with a pre-edit patch bundle, refreshed current-node PR evidence, daily observation, learning memo promotion, and release-readiness reporting while preserving metadata-only runtime behavior.",
++    "last_updated_by": "Codex mission node node-ea000054910e",
++    "last_updated_mission_id": "mission-1f594967c416",
++    "last_updated_reason": "Refreshed current mission evidence and release-readiness notes, preserved archived patch evidence fidelity, and added a validated .gitattributes whitespace exception for quarantine patch bundles while preserving metadata-only runtime behavior.",
+     "owned_path": ".jarvis/production_grade_profile.json",
+     "change_type": "metadata_only",
+     "runtime_behavior_changed": false,
+diff --git a/agile_work_item.json b/agile_work_item.json
+index bf75caf..f03fc63 100644
+--- a/agile_work_item.json
++++ b/agile_work_item.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-agile-work-item",
+   "contract_type": "sdlc_work_item_contract",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-30",
+   "canonical_path": "agile_work_item.json",
+   "mirrors": [
+     ".jarvis/agile_work_item.json"
+diff --git a/docs/platform/release-readiness-report.md b/docs/platform/release-readiness-report.md
+index 551ec60..97bee78 100644
+--- a/docs/platform/release-readiness-report.md
++++ b/docs/platform/release-readiness-report.md
+@@ -1,108 +1,109 @@
+ # Release Readiness Report
+ 
+-- Mission: `mission-b1d6f7df7d24`
+-- Node: `node-14a456b29140`
++- Mission: `mission-fc353dca8ffb`
++- Node: `node-b5eac29f5c60`
+ - Workspace: `sales-saas`
+ - Branch: `node-57f374c2e811-agile-work-item`
+ - PR: https://github.com/5h4d0wn1k/sales-SaaS/pull/1
+-- Base HEAD before this pass: `159a5d8`
+-- Date: `2026-05-28`
++- Base HEAD before this pass: `8d2e6e5b383da663976993258613b66b9652622c`
++- Date: `2026-05-30`
+ - Risk: `medium` per mission verification contract.
+ - Runtime behavior changed: `false`
+ - Deploy workflow behavior changed: `false`
+ 
+ ## Scope
+ 
+-This pass preserves the inherited dirty release-readiness WIP before changing
+-the same metadata surfaces:
++This pass preserves inherited dirty WIP and refreshes release-readiness
++metadata across the agile ready/done contract, PR evidence manifest, daily
++observation, learning memo promotion, production grade profile, advisory
++contract validator, release-readiness report, and production-readiness review.
+ 
+-- Quarantine manifest:
+-  `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json`
+-- Pre-edit patch bundle:
+-  `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`
++The dirty worktree was quarantined before follow-on edits:
+ 
+-It then refreshes current mission evidence across the agile ready/done contract,
+-PR evidence manifest, daily observation, learning memo promotion, production
+-grade profile, advisory contract validator, and this report.
++- Canonical PR-visible bundle:
++  `.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json`
++- Canonical patch:
++  `.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch`
++- Local export bundle:
++  `.codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/`
+ 
+-Application runtime code, worker bundles, routes, migrations, billing behavior,
+-auth behavior, tenancy logic, provider webhooks, approval gates, plan keys,
+-dependencies, shared API contracts, and deploy workflow behavior are unchanged.
++The archived patch bytes are intentionally preserved. Application runtime code,
++worker source, routes, migrations, billing behavior, auth behavior, tenancy
++logic, provider webhooks, approval gates, plan keys, dependencies, shared API
++contracts, and deploy workflow behavior are unchanged.
++
++## Git And PR Posture
++
++- Current branch tracks `origin/node-57f374c2e811-agile-work-item`.
++- `git rev-list --left-right --count HEAD...@{upstream}` reported `0 ahead, 0 behind`
++  before this local retry diff.
++- `gh pr view 1 --json number,state,isDraft,mergeable,headRefName,baseRefName,url,statusCheckRollup`
++  confirmed PR #1 is open, not draft, targets `main`, uses this branch as head,
++  and is currently mergeable.
++- GitHub status checks observed by `gh pr view` are historical successes from
++  `2026-05-28`; they must rerun after this local diff is pushed before merge.
++
++## Branch Whitespace Resolution
++
++The evidence patch contains archived diff bytes and must not be rewritten just
++to satisfy whitespace checks. `.gitattributes` now narrowly disables whitespace
++scanning for archived dirty-worktree patch evidence:
++
++- `.jarvis/dirty_worktree_quarantine_*.patch -whitespace`
++- `.codex/reports/dirty-worktree-quarantine/*/*.patch -whitespace`
++
++`.codex/scripts/validate_repo_contracts.py` validates both rules. `git
++check-attr whitespace` reports `whitespace: unset` for both the `.jarvis`
++canonical patch and the `.codex/reports` local export patch.
+ 
+ ## Delivery Blockers
+ 
+-- Dirty-worktree blocker is quarantined with a recoverable patch bundle and
+-  provenance manifest.
+-- PR #1 was observed open and mergeable, but its historical green checks apply
+-  to commit `159a5d8` from 2026-05-25. The final commit from this node still
+-  needs fresh PR checks before merge.
+-- Cloudflare smoke is blocked in this session because `/etc/cynik/apps/sales-saas.env`
+-  is not readable and smoke environment variables are unset.
++- Fresh remote PR checks still need to run after this branch update is pushed.
++- Cloudflare smoke is blocked in this session because
++  `/etc/cynik/apps/sales-saas.env` is not readable and required smoke variables
++  are unset.
++- No repository bridge self-test command exists; this remains a bridge
++  self-upgrade gate gap.
+ - Actual last known-good Cloudflare Worker rollback target IDs remain
+-  unconfirmed without provider access; this is acceptable for this metadata-only
+-  pass but remains required before runtime production promotion.
+-
+-## CI/CD And Release Path
+-
+-- CI exists at `.github/workflows/ci.yml` with typecheck, unit/workspace tests,
+-  build, and Cloudflare dry-run validation on self-hosted runners.
+-- Deploy exists at `.github/workflows/deploy-cloudflare.yml` with
+-  `workflow_dispatch`, environment selection, core verification before deploy,
+-  deploy concurrency, post-deploy smoke, and production rollback metadata
+-  validation.
+-- Repo operating-system checks exist at
+-  `.github/workflows/repo-operating-system.yml` and run advisory contract
+-  validation.
+-- PR evidence and rollback expectations are encoded in
+-  `.jarvis/pr_evidence_manifest.json` and `.github/PULL_REQUEST_TEMPLATE.md`.
+-
+-## Rollback Metadata Contract
+-
+-Runtime releases must carry a concrete `release.rollback_action` for each
+-affected Cloudflare service: `web`, `api`, and `workflows`, or explicitly state
+-that no service is affected for metadata-only changes.
+-
+-Cloudflare's Workers rollback docs state that rollback can use Wrangler or the
+-dashboard, creates a new active deployment from the selected version, and does
+-not roll back connected resources such as KV, D1, R2, queues, or Durable Object
+-migrations. The report therefore treats concrete Worker version IDs or
+-dashboard rollback target UUIDs as required release metadata before production
+-promotion.
+-
+-Source: https://developers.cloudflare.com/workers/configuration/versions-and-deployments/rollbacks/
++  unconfirmed without provider access; this is acceptable for this
++  metadata-only pass but remains required before runtime production promotion.
+ 
+ ## Verification Evidence
+ 
+ | Check | Command | Result |
+ | --- | --- | --- |
+-| Dirty WIP patch bundle | `git diff --binary --output=.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch` | Passed. |
+-| JSON parse gate | `node -e "const fs=require('fs'); for (const p of process.argv.slice(1)) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')" agile_work_item.json .jarvis/agile_work_item.json .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json .jarvis/pr_evidence_manifest.json .jarvis/daily_observation.json .jarvis/learning_memo_promotion.json .jarvis/production_grade_profile.json` | Passed. |
++| JSON parse gate | `node -e "const fs=require('fs'); for (const p of ['agile_work_item.json','.jarvis/agile_work_item.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/production_grade_profile.json','.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json']) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')"` | Passed. |
+ | Agile mirror check | `cmp -s agile_work_item.json .jarvis/agile_work_item.json` | Passed. |
+ | Python syntax gate | `python3 -m py_compile .codex/scripts/validate_repo_contracts.py` | Passed. |
+-| Whitespace check | `git diff --check` | Passed. |
+-| Strict repo contracts | `npm run repo:contracts -- --strict` | Passed: `362 pass, 0 warn, 0 error`. |
+-| Repo audit | `npm run repo:audit` | Passed: score `100%`, 20/20 mature checks, no priority gaps; `git_dirty=true` because this PR diff is local. |
++| Archived patch attributes | `git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/tracked-wip.patch` | Passed: both report `whitespace: unset`. |
++| Temp-index whitespace gate | `GIT_INDEX_FILE=<temp> git read-tree HEAD && GIT_INDEX_FILE=<temp> git add <changed files> && GIT_INDEX_FILE=<temp> git diff --cached --check` | Passed without mutating the real index. |
++| Worktree whitespace gate | `git diff --check` | Passed. |
++| Branch whitespace gate | `git diff --check origin/main...HEAD` | Passed. |
++| Strict repo contracts | `npm run repo:contracts -- --strict` | Passed: `364 pass, 0 warn, 0 error`. |
+ | Typecheck | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'` | Passed under Node `v22.22.3` and npm `11.10.1`. |
+-| Automated tests | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run test'` | Passed: root `24`, API `63`, web `19`, database `1`, shared `2` tests. |
+-| Build | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'` | Passed. |
+-| Core verification | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run verify:core'` | Passed; reran typecheck, test, and build. |
+-| Cloudflare web worker bundle | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` | Passed; OpenNext generated `.open-next/worker.js`. |
+-| Cloudflare web dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/web/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
+-| Cloudflare API dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/api/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
+-| Cloudflare workflows dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/workflows/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
+-| Smoke environment check | `if [ -r /etc/cynik/apps/sales-saas.env ]; then echo env-file-readable; else echo env-file-not-readable; fi; ...` | Blocked: env file not readable; smoke variables unset. |
+-| Cloudflare smoke | `npm run smoke:cloudflare` | Blocked: `WEB_APP_URL is required`. |
+-| Bridge self-test | `rg -n "bridge self|self-test|selftest|bridge" .codex scripts package.json docs .jarvis -g '!node_modules'` | Blocked: no repository bridge self-test command exists. |
++| Automated tests | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'` | Passed: root `24`, API `63`, web `19`, database `1`, and shared `2` tests. |
++| Build | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build'` | Passed for API, web, workflows, database, and shared packages. |
++| Core verification | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run verify:core'` | Passed; reran typecheck, test, and build. |
++| Repo audit | `npm run repo:audit` | Passed: score `100%`, `20/20` mature checks, no priority gaps, `git_dirty: true` while this PR-ready diff remains local. |
++| Repo report | `npm run repo:report` | Passed; regenerated ignored `.codex/reports/repo-operating-system-report.md`. |
++| Bridge self-test discovery | `jq -r '.scripts | keys[]' package.json | rg -i 'bridge|self|smoke'` | Blocked: only `smoke:cloudflare` is present; no runnable bridge self-test command exists. |
++
++The host default toolchain is Node `v18.19.1` and npm `9.2.0`; CI-equivalent
++verification used Node `22.22.3` and npm `11.10.1` to match the repo contract.
+ 
+ ## Deploy Evidence
+ 
+-- Release bundle creation passed via `npm run build` and
+-  `npm run build:cf-worker --workspace @sales/web`.
++- Release bundle creation passed:
++  `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'`
++  completed and saved `.open-next/worker.js`.
+ - Shadow deploy dry-runs passed for `web`, `api`, and `workflows` with Wrangler
+-  `4.87.0`; no production deploy was performed.
+-- Shadow smoke is blocked until Cloudflare smoke URLs and credentials are
+-  available to the session.
+-- Service restart validation is not applicable for this metadata-only pass.
++  `4.87.0`. No production deploy was performed.
++- Smoke prerequisite check found `/etc/cynik/apps/sales-saas.env` not readable,
++  and `WEB_APP_URL`, `API_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_URL`,
++  `WORKFLOWS_HEALTHCHECK_TOKEN`, and `CLOUDFLARE_API_TOKEN` unset.
++- `npm run smoke:cloudflare` is blocked with `WEB_APP_URL is required`.
++- Service restart validation is not applicable: no runtime, package, workflow,
++  or deploy config paths changed.
+ - Rollback target confirmation is metadata-only for this node; runtime releases
+   still require concrete Cloudflare Worker version IDs or dashboard rollback
+   targets before production promotion.
+@@ -112,15 +113,17 @@ Source: https://developers.cloudflare.com/workers/configuration/versions-and-dep
+ This change should land through the existing branch and PR #1. It should not
+ trigger a production deploy by itself.
+ 
+-Abort or hold merge if any of the following occur:
++Abort or hold production promotion if any of the following occur:
+ 
+ - Fresh PR checks after this node's final pushed commit fail.
+ - Strict repo contract validation returns warnings or errors.
++- `git diff --check origin/main...HEAD` regresses.
++- Fresh `npm run build:cf-worker --workspace @sales/web` cannot produce a web
++  worker bundle for a release candidate.
+ - Cloudflare smoke remains blocked for a runtime-impacting release without an
+   approved substitute.
+-- A reviewer finds that the metadata-only diff accidentally changes runtime,
+-  deployment workflow, dependency, migration, billing, auth, tenancy, webhook,
+-  approval-gate, or shared-contract behavior.
++- Concrete last known-good Cloudflare rollback targets are missing for affected
++  runtime services.
+ 
+ ## Rollback
+ 
+@@ -129,18 +132,21 @@ the previous versions of:
+ 
+ - `agile_work_item.json`
+ - `.jarvis/agile_work_item.json`
+-- `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json`
+-- `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`
++- `.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json`
++- `.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch`
+ - `.jarvis/daily_observation.json`
+ - `.jarvis/learning_memo_promotion.json`
+ - `.jarvis/pr_evidence_manifest.json`
+ - `.jarvis/production_grade_profile.json`
+ - `.codex/scripts/validate_repo_contracts.py`
++- `.gitattributes`
+ - `docs/platform/release-readiness-report.md`
++- `docs/reliability/production-readiness-review.md`
+ 
+-No Cloudflare worker rollback is required for this change by itself. If bundled
+-with runtime service changes, redeploy the last known-good Cloudflare worker
+-versions for `web`, `api`, and `workflows`, then rerun
++Remove the local `.codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/`
++export if present. No Cloudflare worker rollback is required for this change by
++itself. If bundled with runtime service changes, redeploy the last known-good
++Cloudflare worker versions for `web`, `api`, and `workflows`, then rerun
+ `npm run smoke:cloudflare`.
+ 
+ ## Remaining Risk
+@@ -148,7 +154,8 @@ versions for `web`, `api`, and `workflows`, then rerun
+ - Fresh remote PR checks must be observed after push.
+ - Cloudflare smoke did not execute because required environment values are not
+   available in this session.
++- No bridge self-test command exists in this repository.
+ - Actual last known-good Worker rollback target IDs are unconfirmed without
+   Cloudflare provider access.
+-- Dependency vulnerability remediation is out of scope; this node did not
+-  change package manifests or lockfiles.
++- The local default Node version is older than the repo contract; use Node 22
++  for release gates.
+diff --git a/docs/reliability/production-readiness-review.md b/docs/reliability/production-readiness-review.md
+index ba898fa..9a95e3a 100644
+--- a/docs/reliability/production-readiness-review.md
++++ b/docs/reliability/production-readiness-review.md
+@@ -229,3 +229,123 @@ This is an external GitHub account billing or spending-limit blocker, not an obs
+ ### Rollback and release note
+ 
+ This retry addendum is documentation-only. Roll back by reverting the report commit or closing/reverting the PR. No Cloudflare service rollback or service restart is required for this addendum. Production promotion remains blocked until GitHub Actions can run, Cloudflare smoke has readable environment configuration, and a release owner records actual last known-good Worker rollback targets for affected services.
++
++## Release Readiness Addendum: 2026-05-29 Mission Node node-ea000054910e
++
++### Scope
++
++- Change type: metadata, repo contract validation, Git attribute policy, and release-readiness documentation only.
++- Runtime behavior changed: no.
++- Production dependencies changed: no.
++- Migrations changed: no.
++- Workflow triggers or deploy behavior changed: no.
++- Protected runtime surfaces touched: none.
++
++### Finding
++
++The branch-level whitespace gate was failing only on preserved archived patch
++evidence in `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`.
++The production-ready fix is to preserve the archived patch and explicitly
++classify `.jarvis/dirty_worktree_quarantine_*.patch` as evidence that disables
++Git whitespace scanning via `.gitattributes`, with validator coverage in
++`.codex/scripts/validate_repo_contracts.py`.
++
++### Fresh verification evidence
++
++- `node -e "const fs=require('fs'); for (const p of ['agile_work_item.json','.jarvis/agile_work_item.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/production_grade_profile.json']) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')"` passed.
++- `cmp -s agile_work_item.json .jarvis/agile_work_item.json && echo agile mirror ok` passed.
++- `python3 -m py_compile .codex/scripts/validate_repo_contracts.py` passed.
++- `git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch` returned `whitespace: unset`.
++- `git diff --check origin/main...HEAD` passed.
++- `git diff --check` passed.
++- `npm run repo:contracts -- --strict` passed with `363 pass, 0 warn, 0 error`.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'` passed under Node `v22.22.3` and npm `11.10.1`.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'` passed: root 24 tests, API 63 tests, web 19 tests, database 1 test, and shared 2 tests.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build'` passed after the existing retry wrapper recovered from transient Next.js missing-artifact errors.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run verify:core'` passed; its build substep recovered after one transient Next.js missing-manifest retry.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` failed twice because OpenNext/Next.js repeatedly missed transient `.next` artifacts during fresh worker bundle creation.
++- Wrangler dry-runs passed for `web`, `api`, and `workflows` with Wrangler `4.87.0`; the web dry-run should not be treated as fresh bundle evidence while `build:cf-worker` remains blocked.
++- `npm run smoke:cloudflare` was blocked with `WEB_APP_URL is required`.
++- `/etc/cynik/apps/sales-saas.env` was not readable, and `WEB_APP_URL`, `API_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_TOKEN`, and `CLOUDFLARE_API_TOKEN` were unset.
++
++### Release recommendation
++
++This diff is PR-ready as metadata/process hardening once the final branch diff
++and repo contracts remain green. It is not production-promotion-ready as a
++service release until fresh PR checks complete, Cloudflare smoke can run, fresh
++OpenNext web worker bundle creation passes, and rollback targets are confirmed
++for any affected runtime service.
++
++### Rollback note
++
++For this metadata-only addendum, revert the PR or restore the previous versions
++of `.gitattributes`, `.codex/scripts/validate_repo_contracts.py`, the `.jarvis`
++evidence manifests, `agile_work_item.json`, `.jarvis/agile_work_item.json`,
++`docs/platform/release-readiness-report.md`, and this report section. No
++Cloudflare service rollback is required for this diff by itself. If this diff
++ships together with runtime service changes, redeploy the last known-good
++Cloudflare worker versions for web, api, and workflows, then rerun
++`npm run smoke:cloudflare`.
++
++## Release Readiness Addendum: 2026-05-30 Mission Node node-b5eac29f5c60
++
++### Scope
++
++- Change type: metadata, dirty-worktree quarantine evidence, repo contract validation, Git attribute policy, and release-readiness documentation only.
++- Runtime behavior changed: no.
++- Production dependencies changed: no.
++- Migrations changed: no.
++- Workflow triggers or deploy behavior changed: no.
++- Protected runtime surfaces touched: none.
++
++### Finding
++
++This retry node inherited a dirty release-readiness branch. The first safe
++action was to preserve that exact WIP before follow-on edits. The current
++bundle is tracked in `.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json`
++and `.jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch`,
++with a local export under `.codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/`.
++
++The archived patch bytes are preserved. `.gitattributes` now covers both
++tracked `.jarvis` patch evidence and ignored `.codex/reports` patch exports,
++and the advisory validator checks both rules.
++
++### Fresh verification evidence
++
++- JSON parse passed for the agile, PR evidence, daily observation, learning memo, production profile, and quarantine manifest JSON files.
++- `cmp -s agile_work_item.json .jarvis/agile_work_item.json` passed.
++- `python3 -m py_compile .codex/scripts/validate_repo_contracts.py` passed.
++- `git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/tracked-wip.patch` returned `whitespace: unset` for both.
++- Temporary-index `git diff --cached --check` passed for tracked modifications and new PR evidence files without mutating the real index.
++- `git diff --check` and `git diff --check origin/main...HEAD` passed.
++- `npm run repo:contracts -- --strict` passed with `364 pass, 0 warn, 0 error`.
++- `npm run repo:audit` passed with score `100%`, `20/20` mature checks, no priority gaps, and `git_dirty: true` while this PR-ready diff remains local.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'` passed under Node `v22.22.3` and npm `11.10.1`.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'` passed: root 24 tests, API 63 tests, web 19 tests, database 1 test, and shared 2 tests.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build'` passed.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run verify:core'` passed.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` passed and produced `.open-next/worker.js`.
++- Wrangler dry-runs passed for `web`, `api`, and `workflows` with Wrangler `4.87.0`.
++- `npm run smoke:cloudflare` was blocked with `WEB_APP_URL is required`.
++- `/etc/cynik/apps/sales-saas.env` was not readable, and `WEB_APP_URL`, `API_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_TOKEN`, and `CLOUDFLARE_API_TOKEN` were unset.
++- Bridge self-test discovery is blocked: package scripts expose `smoke:cloudflare` but no runnable bridge self-test command.
++
++### Release recommendation
++
++This diff is PR-ready as metadata/process hardening once committed and pushed
++to PR #1. It is not a production service release. Production promotion remains
++blocked for runtime-impacting releases until fresh remote PR checks complete,
++Cloudflare smoke can run with provider-backed environment values, and concrete
++last known-good rollback targets are recorded for affected Cloudflare services.
++
++### Rollback note
++
++For this metadata-only addendum, revert the PR or restore the previous versions
++of `.gitattributes`, `.codex/scripts/validate_repo_contracts.py`, the `.jarvis`
++evidence manifests, `agile_work_item.json`, `.jarvis/agile_work_item.json`,
++`docs/platform/release-readiness-report.md`, and this report section. Remove
++the local `.codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/`
++export if present. No Cloudflare service rollback is required for this diff by
++itself. If this diff ships together with runtime service changes, redeploy the
++last known-good Cloudflare worker versions for web, api, and workflows, then
++rerun `npm run smoke:cloudflare`.

@@ -3,7 +3,7 @@
   "contract_name": "sales-saas-daily-observation",
   "surface_type": "continuous_improvement_daily_observation",
   "status": "active",
-  "last_reviewed": "2026-05-28",
+  "last_reviewed": "2026-05-31",
   "runtime_behavior_changed": false,
   "purpose": "Capture daily, evidence-backed observations that can feed the self-improvement loop without changing runtime behavior.",
   "applies_to": {
@@ -34,39 +34,64 @@
     "promotion_trigger": "Promote only when the observation identifies a reusable lesson, repeated blocker, missing contract surface, or release-readiness gap that should change a repo contract, runbook, template, or backlog."
   },
   "daily_observation": {
-    "date": "2026-05-28",
-    "mission_id": "mission-b1d6f7df7d24",
-    "mission_node": "node-14a456b29140",
-    "observation": "A retried DevOps release-readiness node inherited unstaged metadata WIP on an existing PR branch. The safe path is to preserve the exact pre-edit patch bundle and provenance manifest before refreshing current-node PR evidence, rollback notes, and learning-loop metadata.",
+    "date": "2026-05-31",
+    "mission_id": "mission-5d78617f1cfc",
+    "mission_node": "node-69dc9a7823dc",
+    "observation": "Retry node node-69dc9a7823dc inherited a dirty release-readiness branch with prior quarantine WIP still uncommitted. The safe first action was to package the current dirty state into .jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.json and .jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.patch before refreshing current mission evidence or committing to the existing PR branch.",
     "classification": [
       "dirty_worktree_quarantine",
+      "retry_node_recovery",
       "pr_first_release_readiness",
-      "current_mission_evidence_alignment",
+      "archived_patch_evidence",
       "self_improvement_loop"
     ],
     "evidence": [
       {
-        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
-        "signal": "Records the branch, upstream sync, PR context, modified files, patch bundle, and quarantine policy captured before this node edited the inherited dirty surfaces."
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.json",
+        "signal": "Current-node manifest describing the dirty branch, upstream sync, PR #1 context, tracked patch hash, pre-existing untracked files, quarantine policy, and metadata-only rollback posture."
       },
       {
-        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
-        "signal": "Preserves the exact pre-edit unstaged diff for .codex validator and .jarvis release-readiness metadata surfaces."
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.patch",
+        "signal": "Binary-capable git diff of the tracked dirty WIP captured before current mission metadata updates."
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
+        "signal": "Prior retry manifest preserved as inherited WIP and referenced by the current-node quarantine wrapper."
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
+        "signal": "Binary-capable git diff of inherited tracked WIP captured before this node made further edits."
+      },
+      {
+        "path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/manifest.json",
+        "signal": "Local export manifest under ignored .codex/reports for Telegram or operator handoff."
+      },
+      {
+        "path": ".codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60/untracked.gitattributes",
+        "signal": "Local export copy of the inherited untracked .gitattributes file captured before this node extended it."
+      },
+      {
+        "path": ".gitattributes",
+        "signal": "Limits whitespace-scan exceptions to archived dirty-worktree patch evidence under .jarvis and .codex/reports/dirty-worktree-quarantine."
       },
       {
         "path": ".jarvis/pr_evidence_manifest.json",
-        "signal": "current_mission_evidence is refreshed for mission-b1d6f7df7d24 / node-14a456b29140 with metadata-only scope, verification evidence, deploy posture, rollback metadata, and unresolved risks."
+        "signal": "Current mission evidence points at node-69dc9a7823dc, the current quarantine bundle, PR #1 posture, deploy evidence requirements, rollback metadata, and unresolved risks."
+      },
+      {
+        "path": ".codex/scripts/validate_repo_contracts.py",
+        "signal": "Strict advisory validation checks the archived patch whitespace policy for both .jarvis and .codex quarantine evidence paths."
       },
       {
         "path": "docs/platform/release-readiness-report.md",
-        "signal": "The release-readiness report names the dirty-worktree quarantine, CI/CD and deploy posture, rollback rules, verification evidence, and remaining blockers for this node."
+        "signal": "Release-readiness report records dirty-worktree quarantine, verification gates, deploy posture, smoke blockers, and rollback notes for this node."
       },
       {
         "path": "agile_work_item.json",
-        "signal": "The canonical agile ready/done contract remains mirrored at .jarvis/agile_work_item.json and was re-reviewed for this mission."
+        "signal": "The canonical agile ready/done contract remains mirrored at .jarvis/agile_work_item.json for PR review."
       }
     ],
-    "action_taken": "Create a current dirty-worktree quarantine bundle, refresh current-node daily observation, learning memo promotion, PR evidence, production profile metadata, and release-readiness report without changing runtime behavior, workflows, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, or shared API contracts.",
+    "action_taken": "Captured the inherited dirty worktree in a current-node PR-visible .jarvis quarantine bundle, refreshed mission evidence for node-69dc9a7823dc, preserved prior retry evidence, and kept the changes metadata-only without changing runtime behavior.",
     "promotion_candidate": true,
     "promotion_target": ".jarvis/learning_memo_promotion.json",
     "runtime_behavior_changed": false

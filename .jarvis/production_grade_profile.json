@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "profile_version": "1.0.14",
+  "profile_version": "1.0.17",
   "status": "active",
-  "last_updated": "2026-05-28",
+  "last_updated": "2026-05-31",
   "repo_identity": {
     "name": "sales-aaas-platform",
     "workspace": "sales-saas",
@@ -35,6 +35,7 @@
       ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+      ".gitattributes",
       "docs/platform/release-readiness-report.md",
       "README.md",
       "docs/product/platform-requirements.md",
@@ -51,7 +52,11 @@
       "docs/reliability/postmortem-template.md",
       "scripts/cloudflare-smoke.sh",
       ".github/workflows/ci.yml",
-      ".github/workflows/deploy-cloudflare.yml"
+      ".github/workflows/deploy-cloudflare.yml",
+      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
+      ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.json",
+      ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.patch"
     ]
   },
   "workspace": {
@@ -931,7 +936,15 @@
       {
         "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
         "cites": [
-          "pre-edit dirty diff for node-14a456b29140"
+          "pre-edit dirty diff for node-14a456b29140",
+          "archived patch evidence for whitespace policy"
+        ]
+      },
+      {
+        "path": ".gitattributes",
+        "cites": [
+          "archived dirty-worktree patch whitespace policy",
+          ".jarvis/dirty_worktree_quarantine_*.patch -whitespace"
         ]
       },
       {
@@ -949,6 +962,44 @@
           "Priority Gaps",
           "Recommended Next Actions"
         ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.json",
+        "cites": [
+          "current retry dirty_worktree_quarantine",
+          "captured_before_current_node_metadata_updates",
+          "pre_existing_wip",
+          "tracked_patch_bundle_path",
+          "pull_request_context",
+          "quarantine_policy",
+          "rollback_note"
+        ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.patch",
+        "cites": [
+          "current retry tracked dirty diff for node-69dc9a7823dc",
+          "archived patch evidence for whitespace policy"
+        ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
+        "cites": [
+          "dirty_worktree_quarantine",
+          "captured_before_new_edits",
+          "rollback_note",
+          "pre_existing_wip",
+          "patch_bundle_path",
+          "pull_request_context",
+          "quarantine_policy"
+        ]
+      },
+      {
+        "path": ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
+        "cites": [
+          "pre-edit dirty diff for node-b5eac29f5c60",
+          "archived patch evidence for whitespace policy"
+        ]
       }
     ],
     "maturity_baseline": {
@@ -956,17 +1007,21 @@
       "current_score_percent": 73,
       "assessment_source": "mission baseline",
       "latest_local_audit_command": "npm run repo:audit",
-      "latest_local_audit_interpretation": "Repo operating-system audit can show template coverage as mature while release readiness still depends on PR evidence, deploy smoke, rollback target confirmation, and continuous improvement loops."
+      "latest_local_audit_interpretation": "Repo operating-system audit can show template coverage as mature while release readiness still depends on PR evidence, deploy smoke, rollback target confirmation, and continuous improvement loops.",
+      "latest_quarantine_bundle": ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.json",
+      "latest_retry_node": "mission-5d78617f1cfc / node-69dc9a7823dc"
     },
     "target_state": {
       "name": "self_improving",
       "success_conditions": [
         "Every release-sensitive PR carries ready/done, verification, deploy, rollback, and residual-risk evidence.",
         "Dirty worktrees are quarantined before unrelated growth begins.",
+        "Archived quarantine patch bundles keep evidence fidelity while a narrow Git attribute prevents whitespace gates from requiring archive mutation.",
         "Repo audits and contract validation run in CI and are reviewed before merge.",
         "Credential-dependent smoke gaps and rollback target gaps are recorded instead of treated as passing evidence.",
         "Daily observations and learning memo promotion decisions have explicit JSON evidence before they count as production-grade operating-system learning.",
-        "Reusable lessons from release blockers become repo contracts, runbooks, templates, or backlog items."
+        "Reusable lessons from release blockers become repo contracts, runbooks, templates, or backlog items.",
+        "Retry nodes quarantine inherited dirty worktree state into an evidence bundle before any follow-on metadata or hardening edits."
       ]
     },
     "ratchet_policy": {
@@ -975,7 +1030,9 @@
         "Prefer additive hardening over broad rewrites.",
         "Version baseline improvements and keep them rollbackable.",
         "Keep advisory validation strict enough to expose missing production-grade sections.",
-        "Treat missing evidence as an explicit risk, not a pass."
+        "Validate evidence-file exceptions explicitly instead of relying on undocumented branch-check bypasses.",
+        "Treat missing evidence as an explicit risk, not a pass.",
+        "Captured dirty-worktree evidence must stay byte-preserving; formatting gates can only exclude narrowly documented archive paths with validator coverage."
       ]
     },
     "daily_observation": {
@@ -1098,6 +1155,10 @@
       {
         "item": "Promote repeated mission blockers into regression checks or scorecard evidence.",
         "reason": "Historical or superseded dispatch blockers should not inflate active release pressure without evidence."
+      },
+      {
+        "item": "Add a first-class dirty-worktree quarantine command or script.",
+        "reason": "This retry required manual capture of status, stat, patch, and untracked-file evidence; a repo-local command would make future mission recovery deterministic and easier to review."
       }
     ],
     "learning_capture": {
@@ -1105,10 +1166,15 @@
         ".jarvis/daily_observation.json",
         ".jarvis/learning_memo_promotion.json",
         "docs/platform/release-readiness-report.md",
+        ".gitattributes",
         ".jarvis/pr_evidence_manifest.json",
         ".codex/reports/repo-operating-system-report.md",
         "docs/reliability/production-readiness-review.md",
-        "docs/platform/deploy-and-rollback-policy.md"
+        "docs/platform/deploy-and-rollback-policy.md",
+        ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json",
+        ".jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch",
+        ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.json",
+        ".jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.patch"
       ],
       "rule": "When a release-readiness blocker repeats, capture the prevention mechanism or explain why it remains a human review item."
     },
@@ -1128,10 +1194,18 @@
       {
         "name": "credential_dependent_checks_labeled",
         "target": "100% of unavailable smoke or deploy checks are marked blocked with next safe step"
+      },
+      {
+        "name": "archived_patch_whitespace_policy_validated",
+        "target": ".jarvis/dirty_worktree_quarantine_*.patch is the only documented archived patch whitespace exclusion and repo contracts validate it"
+      },
+      {
+        "name": "retry_dirty_worktree_quarantine_evidence_bundle",
+        "target": "Every retry node with inherited WIP records manifest, patch, status, diff stat, untracked-file evidence, and rollback note before edits."
       }
     ],
     "rollback_policy": {
-      "metadata_only_action": "Revert the PR or restore the previous production profile, daily observation manifest, learning memo promotion manifest, validator, quarantine manifests, PR evidence manifest, and release-readiness report revisions; no Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
+      "metadata_only_action": "Revert the PR or restore the previous production profile, daily observation manifest, learning memo promotion manifest, PR evidence manifest, validator, .gitattributes archived-patch rules, .jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.json, .jarvis/dirty_worktree_quarantine_2026-05-31_node-69dc9a7823dc.patch, .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.json, .jarvis/dirty_worktree_quarantine_2026-05-30_node-b5eac29f5c60.patch, and release-readiness report revisions; remove the local .codex/reports/dirty-worktree-quarantine/2026-05-30-node-b5eac29f5c60 export if present. No Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
       "runtime_release_action_if_bundled": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare."
     },
     "contract_scope": "This continuous_improvement section makes the maturity ratchet, daily observation surface, learning memo promotion surface, feedback loops, evidence cadence, learning capture, and backlog visible from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, deploy behavior, or ownership semantics."
@@ -1823,9 +1897,9 @@
   "metadata": {
     "created_by": "Codex mission node node-745e76479b19",
     "mission_id": "mission-37decb31706c",
-    "last_updated_by": "Codex mission node node-14a456b29140",
-    "last_updated_mission_id": "mission-b1d6f7df7d24",
-    "last_updated_reason": "Quarantined inherited dirty release-readiness WIP with a pre-edit patch bundle, refreshed current-node PR evidence, daily observation, learning memo promotion, and release-readiness reporting while preserving metadata-only runtime behavior.",
+    "last_updated_by": "Codex mission node node-69dc9a7823dc",
+    "last_updated_mission_id": "mission-5d78617f1cfc",
+    "last_updated_reason": "Wrapped the inherited dirty release-readiness WIP in a current-node quarantine bundle, refreshed current mission evidence, preserved archived patch evidence fidelity, and kept the change metadata-only with PR-first rollback notes.",
     "owned_path": ".jarvis/production_grade_profile.json",
     "change_type": "metadata_only",
     "runtime_behavior_changed": false,

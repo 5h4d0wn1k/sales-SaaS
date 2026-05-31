@@ -1,0 +1,772 @@
+diff --git a/.codex/scripts/validate_repo_contracts.py b/.codex/scripts/validate_repo_contracts.py
+index 5d29fe5..edee9db 100644
+--- a/.codex/scripts/validate_repo_contracts.py
++++ b/.codex/scripts/validate_repo_contracts.py
+@@ -28,6 +28,9 @@ PR_EVIDENCE_MANIFEST_PATH = ".jarvis/pr_evidence_manifest.json"
+ PR_TEMPLATE_PATH = ".github/PULL_REQUEST_TEMPLATE.md"
+ PACKAGE_JSON_PATH = "package.json"
+ REPO_OS_WORKFLOW_PATH = ".github/workflows/repo-operating-system.yml"
++GIT_ATTRIBUTES_PATH = ".gitattributes"
++ARCHIVED_PATCH_ATTRIBUTE_PATTERN = ".jarvis/dirty_worktree_quarantine_*.patch"
++ARCHIVED_PATCH_ATTRIBUTE_TOKEN = "-whitespace"
+ 
+ PROFILE_REQUIRED_SECTIONS = [
+     "ownership",
+@@ -1247,6 +1250,52 @@ def check_repo_os_workflow(root: Path, findings: list[Finding]) -> None:
+         )
+ 
+ 
++def check_gitattributes(root: Path, findings: list[Finding]) -> None:
++    relpath = GIT_ATTRIBUTES_PATH
++    path = root / relpath
++    if not path.exists():
++        findings.append(
++            Finding(
++                "warn",
++                "gitattributes.missing",
++                relpath,
++                "Git attributes should document archived patch evidence whitespace handling.",
++            )
++        )
++        return
++
++    for line in read_text(path).splitlines():
++        stripped = line.strip()
++        if not stripped or stripped.startswith("#"):
++            continue
++        tokens = stripped.split()
++        if (
++            tokens
++            and tokens[0] == ARCHIVED_PATCH_ATTRIBUTE_PATTERN
++            and ARCHIVED_PATCH_ATTRIBUTE_TOKEN in tokens[1:]
++        ):
++            findings.append(
++                Finding(
++                    "pass",
++                    "gitattributes.archived_patch_whitespace",
++                    relpath,
++                    "Archived dirty-worktree patch evidence disables whitespace scanning.",
++                    f"{ARCHIVED_PATCH_ATTRIBUTE_PATTERN} {ARCHIVED_PATCH_ATTRIBUTE_TOKEN}",
++                )
++            )
++            return
++
++    findings.append(
++        Finding(
++            "warn",
++            "gitattributes.archived_patch_whitespace",
++            relpath,
++            "Archived dirty-worktree patch evidence should disable whitespace scanning.",
++            f"expected `{ARCHIVED_PATCH_ATTRIBUTE_PATTERN} {ARCHIVED_PATCH_ATTRIBUTE_TOKEN}`",
++        )
++    )
++
++
+ def build_payload(root: Path, findings: list[Finding]) -> dict[str, Any]:
+     totals = {
+         "pass": sum(1 for item in findings if item.level == "pass"),
+@@ -1343,6 +1392,7 @@ def main() -> int:
+     check_pr_template(root, findings)
+     check_package_script(root, findings)
+     check_repo_os_workflow(root, findings)
++    check_gitattributes(root, findings)
+ 
+     payload = build_payload(root, findings)
+     if args.format == "json":
+diff --git a/.jarvis/agile_work_item.json b/.jarvis/agile_work_item.json
+index bf75caf..5213f01 100644
+--- a/.jarvis/agile_work_item.json
++++ b/.jarvis/agile_work_item.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-agile-work-item",
+   "contract_type": "sdlc_work_item_contract",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-29",
+   "canonical_path": "agile_work_item.json",
+   "mirrors": [
+     ".jarvis/agile_work_item.json"
+diff --git a/.jarvis/daily_observation.json b/.jarvis/daily_observation.json
+index 48e555f..155c886 100644
+--- a/.jarvis/daily_observation.json
++++ b/.jarvis/daily_observation.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-daily-observation",
+   "surface_type": "continuous_improvement_daily_observation",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-29",
+   "runtime_behavior_changed": false,
+   "purpose": "Capture daily, evidence-backed observations that can feed the self-improvement loop without changing runtime behavior.",
+   "applies_to": {
+@@ -34,39 +34,44 @@
+     "promotion_trigger": "Promote only when the observation identifies a reusable lesson, repeated blocker, missing contract surface, or release-readiness gap that should change a repo contract, runbook, template, or backlog."
+   },
+   "daily_observation": {
+-    "date": "2026-05-28",
+-    "mission_id": "mission-b1d6f7df7d24",
+-    "mission_node": "node-14a456b29140",
+-    "observation": "A retried DevOps release-readiness node inherited unstaged metadata WIP on an existing PR branch. The safe path is to preserve the exact pre-edit patch bundle and provenance manifest before refreshing current-node PR evidence, rollback notes, and learning-loop metadata.",
++    "date": "2026-05-29",
++    "mission_id": "mission-1f594967c416",
++    "mission_node": "node-ea000054910e",
++    "observation": "The current mission evidence needed a retry-safe refresh for mission-1f594967c416 / node-ea000054910e, and branch-level whitespace checks were failing only because an archived quarantine patch preserves captured trailing whitespace. The safe path is to keep the patch evidence intact, classify quarantine patch bundles with an explicit Git whitespace attribute, and validate that exception in the repo contract.",
+     "classification": [
+-      "dirty_worktree_quarantine",
++      "archived_patch_evidence",
++      "branch_whitespace_gate",
+       "pr_first_release_readiness",
+       "current_mission_evidence_alignment",
+       "self_improvement_loop"
+     ],
+     "evidence": [
+       {
+-        "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+-        "signal": "Records the branch, upstream sync, PR context, modified files, patch bundle, and quarantine policy captured before this node edited the inherited dirty surfaces."
++        "path": ".gitattributes",
++        "signal": "Declares .jarvis/dirty_worktree_quarantine_*.patch as archived patch evidence with whitespace scanning disabled so git diff --check can pass without mutating the preserved patch."
+       },
+       {
+         "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+-        "signal": "Preserves the exact pre-edit unstaged diff for .codex validator and .jarvis release-readiness metadata surfaces."
++        "signal": "Preserves the exact pre-edit unstaged diff; the trailing whitespace belongs to archived patch content and is not runtime source."
+       },
+       {
+         "path": ".jarvis/pr_evidence_manifest.json",
+-        "signal": "current_mission_evidence is refreshed for mission-b1d6f7df7d24 / node-14a456b29140 with metadata-only scope, verification evidence, deploy posture, rollback metadata, and unresolved risks."
++        "signal": "current_mission_evidence is refreshed for mission-1f594967c416 / node-ea000054910e with metadata-only scope, archived-patch whitespace handling, verification evidence, deploy posture, rollback metadata, and unresolved risks."
++      },
++      {
++        "path": ".codex/scripts/validate_repo_contracts.py",
++        "signal": "The strict repo contract now checks that archived dirty-worktree patch evidence has an explicit -whitespace Git attribute."
+       },
+       {
+         "path": "docs/platform/release-readiness-report.md",
+-        "signal": "The release-readiness report names the dirty-worktree quarantine, CI/CD and deploy posture, rollback rules, verification evidence, and remaining blockers for this node."
++        "signal": "The release-readiness report names the archived patch whitespace fix, CI/CD and deploy posture, rollback rules, verification evidence, and remaining blockers for this node."
+       },
+       {
+         "path": "agile_work_item.json",
+         "signal": "The canonical agile ready/done contract remains mirrored at .jarvis/agile_work_item.json and was re-reviewed for this mission."
+       }
+     ],
+-    "action_taken": "Create a current dirty-worktree quarantine bundle, refresh current-node daily observation, learning memo promotion, PR evidence, production profile metadata, and release-readiness report without changing runtime behavior, workflows, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, or shared API contracts.",
++    "action_taken": "Refresh current-node daily observation, learning memo promotion, PR evidence, production profile metadata, release-readiness notes, and advisory validator coverage for archived patch whitespace handling without changing runtime behavior, workflows, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, or shared API contracts.",
+     "promotion_candidate": true,
+     "promotion_target": ".jarvis/learning_memo_promotion.json",
+     "runtime_behavior_changed": false
+diff --git a/.jarvis/learning_memo_promotion.json b/.jarvis/learning_memo_promotion.json
+index 8cbe60f..302e6ec 100644
+--- a/.jarvis/learning_memo_promotion.json
++++ b/.jarvis/learning_memo_promotion.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-learning-memo-promotion",
+   "surface_type": "continuous_improvement_learning_memo_promotion",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-29",
+   "runtime_behavior_changed": false,
+   "purpose": "Define when an observation becomes a promoted learning memo and where that learning must be captured before it is treated as part of the production-grade operating system.",
+   "applies_to": {
+@@ -51,12 +51,13 @@
+     ]
+   },
+   "current_promotion": {
+-    "promotion_id": "2026-05-28-node-14a456b29140-dirty-wip-quarantine-before-refresh",
++    "promotion_id": "2026-05-29-node-ea000054910e-archived-patch-whitespace-exclusion",
+     "source_observation_path": ".jarvis/daily_observation.json",
+-    "source_observation_date": "2026-05-28",
+-    "lesson": "A retried release-readiness node that inherits dirty metadata must first preserve the exact pre-edit diff and provenance, then refresh current-node PR evidence and learning-loop surfaces on the same PR branch. Historical green checks are useful context, but the final pushed commit still needs fresh PR evidence and checks before merge.",
++    "source_observation_date": "2026-05-29",
++    "lesson": "Archived quarantine patch bundles are evidence artifacts, not runtime source. When branch-level whitespace checks fail only on preserved patch content, the safe fix is to classify those bundles with a narrow Git whitespace attribute and validate the exception instead of rewriting the archive and weakening evidence fidelity.",
+     "evidence_refs": [
+       ".jarvis/daily_observation.json",
++      ".gitattributes",
+       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+       ".jarvis/pr_evidence_manifest.json",
+@@ -68,16 +69,18 @@
+     ],
+     "promoted_to": [
+       "dirty_worktree_quarantine.current_node_bundle",
++      "git_attributes.archived_patch_whitespace_policy",
+       "daily_observation.current_mission_context",
+       "learning_memo_promotion.current_promotion",
+       "pr_evidence_manifest.current_mission_evidence",
+       "production_grade_profile.continuous_improvement.daily_observation",
+       "production_grade_profile.continuous_improvement.learning_memo_promotion",
+       "release_readiness_report.current_node_evidence",
++      "production_readiness_review.current_node_evidence",
+       "advisory repo contract validation"
+     ],
+     "runtime_behavior_changed": false,
+-    "rollback_note": "Revert the metadata-only JSON manifests, quarantine patch bundle, production profile, PR evidence, release-readiness report, and advisory validator changes from this node. No Cloudflare worker rollback is required for this change by itself.",
++    "rollback_note": "Revert the metadata-only JSON manifests, .gitattributes archived-patch rule, production profile, PR evidence, release-readiness notes, and advisory validator changes from this node. No Cloudflare worker rollback is required for this change by itself.",
+     "status": "promoted_to_advisory_contract"
+   },
+   "non_goals": [
+diff --git a/.jarvis/pr_evidence_manifest.json b/.jarvis/pr_evidence_manifest.json
+index 340a6c3..f2e326c 100644
+--- a/.jarvis/pr_evidence_manifest.json
++++ b/.jarvis/pr_evidence_manifest.json
+@@ -3,7 +3,7 @@
+   "manifest_name": "sales-saas-pr-evidence-manifest",
+   "manifest_type": "pull_request_release_evidence_contract",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-29",
+   "purpose": "Define the PR evidence, release path, deploy smoke evidence, and rollback metadata required before release-sensitive changes land or promote.",
+   "applies_to": {
+     "repository": "sales-saas",
+@@ -139,17 +139,17 @@
+     "credential_blocker_policy": "If Cloudflare credentials or environment variables are unavailable, record the missing prerequisite and do not claim deploy or smoke success."
+   },
+   "current_mission_evidence": {
+-    "mission_id": "mission-b1d6f7df7d24",
+-    "mission_node": "node-14a456b29140",
++    "mission_id": "mission-1f594967c416",
++    "mission_node": "node-ea000054910e",
+     "branch": "node-57f374c2e811-agile-work-item",
+-    "base_head_before_metadata_edits": "159a5d8",
+-    "captured_at": "2026-05-28",
++    "base_head_before_metadata_edits": "8d2e6e5",
++    "captured_at": "2026-05-29",
+     "runtime_behavior_changed": false,
+     "deploy_workflow_behavior_changed": false,
+     "dependencies_changed": false,
+     "migrations_changed": false,
+     "shared_contracts_changed": false,
+-    "scope": "Quarantine inherited dirty release-readiness WIP with a pre-edit patch bundle, refresh current-node PR evidence, ready/done review metadata, daily observation, learning memo promotion, production profile, and release-readiness report. Runtime behavior, workflows, deploy behavior, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, and shared API contracts remain unchanged.",
++    "scope": "Refresh current mission evidence for mission-1f594967c416 / node-ea000054910e, document release-readiness posture, and resolve the branch-level whitespace gate by classifying archived dirty-worktree patch bundles as evidence files with a narrow Git whitespace attribute. Runtime behavior, workflows, deploy behavior, dependencies, migrations, billing, auth, tenancy, provider webhooks, approval gates, and shared API contracts remain unchanged.",
+     "affected_runtime_services": [],
+     "affected_release_gate_services": [],
+     "owned_surfaces": [
+@@ -162,8 +162,9 @@
+       ".jarvis/learning_memo_promotion.json",
+       ".jarvis/production_grade_profile.json",
+       ".codex/scripts/validate_repo_contracts.py",
+-      ".github/PULL_REQUEST_TEMPLATE.md",
+-      "docs/platform/release-readiness-report.md"
++      ".gitattributes",
++      "docs/platform/release-readiness-report.md",
++      "docs/reliability/production-readiness-review.md"
+     ],
+     "ready_done_contract": {
+       "canonical_path": "agile_work_item.json",
+@@ -192,12 +193,12 @@
+         ".jarvis/pr_evidence_manifest.json",
+         ".jarvis/production_grade_profile.json"
+       ],
+-      "policy": "Preserve the inherited dirty diff before changing the same release-readiness metadata surfaces; do not discard or hide user/Ayushman/senior-dev WIP."
++      "policy": "Preserve archived patch bytes as evidence. The .gitattributes rule disables whitespace scanning only for .jarvis/dirty_worktree_quarantine_*.patch so branch-level whitespace checks do not require mutating archived diff content."
+     },
+     "pull_request": {
+       "known_url": "https://github.com/5h4d0wn1k/sales-SaaS/pull/1",
+       "status": "open_mergeable_existing_pr_branch_update_prepared",
+-      "checks_observed": "PR #1 is open and mergeable. Observed checks are historical for commit 159a5d8 on 2026-05-25; after this node's final commit is pushed, CI, repo operating-system audit, and GitGuardian checks must be observed again before merge."
++      "checks_observed": "PR #1 is open and mergeable. Observed historical checks do not prove this branch update is releasable; after this node's final commit is pushed, CI, repo operating-system audit, GitGuardian checks, and the branch-level whitespace gate must be observed again before merge."
+     },
+     "verification_evidence": [
+       {
+@@ -206,7 +207,7 @@
+         "scope": "Dirty-worktree quarantine: captured the inherited pre-edit unstaged diff before this node changed the same metadata surfaces."
+       },
+       {
+-        "command": "node -e \"const fs=require('fs'); for (const p of process.argv.slice(1)) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')\" agile_work_item.json .jarvis/agile_work_item.json .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json .jarvis/pr_evidence_manifest.json .jarvis/daily_observation.json .jarvis/learning_memo_promotion.json .jarvis/production_grade_profile.json",
++        "command": "node -e \"const fs=require('fs'); for (const p of ['agile_work_item.json','.jarvis/agile_work_item.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/production_grade_profile.json']) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')\"",
+         "status": "passed",
+         "scope": "Machine-readable JSON parsing for owned manifests."
+       },
+@@ -221,14 +222,19 @@
+         "scope": "Python syntax gate for the advisory validator."
+       },
+       {
+-        "command": "git diff --check",
++        "command": "git diff --check origin/main...HEAD",
+         "status": "passed",
+-        "scope": "Whitespace and patch hygiene."
++        "scope": "Branch-level whitespace gate; passed after archived dirty-worktree patch bundles were classified with .gitattributes -whitespace."
++      },
++      {
++        "command": "git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
++        "status": "passed",
++        "scope": "Archived patch attribute validation; expected output is whitespace: unset."
+       },
+       {
+         "command": "npm run repo:contracts -- --strict",
+         "status": "passed",
+-        "scope": "Strict advisory validation after current-node PR evidence and dirty-worktree quarantine alignment: 362 pass, 0 warn, 0 error."
++        "scope": "Strict advisory validation after current-node PR evidence and archived-patch whitespace policy alignment: 363 pass, 0 warn, 0 error."
+       },
+       {
+         "command": "npm run repo:audit",
+@@ -248,22 +254,22 @@
+       {
+         "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'",
+         "status": "passed",
+-        "scope": "Required build gate, including API, web, workflows, database, and shared package builds."
++        "scope": "Required build gate, including API, web, workflows, database, and shared package builds; the web build passed after the existing retry wrapper recovered from transient Next.js missing-artifact errors."
+       },
+       {
+         "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run verify:core'",
+         "status": "passed",
+-        "scope": "Required core verification aggregate reran typecheck, test, and build successfully."
++        "scope": "Required core verification aggregate reran typecheck, test, and build successfully; its build substep recovered after one transient Next.js missing-manifest retry."
+       },
+       {
+         "command": "npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
+-        "status": "passed",
+-        "scope": "Cloudflare web worker release bundle generation under Node v22.22.3 and npm 11.10.1; OpenNext generated .open-next/worker.js."
++        "status": "failed",
++        "scope": "Fresh Cloudflare web worker release bundle generation failed after two command attempts because OpenNext/Next.js repeatedly missed transient .next artifacts such as pages-manifest.json, _ssgManifest.js, and 404.html."
+       },
+       {
+         "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/web/wrangler.jsonc'",
+         "status": "passed",
+-        "scope": "Cloudflare web Worker shadow deploy dry-run with Wrangler 4.87.0."
++        "scope": "Cloudflare web Worker shadow deploy dry-run with Wrangler 4.87.0. This used an existing .open-next/worker.js; release-bundle freshness remains blocked until build:cf-worker passes."
+       },
+       {
+         "command": "npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env=\"\" --config apps/api/wrangler.jsonc'",
+@@ -289,15 +295,15 @@
+     "deploy_evidence": [
+       {
+         "check": "release_bundle_creation",
+-        "status": "passed",
++        "status": "failed",
+         "command": "npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'; npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'",
+-        "evidence": "Workspace build passed and OpenNext generated the Cloudflare web worker bundle. This node does not change runtime source or deploy workflow behavior."
++        "evidence": "Workspace build passed, but fresh OpenNext Cloudflare web worker bundle creation failed twice with transient Next.js artifact errors. This node does not change runtime source or deploy workflow behavior, but production promotion needs a fresh passing build:cf-worker result."
+       },
+       {
+         "check": "cloudflare_shadow_deploy_attempt",
+         "status": "passed",
+         "command": "Wrangler deploy --dry-run for apps/web/wrangler.jsonc, apps/api/wrangler.jsonc, and apps/workflows/wrangler.jsonc under Node 22/npm 11.10.1.",
+-        "evidence": "Dry-runs passed for web, API, and workflows with Wrangler 4.87.0. No production deploy was performed."
++        "evidence": "Dry-runs passed for web, API, and workflows with Wrangler 4.87.0. No production deploy was performed. Web dry-run freshness is inconclusive while fresh build:cf-worker is failing."
+       },
+       {
+         "check": "cloudflare_smoke",
+@@ -317,27 +323,29 @@
+       }
+     ],
+     "rollback_metadata": {
+-      "release_or_pr_identifier": "mission-b1d6f7df7d24 / node-14a456b29140 / PR #1",
++      "release_or_pr_identifier": "mission-1f594967c416 / node-ea000054910e / PR #1",
+       "affected_cloudflare_services": [],
+       "rollback_owner": "DevOps owner for this metadata-only mission node; PR reviewer confirms before merge.",
+       "schema_or_data_compatibility_constraints": "No schema, migration, data, billing, auth, tenancy, provider webhook, shared API contract, dependency, worker bundle, route, workflow, or runtime behavior change.",
+-      "metadata_only_rollback_action": "Revert this node's changes to agile_work_item.json, .jarvis/agile_work_item.json, .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json, .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, .jarvis/learning_memo_promotion.json, .codex/scripts/validate_repo_contracts.py, and docs/platform/release-readiness-report.md. No Cloudflare service rollback is required for this metadata-only change.",
++      "metadata_only_rollback_action": "Revert this node's changes to agile_work_item.json, .jarvis/agile_work_item.json, .jarvis/production_grade_profile.json, .jarvis/pr_evidence_manifest.json, .jarvis/daily_observation.json, .jarvis/learning_memo_promotion.json, .codex/scripts/validate_repo_contracts.py, .gitattributes, docs/platform/release-readiness-report.md, and docs/reliability/production-readiness-review.md. No Cloudflare service rollback is required for this metadata-only change.",
+       "production_service_rollback_action_if_bundled_with_runtime_changes": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows as applicable, then rerun npm run smoke:cloudflare.",
+       "post_rollback_validation": [
+         "node -e JSON parse for owned manifest files",
+         "cmp -s agile_work_item.json .jarvis/agile_work_item.json",
+         "python3 -m py_compile .codex/scripts/validate_repo_contracts.py",
++        "git diff --check origin/main...HEAD",
+         "npm run repo:contracts -- --strict",
+         "npm run verify:core",
+         "npm run smoke:cloudflare when runtime services were deployed or rolled back"
+       ]
+     },
+     "unresolved_risks": [
+-      "New remote PR checks must be observed after this branch update is pushed; historical green checks on 159a5d8 do not prove the final commit is releasable.",
++      "New remote PR checks must be observed after this branch update is pushed; historical green checks do not prove the final commit is releasable.",
+       "PR review must confirm the metadata-only diff did not unintentionally change runtime or deploy workflow behavior.",
+       "Cloudflare smoke is credential and environment dependent; if unavailable, the blocked reason must stay visible instead of being treated as pass evidence.",
++      "Fresh OpenNext web worker bundle creation failed locally after two attempts with transient Next.js artifact errors; production promotion must wait for a passing build:cf-worker result.",
+       "Actual last known-good Cloudflare Worker rollback targets remain unconfirmed without provider access, but no Cloudflare services are affected by this metadata-only node.",
+-      "Dependency vulnerability remediation remains out of scope for this metadata-only node; this node did not change package manifests or lockfiles."
++      "The archived patch whitespace exception is intentionally narrow; reviewers should reject expanding it beyond .jarvis/dirty_worktree_quarantine_*.patch evidence files without a separate rationale."
+     ]
+   },
+   "non_goals": [
+diff --git a/.jarvis/production_grade_profile.json b/.jarvis/production_grade_profile.json
+index 792b436..f1b4ce7 100644
+--- a/.jarvis/production_grade_profile.json
++++ b/.jarvis/production_grade_profile.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 1,
+-  "profile_version": "1.0.14",
++  "profile_version": "1.0.15",
+   "status": "active",
+-  "last_updated": "2026-05-28",
++  "last_updated": "2026-05-29",
+   "repo_identity": {
+     "name": "sales-aaas-platform",
+     "workspace": "sales-saas",
+@@ -35,6 +35,7 @@
+       ".jarvis/dirty_worktree_quarantine_2026-05-25_node-6f40795e0114.json",
+       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json",
+       ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
++      ".gitattributes",
+       "docs/platform/release-readiness-report.md",
+       "README.md",
+       "docs/product/platform-requirements.md",
+@@ -931,7 +932,15 @@
+       {
+         "path": ".jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch",
+         "cites": [
+-          "pre-edit dirty diff for node-14a456b29140"
++          "pre-edit dirty diff for node-14a456b29140",
++          "archived patch evidence for whitespace policy"
++        ]
++      },
++      {
++        "path": ".gitattributes",
++        "cites": [
++          "archived dirty-worktree patch whitespace policy",
++          ".jarvis/dirty_worktree_quarantine_*.patch -whitespace"
+         ]
+       },
+       {
+@@ -963,6 +972,7 @@
+       "success_conditions": [
+         "Every release-sensitive PR carries ready/done, verification, deploy, rollback, and residual-risk evidence.",
+         "Dirty worktrees are quarantined before unrelated growth begins.",
++        "Archived quarantine patch bundles keep evidence fidelity while a narrow Git attribute prevents whitespace gates from requiring archive mutation.",
+         "Repo audits and contract validation run in CI and are reviewed before merge.",
+         "Credential-dependent smoke gaps and rollback target gaps are recorded instead of treated as passing evidence.",
+         "Daily observations and learning memo promotion decisions have explicit JSON evidence before they count as production-grade operating-system learning.",
+@@ -975,6 +985,7 @@
+         "Prefer additive hardening over broad rewrites.",
+         "Version baseline improvements and keep them rollbackable.",
+         "Keep advisory validation strict enough to expose missing production-grade sections.",
++        "Validate evidence-file exceptions explicitly instead of relying on undocumented branch-check bypasses.",
+         "Treat missing evidence as an explicit risk, not a pass."
+       ]
+     },
+@@ -1105,6 +1116,7 @@
+         ".jarvis/daily_observation.json",
+         ".jarvis/learning_memo_promotion.json",
+         "docs/platform/release-readiness-report.md",
++        ".gitattributes",
+         ".jarvis/pr_evidence_manifest.json",
+         ".codex/reports/repo-operating-system-report.md",
+         "docs/reliability/production-readiness-review.md",
+@@ -1128,10 +1140,14 @@
+       {
+         "name": "credential_dependent_checks_labeled",
+         "target": "100% of unavailable smoke or deploy checks are marked blocked with next safe step"
++      },
++      {
++        "name": "archived_patch_whitespace_policy_validated",
++        "target": ".jarvis/dirty_worktree_quarantine_*.patch is the only documented archived patch whitespace exclusion and repo contracts validate it"
+       }
+     ],
+     "rollback_policy": {
+-      "metadata_only_action": "Revert the PR or restore the previous production profile, daily observation manifest, learning memo promotion manifest, validator, quarantine manifests, PR evidence manifest, and release-readiness report revisions; no Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
++      "metadata_only_action": "Revert the PR or restore the previous production profile, daily observation manifest, learning memo promotion manifest, validator, .gitattributes archived-patch rule, PR evidence manifest, and release-readiness report revisions; no Cloudflare service rollback is required for this continuous_improvement metadata change by itself.",
+       "runtime_release_action_if_bundled": "Redeploy the last known-good Cloudflare worker versions for web, api, and workflows, then rerun npm run smoke:cloudflare."
+     },
+     "contract_scope": "This continuous_improvement section makes the maturity ratchet, daily observation surface, learning memo promotion surface, feedback loops, evidence cadence, learning capture, and backlog visible from the canonical production grade profile. It does not change runtime behavior, dependencies, migrations, workflow triggers, billing behavior, auth behavior, shared API contracts, deploy behavior, or ownership semantics."
+@@ -1823,9 +1839,9 @@
+   "metadata": {
+     "created_by": "Codex mission node node-745e76479b19",
+     "mission_id": "mission-37decb31706c",
+-    "last_updated_by": "Codex mission node node-14a456b29140",
+-    "last_updated_mission_id": "mission-b1d6f7df7d24",
+-    "last_updated_reason": "Quarantined inherited dirty release-readiness WIP with a pre-edit patch bundle, refreshed current-node PR evidence, daily observation, learning memo promotion, and release-readiness reporting while preserving metadata-only runtime behavior.",
++    "last_updated_by": "Codex mission node node-ea000054910e",
++    "last_updated_mission_id": "mission-1f594967c416",
++    "last_updated_reason": "Refreshed current mission evidence and release-readiness notes, preserved archived patch evidence fidelity, and added a validated .gitattributes whitespace exception for quarantine patch bundles while preserving metadata-only runtime behavior.",
+     "owned_path": ".jarvis/production_grade_profile.json",
+     "change_type": "metadata_only",
+     "runtime_behavior_changed": false,
+diff --git a/agile_work_item.json b/agile_work_item.json
+index bf75caf..5213f01 100644
+--- a/agile_work_item.json
++++ b/agile_work_item.json
+@@ -3,7 +3,7 @@
+   "contract_name": "sales-saas-agile-work-item",
+   "contract_type": "sdlc_work_item_contract",
+   "status": "active",
+-  "last_reviewed": "2026-05-28",
++  "last_reviewed": "2026-05-29",
+   "canonical_path": "agile_work_item.json",
+   "mirrors": [
+     ".jarvis/agile_work_item.json"
+diff --git a/docs/platform/release-readiness-report.md b/docs/platform/release-readiness-report.md
+index 551ec60..e60c866 100644
+--- a/docs/platform/release-readiness-report.md
++++ b/docs/platform/release-readiness-report.md
+@@ -1,105 +1,99 @@
+ # Release Readiness Report
+ 
+-- Mission: `mission-b1d6f7df7d24`
+-- Node: `node-14a456b29140`
++- Mission: `mission-1f594967c416`
++- Node: `node-ea000054910e`
+ - Workspace: `sales-saas`
+ - Branch: `node-57f374c2e811-agile-work-item`
+ - PR: https://github.com/5h4d0wn1k/sales-SaaS/pull/1
+-- Base HEAD before this pass: `159a5d8`
+-- Date: `2026-05-28`
++- Base HEAD before this pass: `8d2e6e5`
++- Date: `2026-05-29`
+ - Risk: `medium` per mission verification contract.
+ - Runtime behavior changed: `false`
+ - Deploy workflow behavior changed: `false`
+ 
+ ## Scope
+ 
+-This pass preserves the inherited dirty release-readiness WIP before changing
+-the same metadata surfaces:
++This pass refreshes current mission evidence across the agile ready/done
++contract, PR evidence manifest, daily observation, learning memo promotion,
++production grade profile, advisory contract validator, release-readiness report,
++and production-readiness review.
+ 
+-- Quarantine manifest:
+-  `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json`
+-- Pre-edit patch bundle:
++It also resolves the branch-level whitespace failure caused by archived patch
++evidence:
++
++- Archived patch bundle:
+   `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`
++- Git attribute policy:
++  `.jarvis/dirty_worktree_quarantine_*.patch -whitespace`
++
++The archived patch bytes are intentionally preserved. Application runtime code,
++worker source, routes, migrations, billing behavior, auth behavior, tenancy
++logic, provider webhooks, approval gates, plan keys, dependencies, shared API
++contracts, and deploy workflow behavior are unchanged.
++
++## Branch Whitespace Resolution
+ 
+-It then refreshes current mission evidence across the agile ready/done contract,
+-PR evidence manifest, daily observation, learning memo promotion, production
+-grade profile, advisory contract validator, and this report.
++Before this pass, `git diff --check origin/main...HEAD` failed only on trailing
++whitespace inside the archived quarantine patch. Rewriting that patch would have
++weakened evidence fidelity, so this pass added a narrow `.gitattributes`
++exception for `.jarvis/dirty_worktree_quarantine_*.patch` and extended
++`.codex/scripts/validate_repo_contracts.py` to validate that exception.
+ 
+-Application runtime code, worker bundles, routes, migrations, billing behavior,
+-auth behavior, tenancy logic, provider webhooks, approval gates, plan keys,
+-dependencies, shared API contracts, and deploy workflow behavior are unchanged.
++Validation evidence:
++
++- `git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`
++  reports `whitespace: unset`.
++- `git diff --check origin/main...HEAD` now passes.
++- `npm run repo:contracts -- --strict` now checks the archived-patch attribute
++  and passes with `363 pass, 0 warn, 0 error`.
+ 
+ ## Delivery Blockers
+ 
+-- Dirty-worktree blocker is quarantined with a recoverable patch bundle and
+-  provenance manifest.
+-- PR #1 was observed open and mergeable, but its historical green checks apply
+-  to commit `159a5d8` from 2026-05-25. The final commit from this node still
+-  needs fresh PR checks before merge.
+-- Cloudflare smoke is blocked in this session because `/etc/cynik/apps/sales-saas.env`
+-  is not readable and smoke environment variables are unset.
++- Fresh remote PR checks still need to run after this branch update is pushed.
++- Cloudflare smoke is blocked in this session because
++  `/etc/cynik/apps/sales-saas.env` is not readable and required smoke variables
++  are unset.
++- Fresh OpenNext Cloudflare web worker bundle creation failed locally after two
++  command attempts because Next.js repeatedly missed transient `.next` artifacts
++  such as `pages-manifest.json`, `_ssgManifest.js`, and `404.html`. The normal
++  app build and `verify:core` passed after retry, so this is recorded as a
++  release-bundle blocker rather than a runtime behavior regression from this
++  metadata-only change.
+ - Actual last known-good Cloudflare Worker rollback target IDs remain
+   unconfirmed without provider access; this is acceptable for this metadata-only
+   pass but remains required before runtime production promotion.
+ 
+-## CI/CD And Release Path
+-
+-- CI exists at `.github/workflows/ci.yml` with typecheck, unit/workspace tests,
+-  build, and Cloudflare dry-run validation on self-hosted runners.
+-- Deploy exists at `.github/workflows/deploy-cloudflare.yml` with
+-  `workflow_dispatch`, environment selection, core verification before deploy,
+-  deploy concurrency, post-deploy smoke, and production rollback metadata
+-  validation.
+-- Repo operating-system checks exist at
+-  `.github/workflows/repo-operating-system.yml` and run advisory contract
+-  validation.
+-- PR evidence and rollback expectations are encoded in
+-  `.jarvis/pr_evidence_manifest.json` and `.github/PULL_REQUEST_TEMPLATE.md`.
+-
+-## Rollback Metadata Contract
+-
+-Runtime releases must carry a concrete `release.rollback_action` for each
+-affected Cloudflare service: `web`, `api`, and `workflows`, or explicitly state
+-that no service is affected for metadata-only changes.
+-
+-Cloudflare's Workers rollback docs state that rollback can use Wrangler or the
+-dashboard, creates a new active deployment from the selected version, and does
+-not roll back connected resources such as KV, D1, R2, queues, or Durable Object
+-migrations. The report therefore treats concrete Worker version IDs or
+-dashboard rollback target UUIDs as required release metadata before production
+-promotion.
+-
+-Source: https://developers.cloudflare.com/workers/configuration/versions-and-deployments/rollbacks/
+-
+ ## Verification Evidence
+ 
+ | Check | Command | Result |
+ | --- | --- | --- |
+-| Dirty WIP patch bundle | `git diff --binary --output=.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch` | Passed. |
+-| JSON parse gate | `node -e "const fs=require('fs'); for (const p of process.argv.slice(1)) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')" agile_work_item.json .jarvis/agile_work_item.json .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json .jarvis/pr_evidence_manifest.json .jarvis/daily_observation.json .jarvis/learning_memo_promotion.json .jarvis/production_grade_profile.json` | Passed. |
+-| Agile mirror check | `cmp -s agile_work_item.json .jarvis/agile_work_item.json` | Passed. |
++| JSON parse gate | `node -e "const fs=require('fs'); for (const p of ['agile_work_item.json','.jarvis/agile_work_item.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/production_grade_profile.json']) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')"` | Passed. |
++| Agile mirror check | `cmp -s agile_work_item.json .jarvis/agile_work_item.json && echo agile mirror ok` | Passed. |
+ | Python syntax gate | `python3 -m py_compile .codex/scripts/validate_repo_contracts.py` | Passed. |
+-| Whitespace check | `git diff --check` | Passed. |
+-| Strict repo contracts | `npm run repo:contracts -- --strict` | Passed: `362 pass, 0 warn, 0 error`. |
+-| Repo audit | `npm run repo:audit` | Passed: score `100%`, 20/20 mature checks, no priority gaps; `git_dirty=true` because this PR diff is local. |
++| Archived patch attribute | `git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch` | Passed: `whitespace: unset`. |
++| Branch whitespace gate | `git diff --check origin/main...HEAD` | Passed. |
++| Worktree whitespace gate | `git diff --check` | Passed. |
++| Strict repo contracts | `npm run repo:contracts -- --strict` | Passed: `363 pass, 0 warn, 0 error`. |
+ | Typecheck | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'` | Passed under Node `v22.22.3` and npm `11.10.1`. |
+-| Automated tests | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run test'` | Passed: root `24`, API `63`, web `19`, database `1`, shared `2` tests. |
+-| Build | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run build'` | Passed. |
+-| Core verification | `npx -y -p node@22 -p npm@11.10.1 -c 'npm run verify:core'` | Passed; reran typecheck, test, and build. |
+-| Cloudflare web worker bundle | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` | Passed; OpenNext generated `.open-next/worker.js`. |
+-| Cloudflare web dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/web/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
++| Automated tests | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'` | Passed: root `24`, API `63`, web `19`, database `1`, and shared `2` tests. |
++| Build | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build'` | Passed after the existing retry wrapper recovered from transient Next.js missing-artifact errors. |
++| Core verification | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run verify:core'` | Passed; reran typecheck, test, and build. Build recovered after one transient Next.js missing-manifest retry. |
++| Cloudflare web worker bundle | `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` | Failed after two command attempts; OpenNext/Next.js repeatedly missed transient `.next` artifacts during fresh worker bundle creation. |
++| Cloudflare web dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/web/wrangler.jsonc'` | Passed with Wrangler `4.87.0`; release-bundle freshness remains blocked because `build:cf-worker` failed. |
+ | Cloudflare API dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/api/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
+ | Cloudflare workflows dry-run | `npx -y -p node@22 -p npm@11.10.1 -c './node_modules/.bin/wrangler deploy --dry-run --env="" --config apps/workflows/wrangler.jsonc'` | Passed with Wrangler `4.87.0`. |
+-| Smoke environment check | `if [ -r /etc/cynik/apps/sales-saas.env ]; then echo env-file-readable; else echo env-file-not-readable; fi; ...` | Blocked: env file not readable; smoke variables unset. |
++| Smoke environment check | `if [ -r /etc/cynik/apps/sales-saas.env ]; then echo env-file-readable; else echo env-file-not-readable; fi; ...` | Blocked: env file not readable; `WEB_APP_URL`, `API_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_TOKEN`, and `CLOUDFLARE_API_TOKEN` unset. |
+ | Cloudflare smoke | `npm run smoke:cloudflare` | Blocked: `WEB_APP_URL is required`. |
+-| Bridge self-test | `rg -n "bridge self|self-test|selftest|bridge" .codex scripts package.json docs .jarvis -g '!node_modules'` | Blocked: no repository bridge self-test command exists. |
++| Bridge self-test discovery | `rg -n "bridge self|self-test|selftest|bridge" .codex scripts package.json docs .jarvis -g '!node_modules'` | Blocked: no repository bridge self-test command exists. |
+ 
+ ## Deploy Evidence
+ 
+-- Release bundle creation passed via `npm run build` and
+-  `npm run build:cf-worker --workspace @sales/web`.
++- Release bundle creation is not green: `npm run build` passed, but fresh
++  `npm run build:cf-worker --workspace @sales/web` failed locally after two
++  command attempts with transient Next.js artifact errors.
+ - Shadow deploy dry-runs passed for `web`, `api`, and `workflows` with Wrangler
+-  `4.87.0`; no production deploy was performed.
++  `4.87.0`. The web dry-run used an existing `.open-next/worker.js`; do not
++  treat it as proof of fresh web bundle creation until `build:cf-worker` passes.
+ - Shadow smoke is blocked until Cloudflare smoke URLs and credentials are
+   available to the session.
+ - Service restart validation is not applicable for this metadata-only pass.
+@@ -112,15 +106,15 @@ Source: https://developers.cloudflare.com/workers/configuration/versions-and-dep
+ This change should land through the existing branch and PR #1. It should not
+ trigger a production deploy by itself.
+ 
+-Abort or hold merge if any of the following occur:
++Abort or hold production promotion if any of the following occur:
+ 
+ - Fresh PR checks after this node's final pushed commit fail.
+ - Strict repo contract validation returns warnings or errors.
++- `git diff --check origin/main...HEAD` regresses.
++- Fresh `npm run build:cf-worker --workspace @sales/web` cannot produce a web
++  worker bundle for a release candidate.
+ - Cloudflare smoke remains blocked for a runtime-impacting release without an
+   approved substitute.
+-- A reviewer finds that the metadata-only diff accidentally changes runtime,
+-  deployment workflow, dependency, migration, billing, auth, tenancy, webhook,
+-  approval-gate, or shared-contract behavior.
+ 
+ ## Rollback
+ 
+@@ -129,14 +123,14 @@ the previous versions of:
+ 
+ - `agile_work_item.json`
+ - `.jarvis/agile_work_item.json`
+-- `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.json`
+-- `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`
+ - `.jarvis/daily_observation.json`
+ - `.jarvis/learning_memo_promotion.json`
+ - `.jarvis/pr_evidence_manifest.json`
+ - `.jarvis/production_grade_profile.json`
+ - `.codex/scripts/validate_repo_contracts.py`
++- `.gitattributes`
+ - `docs/platform/release-readiness-report.md`
++- `docs/reliability/production-readiness-review.md`
+ 
+ No Cloudflare worker rollback is required for this change by itself. If bundled
+ with runtime service changes, redeploy the last known-good Cloudflare worker
+@@ -148,7 +142,7 @@ versions for `web`, `api`, and `workflows`, then rerun
+ - Fresh remote PR checks must be observed after push.
+ - Cloudflare smoke did not execute because required environment values are not
+   available in this session.
++- Fresh OpenNext web worker bundle creation remains blocked by local transient
++  Next.js artifact failures.
+ - Actual last known-good Worker rollback target IDs are unconfirmed without
+   Cloudflare provider access.
+-- Dependency vulnerability remediation is out of scope; this node did not
+-  change package manifests or lockfiles.
+diff --git a/docs/reliability/production-readiness-review.md b/docs/reliability/production-readiness-review.md
+index ba898fa..b3f9919 100644
+--- a/docs/reliability/production-readiness-review.md
++++ b/docs/reliability/production-readiness-review.md
+@@ -229,3 +229,60 @@ This is an external GitHub account billing or spending-limit blocker, not an obs
+ ### Rollback and release note
+ 
+ This retry addendum is documentation-only. Roll back by reverting the report commit or closing/reverting the PR. No Cloudflare service rollback or service restart is required for this addendum. Production promotion remains blocked until GitHub Actions can run, Cloudflare smoke has readable environment configuration, and a release owner records actual last known-good Worker rollback targets for affected services.
++
++## Release Readiness Addendum: 2026-05-29 Mission Node node-ea000054910e
++
++### Scope
++
++- Change type: metadata, repo contract validation, Git attribute policy, and release-readiness documentation only.
++- Runtime behavior changed: no.
++- Production dependencies changed: no.
++- Migrations changed: no.
++- Workflow triggers or deploy behavior changed: no.
++- Protected runtime surfaces touched: none.
++
++### Finding
++
++The branch-level whitespace gate was failing only on preserved archived patch
++evidence in `.jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch`.
++The production-ready fix is to preserve the archived patch and explicitly
++classify `.jarvis/dirty_worktree_quarantine_*.patch` as evidence that disables
++Git whitespace scanning via `.gitattributes`, with validator coverage in
++`.codex/scripts/validate_repo_contracts.py`.
++
++### Fresh verification evidence
++
++- `node -e "const fs=require('fs'); for (const p of ['agile_work_item.json','.jarvis/agile_work_item.json','.jarvis/pr_evidence_manifest.json','.jarvis/daily_observation.json','.jarvis/learning_memo_promotion.json','.jarvis/production_grade_profile.json']) JSON.parse(fs.readFileSync(p,'utf8')); console.log('json parse ok')"` passed.
++- `cmp -s agile_work_item.json .jarvis/agile_work_item.json && echo agile mirror ok` passed.
++- `python3 -m py_compile .codex/scripts/validate_repo_contracts.py` passed.
++- `git check-attr whitespace -- .jarvis/dirty_worktree_quarantine_2026-05-28_node-14a456b29140.patch` returned `whitespace: unset`.
++- `git diff --check origin/main...HEAD` passed.
++- `git diff --check` passed.
++- `npm run repo:contracts -- --strict` passed with `363 pass, 0 warn, 0 error`.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run typecheck'` passed under Node `v22.22.3` and npm `11.10.1`.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run test'` passed: root 24 tests, API 63 tests, web 19 tests, database 1 test, and shared 2 tests.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build'` passed after the existing retry wrapper recovered from transient Next.js missing-artifact errors.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run verify:core'` passed; its build substep recovered after one transient Next.js missing-manifest retry.
++- `npx -y -p node@22 -p npm@11.10.1 -c 'node -v && npm -v && npm run build:cf-worker --workspace @sales/web'` failed twice because OpenNext/Next.js repeatedly missed transient `.next` artifacts during fresh worker bundle creation.
++- Wrangler dry-runs passed for `web`, `api`, and `workflows` with Wrangler `4.87.0`; the web dry-run should not be treated as fresh bundle evidence while `build:cf-worker` remains blocked.
++- `npm run smoke:cloudflare` was blocked with `WEB_APP_URL is required`.
++- `/etc/cynik/apps/sales-saas.env` was not readable, and `WEB_APP_URL`, `API_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_URL`, `WORKFLOWS_HEALTHCHECK_TOKEN`, and `CLOUDFLARE_API_TOKEN` were unset.
++
++### Release recommendation
++
++This diff is PR-ready as metadata/process hardening once the final branch diff
++and repo contracts remain green. It is not production-promotion-ready as a
++service release until fresh PR checks complete, Cloudflare smoke can run, fresh
++OpenNext web worker bundle creation passes, and rollback targets are confirmed
++for any affected runtime service.
++
++### Rollback note
++
++For this metadata-only addendum, revert the PR or restore the previous versions
++of `.gitattributes`, `.codex/scripts/validate_repo_contracts.py`, the `.jarvis`
++evidence manifests, `agile_work_item.json`, `.jarvis/agile_work_item.json`,
++`docs/platform/release-readiness-report.md`, and this report section. No
++Cloudflare service rollback is required for this diff by itself. If this diff
++ships together with runtime service changes, redeploy the last known-good
++Cloudflare worker versions for web, api, and workflows, then rerun
++`npm run smoke:cloudflare`.

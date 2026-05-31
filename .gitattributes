@@ -1,0 +1,4 @@
+# Archived quarantine patch bundles preserve exact captured diffs.
+# Disable whitespace scanning so branch checks do not require mutating evidence.
+.jarvis/dirty_worktree_quarantine_*.patch -whitespace
+.codex/reports/dirty-worktree-quarantine/*/*.patch -whitespace

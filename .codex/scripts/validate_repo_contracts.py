@@ -28,6 +28,12 @@ PR_EVIDENCE_MANIFEST_PATH = ".jarvis/pr_evidence_manifest.json"
 PR_TEMPLATE_PATH = ".github/PULL_REQUEST_TEMPLATE.md"
 PACKAGE_JSON_PATH = "package.json"
 REPO_OS_WORKFLOW_PATH = ".github/workflows/repo-operating-system.yml"
+GIT_ATTRIBUTES_PATH = ".gitattributes"
+ARCHIVED_PATCH_ATTRIBUTE_TOKEN = "-whitespace"
+ARCHIVED_PATCH_ATTRIBUTE_RULES = [
+    ".jarvis/dirty_worktree_quarantine_*.patch",
+    ".codex/reports/dirty-worktree-quarantine/*/*.patch",
+]
 
 PROFILE_REQUIRED_SECTIONS = [
     "ownership",
@@ -1247,6 +1253,53 @@ def check_repo_os_workflow(root: Path, findings: list[Finding]) -> None:
         )
 
 
+def check_gitattributes(root: Path, findings: list[Finding]) -> None:
+    relpath = GIT_ATTRIBUTES_PATH
+    path = root / relpath
+    if not path.exists():
+        findings.append(
+            Finding(
+                "warn",
+                "gitattributes.missing",
+                relpath,
+                "Git attributes should document archived patch evidence whitespace handling.",
+            )
+        )
+        return
+
+    rules_found = set()
+    for line in read_text(path).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        tokens = stripped.split()
+        if tokens and tokens[0] in ARCHIVED_PATCH_ATTRIBUTE_RULES and ARCHIVED_PATCH_ATTRIBUTE_TOKEN in tokens[1:]:
+            rules_found.add(tokens[0])
+
+    for pattern in ARCHIVED_PATCH_ATTRIBUTE_RULES:
+        if pattern in rules_found:
+            findings.append(
+                Finding(
+                    "pass",
+                    "gitattributes.archived_patch_whitespace",
+                    relpath,
+                    "Archived dirty-worktree patch evidence disables whitespace scanning.",
+                    f"{pattern} {ARCHIVED_PATCH_ATTRIBUTE_TOKEN}",
+                )
+            )
+            continue
+
+        findings.append(
+            Finding(
+                "warn",
+                "gitattributes.archived_patch_whitespace",
+                relpath,
+                "Archived dirty-worktree patch evidence should disable whitespace scanning.",
+                f"expected `{pattern} {ARCHIVED_PATCH_ATTRIBUTE_TOKEN}`",
+            )
+        )
+
+
 def build_payload(root: Path, findings: list[Finding]) -> dict[str, Any]:
     totals = {
         "pass": sum(1 for item in findings if item.level == "pass"),
@@ -1343,6 +1396,7 @@ def main() -> int:
     check_pr_template(root, findings)
     check_package_script(root, findings)
     check_repo_os_workflow(root, findings)
+    check_gitattributes(root, findings)
 
     payload = build_payload(root, findings)
     if args.format == "json":
