@@ -72,4 +72,5 @@ keep tests and docs in sync.
 
 ## License
 
-No license file is provided; all rights reserved by the author.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
