@@ -64,6 +64,97 @@
       "when": 1777890532634,
       "tag": "0008_nebulous_lord_tyger",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780369961684,
+      "tag": "0009_ancient_iron_monger",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780372318486,
+      "tag": "0010_old_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1780373929163,
+      "tag": "0011_steady_rumiko_fujikawa",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1780377421451,
+      "tag": "0012_quiet_stellaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1780424917799,
+      "tag": "0013_sturdy_eternity",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1780426146453,
+      "tag": "0014_absent_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1780427588748,
+      "tag": "0015_bright_the_hand",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1780550236781,
+      "tag": "0016_kind_midnight",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1780564954278,
+      "tag": "0017_military_sleeper",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1780575023104,
+      "tag": "0018_kind_inertia",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1780575631374,
+      "tag": "0019_strange_shiva",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1780576236478,
+      "tag": "0020_confused_brood",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1780731761688,
+      "tag": "0021_public_butterfly",
+      "breakpoints": true
     }
   ]
 }

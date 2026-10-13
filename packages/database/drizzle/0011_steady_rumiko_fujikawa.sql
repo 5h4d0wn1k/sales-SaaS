@@ -1,0 +1,1 @@
+ALTER TABLE "telegram_integrations" ADD COLUMN "last_update_id" integer;

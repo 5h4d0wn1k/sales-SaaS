@@ -257,6 +257,8 @@ export const meetings = pgTable("meetings", {
   owner: varchar("owner", { length: 120 }),
   notes: text("notes"),
   outcome: varchar("outcome", { length: 80 }),
+  dealValueCents: integer("deal_value_cents").notNull().default(0),
+  dealCurrency: varchar("deal_currency", { length: 3 }).notNull().default("USD"),
   ...timestamps,
 });
 
@@ -271,6 +273,215 @@ export const onboardingSessions = pgTable("onboarding_sessions", {
   outreachBrief: text("outreach_brief"),
   ...timestamps,
 });
+
+export const contactIntakeSubmissions = pgTable(
+  "contact_intake_submissions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    intent: varchar("intent", { length: 60 }).notNull().default("sales_assessment"),
+    status: varchar("status", { length: 40 }).notNull().default("new"),
+    priority: varchar("priority", { length: 20 }).notNull().default("medium"),
+    qualificationScore: integer("qualification_score").notNull().default(0),
+    routingRecommendation: text("routing_recommendation").notNull(),
+    name: varchar("name", { length: 160 }).notNull(),
+    email: varchar("email", { length: 255 }).notNull(),
+    companyName: varchar("company_name", { length: 160 }).notNull(),
+    website: varchar("website", { length: 255 }).notNull().default(""),
+    role: varchar("role", { length: 120 }).notNull().default(""),
+    teamSize: varchar("team_size", { length: 80 }).notNull().default(""),
+    monthlyLeadGoal: integer("monthly_lead_goal").notNull().default(0),
+    budgetRange: varchar("budget_range", { length: 40 }).notNull().default("not_sure"),
+    timeline: varchar("timeline", { length: 40 }).notNull().default("exploring"),
+    goals: jsonb("goals").notNull().default([]),
+    channels: jsonb("channels").notNull().default([]),
+    message: text("message").notNull(),
+    sourcePath: varchar("source_path", { length: 255 }).notNull().default("/contact"),
+    referrer: text("referrer").notNull().default(""),
+    utm: jsonb("utm").notNull().default({}),
+    metadata: jsonb("metadata").notNull().default({}),
+    ...timestamps,
+  },
+  (submission) => ({
+    statusPriorityIdx: index("contact_intake_status_priority_idx").on(
+      submission.status,
+      submission.priority,
+    ),
+    emailIdx: index("contact_intake_email_idx").on(submission.email),
+    createdAtIdx: index("contact_intake_created_at_idx").on(submission.createdAt),
+  }),
+);
+
+export const salesBlueprints = pgTable(
+  "sales_blueprints",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+    status: varchar("status", { length: 40 }).notNull().default("draft"),
+    businessProfile: jsonb("business_profile").notNull().default({}),
+    icpSummary: text("icp_summary").notNull().default(""),
+    buyerRoles: jsonb("buyer_roles").notNull().default([]),
+    painPoints: jsonb("pain_points").notNull().default([]),
+    disqualifiers: jsonb("disqualifiers").notNull().default([]),
+    qualificationRules: jsonb("qualification_rules").notNull().default([]),
+    sourceChannels: jsonb("source_channels").notNull().default([]),
+    outreachChannels: jsonb("outreach_channels").notNull().default([]),
+    searchKeywords: jsonb("search_keywords").notNull().default([]),
+    monthlyLeadTarget: integer("monthly_lead_target").notNull().default(100),
+    meetingTarget: integer("meeting_target").notNull().default(10),
+    averageContractValue: integer("average_contract_value").notNull().default(0),
+    automationMode: varchar("automation_mode", { length: 40 }).notNull().default("approval_gated"),
+    approvalRequiredFor: jsonb("approval_required_for").notNull().default([
+      "first outreach",
+      "phone calls",
+      "new channels",
+    ]),
+    complianceNotes: text("compliance_notes").notNull().default(""),
+    readinessScore: integer("readiness_score").notNull().default(0),
+    readinessGaps: jsonb("readiness_gaps").notNull().default([]),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    ...timestamps,
+  },
+  (blueprint) => ({
+    workspaceUnique: uniqueIndex("sales_blueprints_workspace_unique").on(
+      blueprint.workspaceId,
+    ),
+    workspaceStatusIdx: index("sales_blueprints_workspace_status_idx").on(
+      blueprint.workspaceId,
+      blueprint.status,
+    ),
+  }),
+);
+
+export const actionProposals = pgTable(
+  "action_proposals",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+    type: varchar("type", { length: 80 }).notNull(),
+    status: varchar("status", { length: 40 }).notNull().default("pending"),
+    riskLevel: varchar("risk_level", { length: 40 }).notNull().default("medium"),
+    title: varchar("title", { length: 180 }).notNull(),
+    detail: text("detail").notNull(),
+    proposedBy: varchar("proposed_by", { length: 40 }).notNull().default("system"),
+    targetKind: varchar("target_kind", { length: 80 }).notNull(),
+    targetId: varchar("target_id", { length: 160 }),
+    targetLabel: varchar("target_label", { length: 180 }).notNull(),
+    payloadSummary: text("payload_summary").notNull(),
+    payload: jsonb("payload").notNull().default({}),
+    guardrails: jsonb("guardrails").notNull().default([]),
+    expectedEffect: text("expected_effect").notNull(),
+    rollbackPlan: text("rollback_plan").notNull(),
+    requiredRole: roleEnum("required_role").notNull().default("admin"),
+    requestedBy: varchar("requested_by", { length: 160 }),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedByName: varchar("reviewed_by_name", { length: 160 }),
+    reviewNote: text("review_note"),
+    auditEventId: uuid("audit_event_id"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "date" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
+    ...timestamps,
+  },
+  (proposal) => ({
+    workspaceStatusIdx: index("action_proposals_workspace_status_idx").on(
+      proposal.workspaceId,
+      proposal.status,
+    ),
+    workspaceRiskIdx: index("action_proposals_workspace_risk_idx").on(
+      proposal.workspaceId,
+      proposal.riskLevel,
+    ),
+    targetIdx: index("action_proposals_target_idx").on(
+      proposal.workspaceId,
+      proposal.targetKind,
+      proposal.targetId,
+    ),
+  }),
+);
+
+export const aiWorkers = pgTable(
+  "ai_workers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+    name: varchar("name", { length: 160 }).notNull(),
+    role: varchar("role", { length: 120 }).notNull(),
+    status: varchar("status", { length: 40 }).notNull().default("active"),
+    riskLevel: varchar("risk_level", { length: 40 }).notNull().default("medium"),
+    ownerRole: roleEnum("owner_role").notNull().default("admin"),
+    description: text("description").notNull(),
+    permissions: jsonb("permissions").notNull().default([]),
+    allowedTools: jsonb("allowed_tools").notNull().default([]),
+    blockedTools: jsonb("blocked_tools").notNull().default([]),
+    monthlyBudgetCents: integer("monthly_budget_cents").notNull().default(0),
+    budgetUsedCents: integer("budget_used_cents").notNull().default(0),
+    lastActionAt: timestamp("last_action_at", { withTimezone: true, mode: "date" }),
+    guardrails: jsonb("guardrails").notNull().default([]),
+    ...timestamps,
+  },
+  (worker) => ({
+    workspaceStatusIdx: index("ai_workers_workspace_status_idx").on(
+      worker.workspaceId,
+      worker.status,
+    ),
+    workspaceRiskIdx: index("ai_workers_workspace_risk_idx").on(
+      worker.workspaceId,
+      worker.riskLevel,
+    ),
+  }),
+);
+
+export const aiWorkerRuns = pgTable(
+  "ai_worker_runs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+    workerId: uuid("worker_id").notNull().references(() => aiWorkers.id, {
+      onDelete: "cascade",
+    }),
+    status: varchar("status", { length: 40 }).notNull().default("proposed"),
+    title: varchar("title", { length: 180 }).notNull(),
+    detail: text("detail").notNull(),
+    riskLevel: varchar("risk_level", { length: 40 }).notNull().default("medium"),
+    proposedAction: text("proposed_action").notNull(),
+    expectedCostCents: integer("expected_cost_cents").notNull().default(0),
+    actualCostCents: integer("actual_cost_cents").notNull().default(0),
+    approvalProposalId: uuid("approval_proposal_id").references(() => actionProposals.id, {
+      onDelete: "set null",
+    }),
+    resultSummary: text("result_summary"),
+    blockedReason: text("blocked_reason"),
+    completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
+    ...timestamps,
+  },
+  (run) => ({
+    workspaceStatusIdx: index("ai_worker_runs_workspace_status_idx").on(
+      run.workspaceId,
+      run.status,
+    ),
+    workerStatusIdx: index("ai_worker_runs_worker_status_idx").on(
+      run.workerId,
+      run.status,
+    ),
+    approvalProposalIdx: index("ai_worker_runs_approval_proposal_idx").on(
+      run.approvalProposalId,
+    ),
+  }),
+);
 
 export const sourcePlans = pgTable("source_plans", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -288,9 +499,17 @@ export const sourceRuns = pgTable("source_runs", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
   source: varchar("source", { length: 80 }).notNull(),
   status: sourceStatusEnum("status").notNull().default("planned"),
+  providerMode: varchar("provider_mode", { length: 40 }).notNull().default("mock"),
   candidatesFound: integer("candidates_found").notNull().default(0),
+  dedupedCount: integer("deduped_count").notNull().default(0),
   qualifiedCount: integer("qualified_count").notNull().default(0),
   rejectedCount: integer("rejected_count").notNull().default(0),
+  qualityScore: integer("quality_score").notNull().default(0),
+  evidence: jsonb("evidence").notNull().default([]),
+  rejectionReasons: jsonb("rejection_reasons").notNull().default([]),
+  complianceChecks: jsonb("compliance_checks").notNull().default([]),
+  freshness: varchar("freshness", { length: 160 }).notNull().default("Not recorded"),
+  nextAction: varchar("next_action", { length: 180 }).notNull().default("Review source evidence before outreach."),
   summary: text("summary").notNull(),
   ...timestamps,
 });
@@ -313,6 +532,134 @@ export const outreachActivities = pgTable(
   (activity) => ({
     providerMessageIdUnique: uniqueIndex("outreach_activities_provider_message_id_unique").on(
       activity.providerMessageId,
+    ),
+  }),
+);
+
+export const contactSuppressions = pgTable(
+  "contact_suppressions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+    channel: varchar("channel", { length: 40 }).notNull(),
+    contactValue: varchar("contact_value", { length: 255 }).notNull(),
+    normalizedContactValue: varchar("normalized_contact_value", { length: 255 }).notNull(),
+    reason: varchar("reason", { length: 80 }).notNull().default("manual"),
+    source: varchar("source", { length: 120 }).notNull().default("manual"),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
+    ...timestamps,
+  },
+  (suppression) => ({
+    workspaceChannelContactUnique: uniqueIndex(
+      "contact_suppressions_workspace_channel_contact_unique",
+    ).on(
+      suppression.workspaceId,
+      suppression.channel,
+      suppression.normalizedContactValue,
+    ),
+    workspaceChannelIdx: index("contact_suppressions_workspace_channel_idx").on(
+      suppression.workspaceId,
+      suppression.channel,
+    ),
+  }),
+);
+
+export const telegramIntegrations = pgTable(
+  "telegram_integrations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+    botUsername: varchar("bot_username", { length: 120 }),
+    chatIdHash: varchar("chat_id_hash", { length: 128 }).notNull(),
+    chatIdMask: varchar("chat_id_mask", { length: 80 }).notNull(),
+    status: varchar("status", { length: 40 }).notNull().default("pending_verification"),
+    allowedCommands: jsonb("allowed_commands")
+      .$type<string[]>()
+      .notNull()
+      .default([
+        "status",
+        "brief",
+        "approvals",
+        "providers",
+        "suppressions",
+        "sequence",
+        "forecast",
+        "help",
+        "pause",
+      ]),
+    lastUpdateId: integer("last_update_id"),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true, mode: "date" }),
+    ...timestamps,
+  },
+  (integration) => ({
+    workspaceUnique: uniqueIndex("telegram_integrations_workspace_unique").on(
+      integration.workspaceId,
+    ),
+    chatIdHashUnique: uniqueIndex("telegram_integrations_chat_id_hash_unique").on(
+      integration.chatIdHash,
+    ),
+    chatIdHashIdx: index("telegram_integrations_chat_id_hash_idx").on(
+      integration.chatIdHash,
+    ),
+    workspaceStatusIdx: index("telegram_integrations_workspace_status_idx").on(
+      integration.workspaceId,
+      integration.status,
+    ),
+  }),
+);
+
+export const telegramNotificationDeliveries = pgTable(
+  "telegram_notification_deliveries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+    integrationId: uuid("integration_id").references(() => telegramIntegrations.id, {
+      onDelete: "set null",
+    }),
+    actorId: uuid("actor_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    notificationType: varchar("notification_type", { length: 80 }).notNull(),
+    mode: varchar("mode", { length: 40 }).notNull().default("claimed"),
+    provider: varchar("provider", { length: 40 }).notNull().default("telegram"),
+    chatIdMask: varchar("chat_id_mask", { length: 80 }),
+    dryRun: boolean("dry_run").notNull().default(false),
+    targetChatConfigured: boolean("target_chat_configured").notNull().default(false),
+    targetChatMatchesWorkspace: boolean("target_chat_matches_workspace").notNull().default(false),
+    rateLimitLimit: integer("rate_limit_limit").notNull(),
+    rateLimitWindowSeconds: integer("rate_limit_window_seconds").notNull().default(3600),
+    messagePreview: text("message_preview"),
+    detail: text("detail"),
+    metadata: jsonb("metadata").notNull().default({}),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true, mode: "date" }),
+    ...timestamps,
+  },
+  (delivery) => ({
+    workspaceCreatedAtIdx: index("telegram_notification_deliveries_workspace_created_at_idx").on(
+      delivery.workspaceId,
+      delivery.createdAt,
+    ),
+    workspaceTypeCreatedAtIdx: index("telegram_notification_deliveries_workspace_type_created_at_idx").on(
+      delivery.workspaceId,
+      delivery.notificationType,
+      delivery.createdAt,
+    ),
+    workspaceModeCreatedAtIdx: index("telegram_notification_deliveries_workspace_mode_created_at_idx").on(
+      delivery.workspaceId,
+      delivery.mode,
+      delivery.createdAt,
     ),
   }),
 );

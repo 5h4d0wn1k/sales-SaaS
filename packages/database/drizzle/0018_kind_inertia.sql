@@ -1,0 +1,1 @@
+ALTER TABLE "telegram_integrations" ALTER COLUMN "allowed_commands" SET DEFAULT '["status","approvals","providers","suppressions","sequence","help","pause"]'::jsonb;
