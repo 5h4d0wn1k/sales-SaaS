@@ -1,0 +1,100 @@
+name: Production Readiness Monitor
+
+"on":
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-readiness-monitor
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Probe production readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      WEB_APP_URL: ${{ vars.PRODUCTION_WEB_APP_URL || vars.WEB_APP_URL }}
+      WEB_HEALTHCHECK_URL: ${{ vars.PRODUCTION_WEB_HEALTHCHECK_URL || vars.WEB_HEALTHCHECK_URL }}
+      WEB_READINESSCHECK_URL: ${{ vars.PRODUCTION_WEB_READINESSCHECK_URL || vars.WEB_READINESSCHECK_URL }}
+      API_HEALTHCHECK_URL: ${{ vars.PRODUCTION_API_HEALTHCHECK_URL || vars.API_HEALTHCHECK_URL }}
+      API_READINESSCHECK_URL: ${{ vars.PRODUCTION_API_READINESSCHECK_URL || vars.API_READINESSCHECK_URL }}
+      WORKFLOWS_HEALTHCHECK_URL: ${{ vars.PRODUCTION_WORKFLOWS_HEALTHCHECK_URL || vars.WORKFLOWS_HEALTHCHECK_URL }}
+      WORKFLOWS_HEALTHCHECK_TOKEN: ${{ secrets.PRODUCTION_WORKFLOWS_HEALTHCHECK_TOKEN || secrets.WORKFLOWS_HEALTHCHECK_TOKEN }}
+      READINESS_ALERT_WEBHOOK_URL: ${{ secrets.PRODUCTION_READINESS_ALERT_WEBHOOK_URL || secrets.READINESS_ALERT_WEBHOOK_URL }}
+      READINESS_ALERT_WEBHOOK_FORMAT: ${{ vars.PRODUCTION_READINESS_ALERT_WEBHOOK_FORMAT || vars.READINESS_ALERT_WEBHOOK_FORMAT || 'slack' }}
+      READINESS_ALLOW_WARNINGS: ${{ vars.PRODUCTION_READINESS_ALLOW_WARNINGS || vars.READINESS_ALLOW_WARNINGS || 'false' }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate monitor variables
+        run: |
+          test -n "$WEB_APP_URL"
+          test -n "$API_HEALTHCHECK_URL"
+      - name: Run production smoke checks
+        run: bash scripts/cloudflare-smoke.sh
+      - name: Send failure alert webhook
+        if: failure()
+        run: |
+          if [[ -z "${READINESS_ALERT_WEBHOOK_URL:-}" ]]; then
+            echo "No readiness alert webhook configured; relying on GitHub scheduled-run failure notification."
+            exit 0
+          fi
+
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          export RUN_URL="$run_url"
+          python3 - <<'PY'
+          import json
+          import os
+
+          webhook_format = os.environ.get("READINESS_ALERT_WEBHOOK_FORMAT", "slack").strip().lower()
+          text = (
+              "Production readiness monitor failed for "
+              f"{os.environ.get('GITHUB_REPOSITORY', 'unknown repository')}.\n"
+              f"Run: {os.environ.get('RUN_URL', 'unavailable')}\n"
+              f"Web: {os.environ.get('WEB_APP_URL', 'missing')}\n"
+              f"API health: {os.environ.get('API_HEALTHCHECK_URL', 'missing')}"
+          )
+
+          if webhook_format == "discord":
+              payload = {"content": text}
+          elif webhook_format == "generic":
+              payload = {
+                  "status": "failed",
+                  "service": "sales-aaas",
+                  "check": "production-readiness-monitor",
+                  "text": text,
+                  "runUrl": os.environ.get("RUN_URL", ""),
+                  "webUrl": os.environ.get("WEB_APP_URL", ""),
+                  "apiHealthUrl": os.environ.get("API_HEALTHCHECK_URL", ""),
+              }
+          else:
+              payload = {"text": text}
+
+          with open("readiness-alert-payload.json", "w", encoding="utf-8") as payload_file:
+              json.dump(payload, payload_file)
+          PY
+
+          curl -fsS \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data-binary @readiness-alert-payload.json \
+            "$READINESS_ALERT_WEBHOOK_URL"
+      - name: Write monitor summary
+        if: always()
+        run: |
+          {
+            echo "## Production readiness monitor"
+            echo
+            echo "- Web: ${WEB_APP_URL:-missing}"
+            echo "- API health: ${API_HEALTHCHECK_URL:-missing}"
+            echo "- API readiness: ${API_READINESSCHECK_URL:-derived from health URL}"
+            echo "- Workflow health: ${WORKFLOWS_HEALTHCHECK_URL:-not configured}"
+            echo "- Alert webhook: $([[ -n "${READINESS_ALERT_WEBHOOK_URL:-}" ]] && echo "configured" || echo "not configured")"
+            echo "- Readiness warnings allowed: ${READINESS_ALLOW_WARNINGS:-false}"
+            echo
+            echo "A failed scheduled run is a production readiness alert for the owner. Configure the optional webhook secret to route failures into chat or incident tooling. Readiness warnings fail by default unless READINESS_ALLOW_WARNINGS is explicitly set for an accepted rollout exception."
+          } >> "$GITHUB_STEP_SUMMARY"

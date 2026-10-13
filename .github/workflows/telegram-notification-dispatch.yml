@@ -1,0 +1,81 @@
+name: Telegram Notification Dispatch
+
+"on":
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-notification-dispatch
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    name: Dispatch scheduled Telegram summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_NOTIFICATION_DISPATCH_ENABLED: ${{ vars.PRODUCTION_TELEGRAM_NOTIFICATION_DISPATCH_ENABLED || vars.TELEGRAM_NOTIFICATION_DISPATCH_ENABLED || 'false' }}
+      API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL || vars.API_BASE_URL }}
+      TELEGRAM_NOTIFICATION_TYPE: ${{ vars.PRODUCTION_TELEGRAM_NOTIFICATION_TYPE || vars.TELEGRAM_NOTIFICATION_TYPE || 'operator_brief' }}
+      TELEGRAM_NOTIFICATION_DRY_RUN: ${{ vars.PRODUCTION_TELEGRAM_NOTIFICATION_DRY_RUN || vars.TELEGRAM_NOTIFICATION_DRY_RUN || 'false' }}
+      TELEGRAM_NOTIFICATION_SCHEDULER_SECRET: ${{ secrets.PRODUCTION_TELEGRAM_NOTIFICATION_SCHEDULER_SECRET || secrets.TELEGRAM_NOTIFICATION_SCHEDULER_SECRET }}
+    steps:
+      - name: Check dispatch configuration
+        id: config
+        run: |
+          if [[ "${TELEGRAM_NOTIFICATION_DISPATCH_ENABLED}" != "true" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Scheduled Telegram notification dispatch is disabled." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          test -n "${API_BASE_URL}"
+          test -n "${TELEGRAM_NOTIFICATION_SCHEDULER_SECRET}"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+      - name: Call scheduled dispatch endpoint
+        if: steps.config.outputs.enabled == 'true'
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          payload = {
+              "notificationType": os.environ.get("TELEGRAM_NOTIFICATION_TYPE", "operator_brief"),
+              "dryRun": os.environ.get("TELEGRAM_NOTIFICATION_DRY_RUN", "false").lower() == "true",
+          }
+
+          with open("telegram-notification-dispatch.json", "w", encoding="utf-8") as payload_file:
+              json.dump(payload, payload_file)
+          PY
+
+          api_base="${API_BASE_URL%/}"
+          curl -fsS \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Telegram-Notification-Scheduler-Secret: ${TELEGRAM_NOTIFICATION_SCHEDULER_SECRET}" \
+            --data-binary @telegram-notification-dispatch.json \
+            "${api_base}/v1/command-center/telegram-notifications/scheduled-dispatch" \
+            | tee telegram-notification-dispatch-response.json
+      - name: Write dispatch summary
+        if: always()
+        run: |
+          {
+            echo "## Telegram notification dispatch"
+            echo
+            echo "- Enabled: ${TELEGRAM_NOTIFICATION_DISPATCH_ENABLED}"
+            echo "- API base URL: ${API_BASE_URL:-missing}"
+            echo "- Notification type: ${TELEGRAM_NOTIFICATION_TYPE}"
+            echo "- Dry run: ${TELEGRAM_NOTIFICATION_DRY_RUN}"
+            echo "- Scheduler secret: $([[ -n "${TELEGRAM_NOTIFICATION_SCHEDULER_SECRET:-}" ]] && echo "configured" || echo "missing")"
+            if [[ -f telegram-notification-dispatch-response.json ]]; then
+              echo
+              echo '```json'
+              cat telegram-notification-dispatch-response.json
+              echo
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
