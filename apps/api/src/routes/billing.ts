@@ -4,19 +4,21 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { and, eq, gt, desc } from "drizzle-orm";
 import { db, subscriptions, payments, organizations, usageEvents } from "@sales/database";
-import { getPlanByKey } from "@sales/shared";
+import { getPlanByKey, getPlanIncludedChannels, getPlanProviderCostBudgetCents } from "@sales/shared";
 import { getStorage } from "../storage";
+import {
+    getAllowedFrontendOrigins,
+    isAllowedFrontendReturnUrl,
+} from "../frontend-origin";
 import {
     getStripeProviderPaymentId,
     insertPaymentIfMissing,
 } from "./billing-payment-records";
-
-// Initialize providers
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy");
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_dummy",
-    key_secret: process.env.RAZORPAY_KEY_SECRET || "dummy",
-});
+import {
+    invalidJsonPayloadResponse,
+    isJsonParseError,
+    isJsonPayloadRequest,
+} from "../middleware/error-boundary";
 
 interface BillingVars {
   user: {
@@ -79,7 +81,7 @@ function requireProviderConfig(c: any, provider: "stripe" | "razorpay", envNames
         return null;
     }
 
-    const missing = envNames.filter((name) => !process.env[name]);
+    const missing = envNames.filter((name) => !configuredEnvValue(name));
 
     if (missing.length === 0) {
         return null;
@@ -89,42 +91,53 @@ function requireProviderConfig(c: any, provider: "stripe" | "razorpay", envNames
     return c.json({ error: `${provider} billing is not configured` }, 503);
 }
 
-function getAllowedFrontendOrigins() {
-    const origins = new Set<string>();
-
-    if (process.env.FRONTEND_URL) {
-        origins.add(process.env.FRONTEND_URL);
-    }
-
-    if (process.env.NODE_ENV !== "production") {
-        origins.add("http://localhost:3000");
-        origins.add("http://localhost:3001");
-        origins.add("http://127.0.0.1:3000");
-    }
-
-    return origins;
+function configuredEnvValue(name: string) {
+    const value = process.env[name]?.trim();
+    return value ? value : null;
 }
 
-function isAllowedReturnUrl(candidate: string, allowedOrigins: Set<string>) {
-    try {
-        const url = new URL(candidate);
-        return allowedOrigins.has(url.origin);
-    } catch {
-        return false;
+function createStripeClient() {
+    const secretKey = configuredEnvValue("STRIPE_SECRET_KEY");
+    if (!secretKey) {
+        throw new Error("STRIPE_SECRET_KEY is required before using Stripe billing.");
     }
+
+    return new Stripe(secretKey);
+}
+
+function createRazorpayClient() {
+    const keyId = configuredEnvValue("RAZORPAY_KEY_ID");
+    const keySecret = configuredEnvValue("RAZORPAY_KEY_SECRET");
+    if (!keyId || !keySecret) {
+        throw new Error("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required before using Razorpay billing.");
+    }
+
+    return new Razorpay({
+        key_id: keyId,
+        key_secret: keySecret,
+    });
 }
 
 function validateCheckoutReturnUrls(c: any, successUrl: string, cancelUrl: string) {
     const allowedOrigins = getAllowedFrontendOrigins();
 
     if (
-        !isAllowedReturnUrl(successUrl, allowedOrigins) ||
-        !isAllowedReturnUrl(cancelUrl, allowedOrigins)
+        !isAllowedFrontendReturnUrl(successUrl, allowedOrigins) ||
+        !isAllowedFrontendReturnUrl(cancelUrl, allowedOrigins)
     ) {
         return c.json({ error: "Checkout return URLs must use an allowed frontend origin" }, 400);
     }
 
     return null;
+}
+
+function billingFailureResponse(c: any, logLabel: string, publicMessage: string, error: unknown) {
+    if (isJsonParseError(error) && isJsonPayloadRequest(c)) {
+        return invalidJsonPayloadResponse(c, "Invalid billing JSON payload.");
+    }
+
+    console.error(logLabel, error);
+    return c.json({ error: publicMessage }, 500);
 }
 
 function buildScheduledCancellationState() {
@@ -209,13 +222,23 @@ billingRoutes.get("/portal", async (c) => {
                 name: org.name,
                 slug: org.slug,
             },
-            subscription,
+            subscription: subscription
+                ? {
+                    ...subscription,
+                    providerCostBudgetCents: getPlanProviderCostBudgetCents(subscription.planKey),
+                    includedChannels: getPlanIncludedChannels(subscription.planKey),
+                }
+                : null,
             paymentHistory,
             usage,
         });
     } catch (error: any) {
-        console.error("Billing portal error:", error);
-        return c.json({ error: error.message }, 500);
+        return billingFailureResponse(
+            c,
+            "Billing portal error:",
+            "Billing portal is temporarily unavailable.",
+            error,
+        );
     }
 });
 
@@ -246,6 +269,7 @@ billingRoutes.post("/checkout/stripe", async (c) => {
         if (!organizationId) {
             return c.json({ error: "No organization associated with user" }, 404);
         }
+        const stripe = createStripeClient();
 
         // Get or create Stripe customer
         let [orgRecord] = await db
@@ -293,8 +317,12 @@ billingRoutes.post("/checkout/stripe", async (c) => {
 
         return c.json({ url: session.url });
     } catch (error: any) {
-        console.error("Stripe checkout error:", error);
-        return c.json({ error: error.message }, 500);
+        return billingFailureResponse(
+            c,
+            "Stripe checkout error:",
+            "Stripe checkout is temporarily unavailable.",
+            error,
+        );
     }
 });
 
@@ -326,6 +354,7 @@ billingRoutes.post("/checkout/razorpay", async (c) => {
         if (!organizationId) {
             return c.json({ error: "No organization associated with user" }, 404);
         }
+        const razorpay = createRazorpayClient();
 
         // Get or create Razorpay customer
         let [orgRecord] = await db
@@ -373,8 +402,12 @@ billingRoutes.post("/checkout/razorpay", async (c) => {
             description: plan.name,
         });
     } catch (error: any) {
-        console.error("Razorpay checkout error:", error);
-        return c.json({ error: error.message }, 500);
+        return billingFailureResponse(
+            c,
+            "Razorpay checkout error:",
+            "Razorpay checkout is temporarily unavailable.",
+            error,
+        );
     }
 });
 
@@ -389,7 +422,14 @@ billingRoutes.post("/webhook/stripe", async (c) => {
         console.error("STRIPE_WEBHOOK_SECRET not set");
         return c.json({ error: "Webhook secret not configured" }, 500);
     }
+    const configError = requireProviderConfig(c, "stripe", [
+        "STRIPE_SECRET_KEY",
+    ]);
+    if (configError) {
+        return configError;
+    }
 
+    const stripe = createStripeClient();
     let event: any;
     try {
         event = stripe.webhooks.constructEvent(rawBody, sig, secret);
@@ -456,20 +496,16 @@ billingRoutes.post("/webhook/stripe", async (c) => {
                 // Record initial payment if payment_intent present
                 if (session.payment_intent) {
                     try {
-                        if (process.env.STRIPE_SECRET_KEY || process.env.NODE_ENV === "test") {
-                            const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
-                            await insertPaymentIfMissing(db, {
-                                organizationId,
-                                amount: paymentIntent.amount,
-                                currency: paymentIntent.currency.toUpperCase(),
-                                status: paymentIntent.status,
-                                provider: "stripe",
-                                providerPaymentId: paymentIntent.id,
-                                receiptUrl: session.metadata?.receiptUrl || null,
-                            });
-                        } else {
-                            console.error("Skipping Stripe payment intent retrieval because STRIPE_SECRET_KEY is missing.");
-                        }
+                        const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+                        await insertPaymentIfMissing(db, {
+                            organizationId,
+                            amount: paymentIntent.amount,
+                            currency: paymentIntent.currency.toUpperCase(),
+                            status: paymentIntent.status,
+                            provider: "stripe",
+                            providerPaymentId: paymentIntent.id,
+                            receiptUrl: session.metadata?.receiptUrl || null,
+                        });
                     } catch (piErr) {
                         console.error("Failed to retrieve payment intent:", piErr);
                     }
@@ -795,6 +831,7 @@ billingRoutes.post("/cancel", async (c) => {
             if (configError) {
                 return configError;
             }
+            const stripe = createStripeClient();
             // Cancel at period end
             await stripe.subscriptions.update(sub.stripeSubscriptionId, {
                 cancel_at_period_end: true,
@@ -818,6 +855,7 @@ billingRoutes.post("/cancel", async (c) => {
             if (configError) {
                 return configError;
             }
+            const razorpay = createRazorpayClient();
             await razorpay.subscriptions.cancel(sub.razorpaySubscriptionId, true);
             await db
                 .update(subscriptions)
@@ -834,7 +872,11 @@ billingRoutes.post("/cancel", async (c) => {
             return c.json({ error: "No payment provider configured" }, 400);
         }
     } catch (error: any) {
-        console.error("Cancel subscription error:", error);
-        return c.json({ error: error.message }, 500);
+        return billingFailureResponse(
+            c,
+            "Cancel subscription error:",
+            "Billing cancellation is temporarily unavailable.",
+            error,
+        );
     }
 });

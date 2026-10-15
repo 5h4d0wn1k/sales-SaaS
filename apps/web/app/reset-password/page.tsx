@@ -1,4 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Reset Password",
+  description: "Choose a new password for your Winrate account.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type ResetPasswordPageProps = {
   searchParams?: Promise<{

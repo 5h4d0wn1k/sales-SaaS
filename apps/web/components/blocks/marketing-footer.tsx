@@ -6,12 +6,54 @@ export function MarketingFooter() {
     <footer className="py-10 border-t">
       <div className="mx-auto max-w-5xl px-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
-            <Zap className="w-3.5 h-3.5 text-white" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-700">
+            <Zap className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="text-sm font-bold tracking-tight">Winrate</span>
+          <span className="text-sm font-semibold tracking-normal">Winrate</span>
         </div>
         <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+          <Link href="/solutions" className="hover:text-foreground transition-colors">
+            Solutions
+          </Link>
+          <Link href="/ai-sales-automation-platform" className="hover:text-foreground transition-colors">
+            Platform
+          </Link>
+          <Link href="/ai-sdr-software" className="hover:text-foreground transition-colors">
+            AI SDR
+          </Link>
+          <Link href="/ai-lead-generation-software" className="hover:text-foreground transition-colors">
+            Lead Gen
+          </Link>
+          <Link href="/ai-outbound-sales-automation" className="hover:text-foreground transition-colors">
+            Outbound
+          </Link>
+          <Link href="/ai-sales-meeting-scheduler" className="hover:text-foreground transition-colors">
+            Meetings
+          </Link>
+          <Link href="/telegram-sales-command-center" className="hover:text-foreground transition-colors">
+            Telegram
+          </Link>
+          <Link href="/compare-sales-tools" className="hover:text-foreground transition-colors">
+            Compare
+          </Link>
+          <Link href="/integrations" className="hover:text-foreground transition-colors">
+            Integrations
+          </Link>
+          <Link href="/trust" className="hover:text-foreground transition-colors">
+            Trust
+          </Link>
+          <Link href="/resources" className="hover:text-foreground transition-colors">
+            Resources
+          </Link>
+          <Link href="/sales-blueprint" className="hover:text-foreground transition-colors">
+            Blueprint
+          </Link>
+          <Link href="/roi-calculator" className="hover:text-foreground transition-colors">
+            ROI
+          </Link>
+          <Link href="/managed-services" className="hover:text-foreground transition-colors">
+            Managed
+          </Link>
           <Link href="/pricing" className="hover:text-foreground transition-colors">
             Pricing
           </Link>

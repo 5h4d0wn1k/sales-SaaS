@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerApiBaseUrl } from "@/lib/server-api-auth";
+import { rejectCrossOriginMutation } from "@/lib/same-origin";
+import { createAccountLifecycleApiHeaders } from "../../proxy-headers";
 
 export async function POST(request: NextRequest) {
+  const crossOrigin = rejectCrossOriginMutation(request);
+  if (crossOrigin) return crossOrigin;
+
   const formData = await request.formData();
   const email =
     typeof formData.get("email") === "string" ? String(formData.get("email")).trim() : "";
@@ -15,9 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     await fetch(`${getServerApiBaseUrl()}/v1/auth/password-reset/request`, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
+      headers: createAccountLifecycleApiHeaders(request),
       body: JSON.stringify({ email }),
       cache: "no-store",
     });

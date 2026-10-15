@@ -51,7 +51,7 @@ async function loadProviderTargetHelpers(limitResults: unknown[][]) {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("@sales/database");
+  vi.doUnmock("@sales/database");
   vi.restoreAllMocks();
 });
 

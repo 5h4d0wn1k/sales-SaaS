@@ -43,9 +43,11 @@
 
 - Current state:
   - logs and test coverage exist
+  - scheduled readiness monitor exists when production URL variables are configured
+  - optional alert webhook exists when readiness webhook secrets are configured
   - production dashboards and paging are still incomplete
 - Required future dashboards:
-  - dashboard API health
+  - dashboard API liveness and readiness
   - auth callback failures
   - billing checkout failures
   - webhook verification failures
@@ -61,7 +63,8 @@
 ## Immediate Response
 
 - First 5 to 15 minute checks:
-  - hit `/health`
+  - hit web/API `/health` for liveness and `/ready` for traffic readiness
+  - check the latest `Production Readiness Monitor` workflow run
   - confirm latest migration state
   - confirm billing provider secrets
   - inspect recent auth, billing, and provider-event logs

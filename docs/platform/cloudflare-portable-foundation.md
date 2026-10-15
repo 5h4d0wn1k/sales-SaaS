@@ -141,6 +141,35 @@ npx wrangler secret put DATABASE_URL --config apps/api/wrangler.jsonc
 
 Other existing API secrets should also be stored in Wrangler secrets before a real deployment.
 
+## Health and readiness
+
+- Web liveness: `GET /health`
+- Web readiness: `GET /ready`
+- API liveness: `GET /health`
+- API readiness: `GET /ready`
+
+Use liveness to confirm the worker process can answer requests. Use readiness before promotion or traffic cutover. API readiness fails production deployments that fall back to demo memory storage, and web readiness checks that the downstream API readiness endpoint is healthy. The Cloudflare smoke script also fetches public `sitemap.xml`, `robots.txt`, social preview image headers, and `/.well-known/security.txt` so SEO and trust assets are verified after the web worker is ready.
+
+## Production readiness monitor
+
+`.github/workflows/readiness-monitor.yml` runs the same Cloudflare smoke script every 30 minutes. Configure repository or organization variables with production-prefixed names when possible:
+
+- `PRODUCTION_WEB_APP_URL`
+- `PRODUCTION_API_HEALTHCHECK_URL`
+- optional `PRODUCTION_WEB_HEALTHCHECK_URL`
+- optional `PRODUCTION_WEB_READINESSCHECK_URL`
+- optional `PRODUCTION_API_READINESSCHECK_URL`
+- optional `PRODUCTION_WORKFLOWS_HEALTHCHECK_URL`
+- optional secret `PRODUCTION_READINESS_ALERT_WEBHOOK_URL`
+- optional `PRODUCTION_READINESS_ALERT_WEBHOOK_FORMAT` as `slack`, `discord`, or `generic`
+- optional `PRODUCTION_READINESS_ALLOW_WARNINGS=true` only for an explicitly accepted rollout exception
+
+If production-prefixed values are not present, the monitor falls back to the existing smoke variable names used by deployment workflows.
+
+Readiness warnings fail the production monitor by default. This keeps warning-level launch blockers, such as missing provider readiness or process-local abuse controls, from looking like a clean production pass. Set `PRODUCTION_READINESS_ALLOW_WARNINGS=true` only when the owner has accepted a temporary rollout exception and documented the follow-up.
+
+When the optional alert webhook secret is configured, failed scheduled runs post to the webhook. Without it, GitHub Actions still records the failed scheduled run as the owner-facing alert.
+
 ## Staging deploy order
 
 Use this order so browser CORS and build-time envs line up correctly:
@@ -175,8 +204,10 @@ Without that variable, `opennextjs-cloudflare deploy` cannot build the local pla
 
 What is working:
 
-- `apps/api` staging is live and `/health` reports `storage: "postgres"`.
-- `apps/web` staging is live and serves the public product surface.
+- `apps/api` staging is live, `/health` reports `storage: "postgres"`, and `/ready`
+  confirms production traffic readiness.
+- `apps/web` staging is live, serves the public product surface, and exposes `/health`
+  plus `/ready` with `service: "sales-web"` for deployment smoke checks.
 - API CORS now allows the deployed staging web origin.
 - `apps/workflows` staging is live and token-protected.
 

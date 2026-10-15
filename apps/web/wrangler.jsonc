@@ -10,7 +10,7 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "sales-web",
-  "account_id": "e251f79bafcd5a50d2964251a5e53450",
+  "account_id": "07eae60a75b06661ea752a78cdf51565",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-05-03",
   "compatibility_flags": [
@@ -35,13 +35,14 @@
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
-          "id": "08eda5f0a1714b69b1abb3df8c3b897e"
+          "id": "9c1c36b38d064425b8e7e3587c12635d"
         }
       ],
       "vars": {
         "APP_ENV": "staging",
         "AUTH_TRUST_HOST": "true",
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "NEXT_PUBLIC_API_URL": "https://sales-api-staging.salesxgrowth.workers.dev"
       }
     },
     "production": {
@@ -52,10 +53,17 @@
           "DATABASE_URL"
         ]
       },
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "9c1c36b38d064425b8e7e3587c12635d"
+        }
+      ],
       "vars": {
         "APP_ENV": "production",
         "AUTH_TRUST_HOST": "true",
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "NEXT_PUBLIC_API_URL": "https://api.salesxgrowth.com"
       }
     }
   }

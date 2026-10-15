@@ -1,13 +1,25 @@
 import { auth } from "@/auth";
 import GetStartedFlow from "./get-started-flow";
+import type { Metadata } from "next";
 import {
     normalizePlanKey,
     normalizeRequestedStep,
+    readAcquisitionQueryContext,
     resolveInitialGetStartedStep,
 } from "./flow-state";
+import { parseGetStartedAcquisitionContext } from "@/lib/acquisition-context";
 
-type GetStartedPageProps = {
-    searchParams?: Promise<{
+export const metadata: Metadata = {
+    title: "Get Started",
+    description:
+        "Create a Winrate workspace, capture your business context, and start the beta onboarding flow.",
+    robots: {
+        index: false,
+        follow: true,
+    },
+};
+
+type GetStartedSearchParams = Record<string, string | string[] | undefined> & {
         plan?: string;
         step?: string;
         checkout?: string;
@@ -19,26 +31,39 @@ type GetStartedPageProps = {
         inviteWorkspace?: string;
         inviteOrganization?: string;
         inviteMessage?: string;
-    }>;
 };
+
+type GetStartedPageProps = {
+    searchParams?: Promise<GetStartedSearchParams>;
+};
+
+function firstSearchParam(value: string | string[] | undefined) {
+    if (Array.isArray(value)) {
+        return value[0];
+    }
+
+    return value;
+}
 
 export default async function GetStartedPage({ searchParams }: GetStartedPageProps) {
     const session = await auth();
     const params = await searchParams;
     const googleAuthEnabled =
         Boolean(process.env.GOOGLE_CLIENT_ID) && Boolean(process.env.GOOGLE_CLIENT_SECRET);
-    const initialSelectedPlan = normalizePlanKey(params?.plan);
-    const initialCheckoutState = params?.checkout === "canceled" ? "canceled" : null;
+    const initialSelectedPlan = normalizePlanKey(firstSearchParam(params?.plan));
+    const acquisitionQuery = readAcquisitionQueryContext(params);
+    const acquisitionContext = parseGetStartedAcquisitionContext(params);
+    const initialCheckoutState = firstSearchParam(params?.checkout) === "canceled" ? "canceled" : null;
     const initialNotice =
-        params?.reset === "success"
+        firstSearchParam(params?.reset) === "success"
             ? "reset-success"
-            : params?.verifyEmail === "sent"
+            : firstSearchParam(params?.verifyEmail) === "sent"
                 ? "verify-email-sent"
                 : null;
     const initialStep = resolveInitialGetStartedStep({
         hasSession: Boolean(session),
         planKey: initialSelectedPlan,
-        requestedStep: normalizeRequestedStep(params?.step),
+        requestedStep: normalizeRequestedStep(firstSearchParam(params?.step)),
         checkoutState: initialCheckoutState,
     });
 
@@ -51,15 +76,17 @@ export default async function GetStartedPage({ searchParams }: GetStartedPagePro
             initialCheckoutState={initialCheckoutState}
             userEmailVerified={Boolean(session?.user?.emailVerified)}
             initialNotice={initialNotice}
+            acquisitionContext={acquisitionContext}
+            acquisitionQuery={acquisitionQuery ?? null}
             inviteContext={
-                params?.invite
+                firstSearchParam(params?.invite)
                     ? {
-                        token: params.invite,
-                        email: params.inviteEmail?.trim() || null,
-                        workspaceName: params.inviteWorkspace?.trim() || null,
-                        organizationName: params.inviteOrganization?.trim() || null,
-                        message: params.inviteMessage?.trim() || null,
-                        status: params.inviteStatus?.trim() || null,
+                        token: firstSearchParam(params?.invite) ?? "",
+                        email: firstSearchParam(params?.inviteEmail)?.trim() || null,
+                        workspaceName: firstSearchParam(params?.inviteWorkspace)?.trim() || null,
+                        organizationName: firstSearchParam(params?.inviteOrganization)?.trim() || null,
+                        message: firstSearchParam(params?.inviteMessage)?.trim() || null,
+                        status: firstSearchParam(params?.inviteStatus)?.trim() || null,
                     }
                     : null
             }

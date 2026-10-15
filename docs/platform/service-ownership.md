@@ -45,11 +45,12 @@
 
 ## First response checklist
 
-1. check `/health`
-2. confirm latest deploy and migration context
-3. inspect auth, billing, and provider logs
-4. reproduce with the narrowest route or page
-5. decide whether to pause rollout, rollback, or narrow scope
+1. check web/API `/health` for liveness and `/ready` for traffic readiness
+2. check the latest `Production Readiness Monitor` workflow run
+3. confirm latest deploy and migration context
+4. inspect auth, billing, and provider logs
+5. reproduce with the narrowest route or page
+6. decide whether to pause rollout, rollback, or narrow scope
 
 ## Safe mitigations
 
@@ -69,5 +70,6 @@
 
 - dependency and build review: weekly
 - billing and lifecycle smoke review: before sensitive releases
+- production readiness monitor and alert-webhook review: daily while owner-operated
 - truth-matrix review: before marketing or pricing changes
 - roadmap and entitlement review: monthly while the product is still shaping

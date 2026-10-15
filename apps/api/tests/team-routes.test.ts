@@ -96,6 +96,25 @@ async function loadAppWithTeamMocks(options?: {
     },
     memberships: [],
   }));
+  const updateWorkspaceTeamMemberRoleForActorMock = vi.fn(async () => ({
+    member: {
+      userId: "user-2",
+      email: "teammate@example.com",
+      displayName: "Teammate Example",
+      workspaceRole: "admin" as const,
+      organizationRole: "admin" as const,
+      activeWorkspace: false,
+      currentUser: false,
+    },
+  }));
+  const removeWorkspaceTeamMemberForActorMock = vi.fn(async () => ({
+    removedUserId: "user-2",
+    removedEmail: "teammate@example.com",
+  }));
+  const transferWorkspaceOwnershipForActorMock = vi.fn(async () => ({
+    transferredToUserId: "user-2",
+    transferredToEmail: "teammate@example.com",
+  }));
 
   vi.doMock("../src/middleware/auth", () => ({
     ...actualAuth,
@@ -111,6 +130,9 @@ async function loadAppWithTeamMocks(options?: {
     createWorkspaceInvitationForActor: createWorkspaceInvitationForActorMock,
     revokeWorkspaceInvitationForActor: revokeWorkspaceInvitationForActorMock,
     acceptWorkspaceInvitationForUser: acceptWorkspaceInvitationForUserMock,
+    updateWorkspaceTeamMemberRoleForActor: updateWorkspaceTeamMemberRoleForActorMock,
+    removeWorkspaceTeamMemberForActor: removeWorkspaceTeamMemberForActorMock,
+    transferWorkspaceOwnershipForActor: transferWorkspaceOwnershipForActorMock,
   }));
 
   vi.resetModules();
@@ -118,19 +140,23 @@ async function loadAppWithTeamMocks(options?: {
 
   return {
     app: createApp(),
+    TenantAccessError: actualTenantAccess.TenantAccessError,
     listWorkspaceTeamMembersForActorMock,
     listWorkspaceInvitationsForActorMock,
     createWorkspaceInvitationForActorMock,
     revokeWorkspaceInvitationForActorMock,
     acceptWorkspaceInvitationForUserMock,
+    updateWorkspaceTeamMemberRoleForActorMock,
+    removeWorkspaceTeamMemberForActorMock,
+    transferWorkspaceOwnershipForActorMock,
   };
 }
 
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("../src/middleware/auth");
-  vi.unmock("../src/tenant-access");
+  vi.doUnmock("../src/middleware/auth");
+  vi.doUnmock("../src/tenant-access");
 });
 
 describe("team account routes", () => {
@@ -230,6 +256,38 @@ describe("team account routes", () => {
     expect(createWorkspaceInvitationForActorMock).not.toHaveBeenCalled();
   });
 
+  it("blocks admins from inviting new admins or owners", async () => {
+    const { app, createWorkspaceInvitationForActorMock, TenantAccessError } = await loadAppWithTeamMocks({
+      user: {
+        ...authenticatedOwner,
+        role: "admin",
+      },
+    });
+    createWorkspaceInvitationForActorMock.mockRejectedValueOnce(
+      new TenantAccessError(
+        "Only workspace owners can invite admins or additional owners.",
+        403,
+        "invite_role_forbidden",
+      ),
+    );
+
+    const response = await app.request("/v1/account/team/invitations", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "admin@example.com",
+        role: "admin",
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "invite_role_forbidden",
+    });
+  });
+
   it("blocks members from reading or mutating team administration routes", async () => {
     const { app } = await loadAppWithTeamMocks({
       user: {
@@ -244,6 +302,222 @@ describe("team account routes", () => {
     await expect(response.json()).resolves.toMatchObject({
       error: "Insufficient permissions",
     });
+  });
+
+  it("updates team member roles for verified owners", async () => {
+    const { app, updateWorkspaceTeamMemberRoleForActorMock } = await loadAppWithTeamMocks();
+
+    const response = await app.request("/v1/account/team/members/user-2/role", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "admin",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      member: {
+        userId: "user-2",
+        workspaceRole: "admin",
+      },
+    });
+    expect(updateWorkspaceTeamMemberRoleForActorMock).toHaveBeenCalledWith(
+      {
+        id: authenticatedOwner.id,
+        email: authenticatedOwner.email,
+        name: authenticatedOwner.name,
+        role: authenticatedOwner.role,
+        organizationId: authenticatedOwner.organizationId,
+        workspaceId: authenticatedOwner.workspaceId,
+      },
+      "user-2",
+      {
+        role: "admin",
+      },
+    );
+  });
+
+  it("keeps role changes blocked until the account email is verified", async () => {
+    const { app, updateWorkspaceTeamMemberRoleForActorMock } = await loadAppWithTeamMocks({
+      user: {
+        ...authenticatedOwner,
+        emailVerified: false,
+      },
+    });
+
+    const response = await app.request("/v1/account/team/members/user-2/role", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "admin",
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "email_verification_required",
+    });
+    expect(updateWorkspaceTeamMemberRoleForActorMock).not.toHaveBeenCalled();
+  });
+
+  it("surfaces last-owner protection when role changes would orphan the workspace", async () => {
+    const { app, updateWorkspaceTeamMemberRoleForActorMock, TenantAccessError } =
+      await loadAppWithTeamMocks();
+    updateWorkspaceTeamMemberRoleForActorMock.mockRejectedValueOnce(
+      new TenantAccessError(
+        "At least one owner must keep organization access.",
+        409,
+        "last_owner_required",
+      ),
+    );
+
+    const response = await app.request("/v1/account/team/members/user-2/role", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "member",
+      }),
+    });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "last_owner_required",
+      error: "At least one owner must keep organization access.",
+    });
+  });
+
+  it("removes team members for verified owners", async () => {
+    const { app, removeWorkspaceTeamMemberForActorMock } = await loadAppWithTeamMocks();
+
+    const response = await app.request("/v1/account/team/members/user-2", {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      removedUserId: "user-2",
+      removedEmail: "teammate@example.com",
+    });
+    expect(removeWorkspaceTeamMemberForActorMock).toHaveBeenCalledWith(
+      {
+        id: authenticatedOwner.id,
+        email: authenticatedOwner.email,
+        name: authenticatedOwner.name,
+        role: authenticatedOwner.role,
+        organizationId: authenticatedOwner.organizationId,
+        workspaceId: authenticatedOwner.workspaceId,
+      },
+      "user-2",
+    );
+  });
+
+  it("blocks admins from mutating existing team members", async () => {
+    const { app } = await loadAppWithTeamMocks({
+      user: {
+        ...authenticatedOwner,
+        role: "admin",
+      },
+    });
+
+    const response = await app.request("/v1/account/team/members/user-2/role", {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "admin",
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Insufficient permissions",
+    });
+  });
+
+  it("surfaces last-owner protection when removal would orphan the workspace", async () => {
+    const { app, removeWorkspaceTeamMemberForActorMock, TenantAccessError } =
+      await loadAppWithTeamMocks();
+    removeWorkspaceTeamMemberForActorMock.mockRejectedValueOnce(
+      new TenantAccessError(
+        "At least one owner must keep organization access.",
+        409,
+        "last_owner_required",
+      ),
+    );
+
+    const response = await app.request("/v1/account/team/members/user-2", {
+      method: "DELETE",
+    });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "last_owner_required",
+      error: "At least one owner must keep organization access.",
+    });
+  });
+
+  it("transfers ownership for verified owners", async () => {
+    const { app, transferWorkspaceOwnershipForActorMock } = await loadAppWithTeamMocks();
+
+    const response = await app.request("/v1/account/team/ownership/transfer", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        targetUserId: "user-2",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      transferredToUserId: "user-2",
+      transferredToEmail: "teammate@example.com",
+    });
+    expect(transferWorkspaceOwnershipForActorMock).toHaveBeenCalledWith(
+      {
+        id: authenticatedOwner.id,
+        email: authenticatedOwner.email,
+        name: authenticatedOwner.name,
+        role: authenticatedOwner.role,
+        organizationId: authenticatedOwner.organizationId,
+        workspaceId: authenticatedOwner.workspaceId,
+      },
+      "user-2",
+    );
+  });
+
+  it("keeps ownership transfer blocked until the account email is verified", async () => {
+    const { app, transferWorkspaceOwnershipForActorMock } = await loadAppWithTeamMocks({
+      user: {
+        ...authenticatedOwner,
+        emailVerified: false,
+      },
+    });
+
+    const response = await app.request("/v1/account/team/ownership/transfer", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        targetUserId: "user-2",
+      }),
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "email_verification_required",
+    });
+    expect(transferWorkspaceOwnershipForActorMock).not.toHaveBeenCalled();
   });
 
   it("accepts pending invitations for the signed-in account", async () => {

@@ -22,8 +22,8 @@ async function loadServerApiAuth(options: {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("next/headers");
-  vi.unmock("../auth");
+  vi.doUnmock("next/headers");
+  vi.doUnmock("../auth");
 });
 
 describe("server api auth helper", () => {

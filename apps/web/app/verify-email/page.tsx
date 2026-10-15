@@ -1,5 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getServerApiBaseUrl } from "@/lib/server-api-auth";
+
+export const metadata: Metadata = {
+  title: "Verify Email",
+  description: "Verify the email address connected to your Winrate account.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type VerifyEmailPageProps = {
   searchParams?: Promise<{

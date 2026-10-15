@@ -1,5 +1,15 @@
 import { HeroHeader } from "../../components/blocks/hero-section";
 import { MarketingFooter } from "../../components/blocks/marketing-footer";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Privacy Policy",
+    description:
+        "How Winrate handles account, workspace, billing, and sales workflow data during the beta.",
+    alternates: {
+        canonical: "/privacy",
+    },
+};
 
 export default async function PrivacyPage() {
     return (

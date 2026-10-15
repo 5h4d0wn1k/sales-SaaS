@@ -67,7 +67,7 @@ Professional-network outreach or workflow assistance. Treat official API use and
 
 ### Content / SEO
 
-Research, creation, approval, and publishing workflow for discoverability and inbound support. This is strategically important, but not yet current repo truth as a delivered product surface.
+Research, creation, approval, and publishing workflow for discoverability and inbound support. Current repo truth supports beta opportunity planning and reviewable brief inputs; autonomous publishing, distribution, and scaled content operations remain roadmap.
 
 ## Documentation rules
 

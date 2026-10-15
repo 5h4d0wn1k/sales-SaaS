@@ -226,9 +226,9 @@ async function loadAuthenticatedApp(options?: {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("@sales/database");
-  vi.unmock("../src/storage");
-  vi.unmock("../src/tenant-access");
+  vi.doUnmock("@sales/database");
+  vi.doUnmock("../src/storage");
+  vi.doUnmock("../src/tenant-access");
 });
 
 describe("auth middleware", () => {

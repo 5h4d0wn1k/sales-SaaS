@@ -16,6 +16,7 @@ The long-term company vision is a global platform that automates lead generation
 - [Critical User Journeys](product/critical-user-journeys.md)
 - [Platform Requirements Brief](product/platform-requirements.md)
 - [Channel Taxonomy](product/channel-taxonomy.md)
+- [AI Operating System Roadmap](product/ai-operating-system-roadmap.md)
 - [Shared Glossary](product/glossary.md)
 
 ### Compliance and trust

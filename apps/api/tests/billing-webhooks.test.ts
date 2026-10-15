@@ -2,6 +2,8 @@ import crypto from "crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 
+const previousStripeSecret = process.env.STRIPE_SECRET_KEY;
+
 async function loadAppWithEnv(overrides: Record<string, string | undefined>) {
   const previous = {
     NODE_ENV: process.env.NODE_ENV,
@@ -131,6 +133,7 @@ async function loadBillingWebhookApp(options: {
   stripeEvent?: unknown;
   dbMock?: ReturnType<typeof createThrowingDbMock>;
 }) {
+  process.env.STRIPE_SECRET_KEY ??= "sk_test_billing_webhooks";
   const actualDatabase = await vi.importActual<typeof import("@sales/database")>("@sales/database");
   const dbMock = options.dbMock ?? createThrowingDbMock();
 
@@ -159,10 +162,16 @@ async function loadBillingWebhookApp(options: {
 }
 
 afterEach(() => {
+  if (previousStripeSecret === undefined) {
+    delete process.env.STRIPE_SECRET_KEY;
+  } else {
+    process.env.STRIPE_SECRET_KEY = previousStripeSecret;
+  }
+
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("@sales/database");
-  vi.unmock("stripe");
+  vi.doUnmock("@sales/database");
+  vi.doUnmock("stripe");
 });
 
 describe("billing webhook ingress", () => {

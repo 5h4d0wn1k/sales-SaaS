@@ -18,6 +18,11 @@
 
 - workspace subscriptions
 - plan-based seat and usage boundaries
+- plan-based outreach dispatch and voice call quotas
+- included-channel boundaries by plan
+- entitlement blocks that recommend the next viable paid plan
+- public plan-fit advisor recommendations that route high-intent pricing visitors into attributed onboarding or managed-review flows
+- dashboard managed-support fit recommendations that route plan pressure, approval load, conversion work, operational blockers, and AI-worker review pressure into scoped managed-service conversations
 
 ### Expansion revenue
 
@@ -64,9 +69,10 @@
 - registration, consent, and provider compliance overhead
 - not a good default expansion path without strong economics
 
-### Content / SEO later
+### Content / SEO
 
-- can become attractive if AI-assisted workflow improves efficiency without high support burden
+- beta opportunity planning can support lower-cost inbound demand when it stays tied to the Sales Blueprint, review blockers, source evidence, and claim guardrails
+- publishing, distribution automation, and scaled content operations should remain gated until support burden, quality review time, and conversion value are measured
 
 ## Leading metrics
 
@@ -75,8 +81,9 @@
 - trial-to-paid conversion
 - paid workspace retention
 - managed-service attach rate
+- managed-support fit rate by package recommendation
 - gross margin by plan
-- provider cost per paid workspace
+- provider cost per paid workspace, tracked through `provider_cost_cents`
 - support tickets per 100 active workspaces
 - hours of human service per managed account
 

@@ -65,9 +65,13 @@ export async function authMiddleware(c: Context, next: Next) {
   // Public paths that don't require authentication
   const publicPaths = [
     "/health",
+    "/ready",
     "/v1/foundation/summary",
+    "/v1/contact/intake",
     "/v1/webhooks/resend",
+    "/v1/webhooks/telegram",
     "/v1/webhooks/twilio/voice-status",
+    "/v1/command-center/telegram-notifications/scheduled-dispatch",
     "/v1/billing/webhook/stripe",
     "/v1/billing/webhook/razorpay",
     "/v1/auth/register",

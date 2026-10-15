@@ -49,7 +49,15 @@ function buildFrontendUrl(pathname: string, params: Record<string, string>) {
 }
 
 function isLifecycleEmailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY) && Boolean(process.env.RESEND_FROM_EMAIL);
+  return Boolean(
+    process.env.RESEND_API_KEY &&
+      process.env.RESEND_FROM_EMAIL &&
+      (process.env.NODE_ENV !== "production" || process.env.FRONTEND_URL),
+  );
+}
+
+function safeHeaderText(value: string) {
+  return value.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 async function deliverLifecycleEmail({
@@ -67,7 +75,9 @@ async function deliverLifecycleEmail({
 }): Promise<LifecycleEmailDelivery> {
   if (!isLifecycleEmailConfigured()) {
     if (process.env.NODE_ENV === "production") {
-      console.error("Lifecycle email delivery is unavailable: missing Resend configuration.");
+      console.error(
+        "Lifecycle email delivery is unavailable: missing Resend or FRONTEND_URL configuration.",
+      );
       return { mode: "unavailable" };
     }
 
@@ -78,7 +88,7 @@ async function deliverLifecycleEmail({
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to,
-    subject,
+    subject: safeHeaderText(subject),
     html,
     text,
   });

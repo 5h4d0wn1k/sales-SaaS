@@ -16,5 +16,5 @@ export function resolveReturnTo(
 export function appendStatusParam(pathname: string, key: string, value: string) {
   const url = new URL(pathname, "http://localhost");
   url.searchParams.set(key, value);
-  return `${url.pathname}${url.search}`;
+  return `${url.pathname}${url.search}${url.hash}`;
 }

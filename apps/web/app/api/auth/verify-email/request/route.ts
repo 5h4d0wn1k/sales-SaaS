@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getServerApiBaseUrl } from "@/lib/server-api-auth";
+import { rejectCrossOriginMutation } from "@/lib/same-origin";
 import { appendStatusParam, resolveReturnTo } from "@/lib/return-to";
+import { createAccountLifecycleApiHeaders } from "../../proxy-headers";
 
 export async function POST(request: NextRequest) {
+  const crossOrigin = rejectCrossOriginMutation(request);
+  if (crossOrigin) return crossOrigin;
+
   const formData = await request.formData();
   const session = await auth();
   const returnTo = resolveReturnTo(formData.get("returnTo"), "/dashboard");
@@ -21,9 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     const response = await fetch(`${getServerApiBaseUrl()}/v1/auth/verify-email/request`, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
+      headers: createAccountLifecycleApiHeaders(request),
       body: JSON.stringify({ email }),
       cache: "no-store",
     });

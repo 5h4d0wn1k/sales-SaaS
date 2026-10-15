@@ -1,0 +1,500 @@
+- generic [active] [ref=e1]:
+  - banner:
+    - navigation [ref=e2]:
+      - generic [ref=e4]:
+        - link "home" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - generic [ref=e10]: Winrate
+        - list [ref=e12]:
+          - listitem [ref=e13]:
+            - link "Solutions" [ref=e14] [cursor=pointer]:
+              - /url: /solutions
+          - listitem [ref=e15]:
+            - link "Platform" [ref=e16] [cursor=pointer]:
+              - /url: /ai-sales-automation-platform
+          - listitem [ref=e17]:
+            - link "AI SDR" [ref=e18] [cursor=pointer]:
+              - /url: /ai-sdr-software
+          - listitem [ref=e19]:
+            - link "Lead Gen" [ref=e20] [cursor=pointer]:
+              - /url: /ai-lead-generation-software
+          - listitem [ref=e21]:
+            - link "Outbound" [ref=e22] [cursor=pointer]:
+              - /url: /ai-outbound-sales-automation
+          - listitem [ref=e23]:
+            - link "Meetings" [ref=e24] [cursor=pointer]:
+              - /url: /ai-sales-meeting-scheduler
+          - listitem [ref=e25]:
+            - link "Telegram" [ref=e26] [cursor=pointer]:
+              - /url: /telegram-sales-command-center
+          - listitem [ref=e27]:
+            - link "Compare" [ref=e28] [cursor=pointer]:
+              - /url: /compare-sales-tools
+          - listitem [ref=e29]:
+            - link "Integrations" [ref=e30] [cursor=pointer]:
+              - /url: /integrations
+          - listitem [ref=e31]:
+            - link "Resources" [ref=e32] [cursor=pointer]:
+              - /url: /resources
+          - listitem [ref=e33]:
+            - link "Blueprint" [ref=e34] [cursor=pointer]:
+              - /url: /sales-blueprint
+          - listitem [ref=e35]:
+            - link "ROI" [ref=e36] [cursor=pointer]:
+              - /url: /roi-calculator
+          - listitem [ref=e37]:
+            - link "Trust" [ref=e38] [cursor=pointer]:
+              - /url: /trust
+          - listitem [ref=e39]:
+            - link "Pricing" [ref=e40] [cursor=pointer]:
+              - /url: /pricing
+        - generic [ref=e41]:
+          - link "Contact" [ref=e42] [cursor=pointer]:
+            - /url: /contact
+          - link "Get started" [ref=e43] [cursor=pointer]:
+            - /url: /get-started
+  - main [ref=e44]:
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e47]: Pricing
+        - heading "Straightforward pricing for the current public beta" [level=1] [ref=e49]
+        - paragraph [ref=e50]: These plans describe capabilities that are available in the product today. Start free, validate the workflow, then scale usage and seats when the fit is real.
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - heading "Free" [level=3] [ref=e53]
+          - paragraph [ref=e54]: A free workspace for validating your first outbound workflow
+          - generic [ref=e55]: Free
+          - list [ref=e56]:
+            - listitem [ref=e57]:
+              - img [ref=e58]
+              - generic [ref=e60]: Up to 100 leads
+            - listitem [ref=e61]:
+              - img [ref=e62]
+              - generic [ref=e64]: 0 live dispatches
+            - listitem [ref=e65]:
+              - img [ref=e66]
+              - generic [ref=e68]: Email planning channel
+            - listitem [ref=e69]:
+              - img [ref=e70]
+              - generic [ref=e72]: $0 provider-cost budget
+            - listitem [ref=e73]:
+              - img [ref=e74]
+              - generic [ref=e76]: 0 AI worker proposals
+            - listitem [ref=e77]:
+              - img [ref=e78]
+              - generic [ref=e80]: $0 AI dry-run budget
+            - listitem [ref=e81]:
+              - img [ref=e82]
+              - generic [ref=e84]: 1 user seat
+            - listitem [ref=e85]:
+              - img [ref=e86]
+              - generic [ref=e88]: Guided onboarding workspace
+            - listitem [ref=e89]:
+              - img [ref=e90]
+              - generic [ref=e92]: Dashboard visibility
+          - link "Start Free" [ref=e93] [cursor=pointer]:
+            - /url: /get-started?plan=free&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=plan_card
+            - text: Start Free
+            - img [ref=e94]
+        - generic [ref=e96]:
+          - heading "Starter" [level=3] [ref=e97]
+          - paragraph [ref=e98]: For founders building a repeatable outbound motion
+          - generic [ref=e99]: $49/mo
+          - list [ref=e100]:
+            - listitem [ref=e101]:
+              - img [ref=e102]
+              - generic [ref=e104]: Up to 1,000 leads/mo
+            - listitem [ref=e105]:
+              - img [ref=e106]
+              - generic [ref=e108]: 100 email dispatches/mo
+            - listitem [ref=e109]:
+              - img [ref=e110]
+              - generic [ref=e112]: $15 provider-cost budget
+            - listitem [ref=e113]:
+              - img [ref=e114]
+              - generic [ref=e116]: 10 AI worker proposals/mo
+            - listitem [ref=e117]:
+              - img [ref=e118]
+              - generic [ref=e120]: $25 AI dry-run budget/mo
+            - listitem [ref=e121]:
+              - img [ref=e122]
+              - generic [ref=e124]: 3 user seats
+            - listitem [ref=e125]:
+              - img [ref=e126]
+              - generic [ref=e128]: Approval-gated campaigns
+            - listitem [ref=e129]:
+              - img [ref=e130]
+              - generic [ref=e132]: Billing portal access
+            - listitem [ref=e133]:
+              - img [ref=e134]
+              - generic [ref=e136]: Email support
+          - link "Choose Plan" [ref=e137] [cursor=pointer]:
+            - /url: /get-started?plan=starter&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=plan_card
+            - text: Choose Plan
+            - img [ref=e138]
+        - generic [ref=e140]:
+          - generic [ref=e141]: Most Popular
+          - heading "Professional" [level=3] [ref=e142]
+          - paragraph [ref=e143]: For teams managing active campaigns and review flows
+          - generic [ref=e144]: $99/mo
+          - list [ref=e145]:
+            - listitem [ref=e146]:
+              - img [ref=e147]
+              - generic [ref=e149]: Up to 5,000 leads/mo
+            - listitem [ref=e150]:
+              - img [ref=e151]
+              - generic [ref=e153]: 1,000 dispatches/mo
+            - listitem [ref=e154]:
+              - img [ref=e155]
+              - generic [ref=e157]: 250 voice calls/mo
+            - listitem [ref=e158]:
+              - img [ref=e159]
+              - generic [ref=e161]: $50 provider-cost budget
+            - listitem [ref=e162]:
+              - img [ref=e163]
+              - generic [ref=e165]: 50 AI worker proposals/mo
+            - listitem [ref=e166]:
+              - img [ref=e167]
+              - generic [ref=e169]: $150 AI dry-run budget/mo
+            - listitem [ref=e170]:
+              - img [ref=e171]
+              - generic [ref=e173]: 10 user seats
+            - listitem [ref=e174]:
+              - img [ref=e175]
+              - generic [ref=e177]: Campaign activity tracking
+            - listitem [ref=e178]:
+              - img [ref=e179]
+              - generic [ref=e181]: Priority support
+          - link "Choose Plan" [ref=e182] [cursor=pointer]:
+            - /url: /get-started?plan=pro&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=plan_card
+            - text: Choose Plan
+            - img [ref=e183]
+        - generic [ref=e185]:
+          - heading "Elite" [level=3] [ref=e186]
+          - paragraph [ref=e187]: For larger teams operating at higher monthly volume
+          - generic [ref=e188]: $249/mo
+          - list [ref=e189]:
+            - listitem [ref=e190]:
+              - img [ref=e191]
+              - generic [ref=e193]: Up to 20,000 leads/mo
+            - listitem [ref=e194]:
+              - img [ref=e195]
+              - generic [ref=e197]: 5,000 dispatches/mo
+            - listitem [ref=e198]:
+              - img [ref=e199]
+              - generic [ref=e201]: 1,000 voice calls/mo
+            - listitem [ref=e202]:
+              - img [ref=e203]
+              - generic [ref=e205]: $150 provider-cost budget
+            - listitem [ref=e206]:
+              - img [ref=e207]
+              - generic [ref=e209]: 250 AI worker proposals/mo
+            - listitem [ref=e210]:
+              - img [ref=e211]
+              - generic [ref=e213]: $500 AI dry-run budget/mo
+            - listitem [ref=e214]:
+              - img [ref=e215]
+              - generic [ref=e217]: Unlimited seats
+            - listitem [ref=e218]:
+              - img [ref=e219]
+              - generic [ref=e221]: Expanded workspace capacity
+            - listitem [ref=e222]:
+              - img [ref=e223]
+              - generic [ref=e225]: Priority rollout support
+          - link "Choose Plan" [ref=e226] [cursor=pointer]:
+            - /url: /get-started?plan=elite&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=plan_card
+            - text: Choose Plan
+            - img [ref=e227]
+      - generic [ref=e229]:
+        - generic [ref=e230]:
+          - generic [ref=e231]:
+            - paragraph [ref=e232]: Plan fit advisor
+            - heading "Pick the plan by rollout stage, not by guesswork." [level=2] [ref=e233]
+          - paragraph [ref=e234]: Each recommendation is grounded in the shared plan catalog. It does not start provider work, billing changes, lead sourcing, or outreach without the normal account and approval gates.
+        - table [ref=e236]:
+          - rowgroup [ref=e237]:
+            - row "Rollout stage Plan Operating boundaries Guardrail Next step" [ref=e238]:
+              - columnheader "Rollout stage" [ref=e239]
+              - columnheader "Plan" [ref=e240]
+              - columnheader "Operating boundaries" [ref=e241]
+              - columnheader "Guardrail" [ref=e242]
+              - columnheader "Next step" [ref=e243]
+          - rowgroup [ref=e244]:
+            - 'row "Validate the workspace Best when the buyer needs to test onboarding, dashboard visibility, and a first reviewable workflow before paid rollout. Free Free Self-guided validation Lead volume 100 leads/mo Live dispatch No live dispatch Voice No voice calls Provider budget $0/mo AI work 0 proposals / $0 dry-run Validation stays review-only: no live dispatch, calls, provider spend, or AI execution until the account, plan, and approval gates support it. Start validation" [ref=e245]':
+              - rowheader "Validate the workspace Best when the buyer needs to test onboarding, dashboard visibility, and a first reviewable workflow before paid rollout." [ref=e246]:
+                - generic [ref=e247]: Validate the workspace
+                - generic [ref=e248]: Best when the buyer needs to test onboarding, dashboard visibility, and a first reviewable workflow before paid rollout.
+              - cell "Free Free Self-guided validation" [ref=e249]:
+                - generic [ref=e250]: Free
+                - generic [ref=e251]: Free
+                - generic [ref=e252]: Self-guided validation
+              - cell "Lead volume 100 leads/mo Live dispatch No live dispatch Voice No voice calls Provider budget $0/mo AI work 0 proposals / $0 dry-run" [ref=e253]:
+                - generic [ref=e254]:
+                  - generic [ref=e255]:
+                    - term [ref=e256]: Lead volume
+                    - definition [ref=e257]: 100 leads/mo
+                  - generic [ref=e258]:
+                    - term [ref=e259]: Live dispatch
+                    - definition [ref=e260]: No live dispatch
+                  - generic [ref=e261]:
+                    - term [ref=e262]: Voice
+                    - definition [ref=e263]: No voice calls
+                  - generic [ref=e264]:
+                    - term [ref=e265]: Provider budget
+                    - definition [ref=e266]: $0/mo
+                  - generic [ref=e267]:
+                    - term [ref=e268]: AI work
+                    - definition [ref=e269]: 0 proposals / $0 dry-run
+              - 'cell "Validation stays review-only: no live dispatch, calls, provider spend, or AI execution until the account, plan, and approval gates support it." [ref=e270]'
+              - cell "Start validation" [ref=e271]:
+                - link "Start validation" [ref=e273] [cursor=pointer]:
+                  - /url: /get-started?plan=free&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=fit_validate
+                  - text: Start validation
+                  - img [ref=e274]
+            - row "Founder-led launch Best when a founder or small team is ready to launch email-first source review and approval-gated outreach. Starter $49/mo Setup Sprint optional Lead volume 1,000 leads/mo Live dispatch 100 dispatches/mo Voice No voice calls Provider budget $15/mo AI work 10 proposals / $25 dry-run Email-first launch still requires verified account posture, provider readiness, suppression checks, and owner approval gates. Choose Starter Review Setup Sprint" [ref=e276]:
+              - rowheader "Founder-led launch Best when a founder or small team is ready to launch email-first source review and approval-gated outreach." [ref=e277]:
+                - generic [ref=e278]: Founder-led launch
+                - generic [ref=e279]: Best when a founder or small team is ready to launch email-first source review and approval-gated outreach.
+              - cell "Starter $49/mo Setup Sprint optional" [ref=e280]:
+                - generic [ref=e281]: Starter
+                - generic [ref=e282]: $49/mo
+                - generic [ref=e283]: Setup Sprint optional
+              - cell "Lead volume 1,000 leads/mo Live dispatch 100 dispatches/mo Voice No voice calls Provider budget $15/mo AI work 10 proposals / $25 dry-run" [ref=e284]:
+                - generic [ref=e285]:
+                  - generic [ref=e286]:
+                    - term [ref=e287]: Lead volume
+                    - definition [ref=e288]: 1,000 leads/mo
+                  - generic [ref=e289]:
+                    - term [ref=e290]: Live dispatch
+                    - definition [ref=e291]: 100 dispatches/mo
+                  - generic [ref=e292]:
+                    - term [ref=e293]: Voice
+                    - definition [ref=e294]: No voice calls
+                  - generic [ref=e295]:
+                    - term [ref=e296]: Provider budget
+                    - definition [ref=e297]: $15/mo
+                  - generic [ref=e298]:
+                    - term [ref=e299]: AI work
+                    - definition [ref=e300]: 10 proposals / $25 dry-run
+              - cell "Email-first launch still requires verified account posture, provider readiness, suppression checks, and owner approval gates." [ref=e301]
+              - cell "Choose Starter Review Setup Sprint" [ref=e302]:
+                - generic [ref=e303]:
+                  - link "Choose Starter" [ref=e304] [cursor=pointer]:
+                    - /url: /get-started?plan=starter&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=fit_founder_launch
+                    - text: Choose Starter
+                    - img [ref=e305]
+                  - link "Review Setup Sprint" [ref=e307] [cursor=pointer]:
+                    - /url: /contact?intent=managed_services&utm_source=pricing&utm_medium=pricing_page&utm_campaign=managed_services_setup_sprint&managedPackage=setup-sprint&managedIntent=pricing_setup_review&pricingIntent=fit_founder_launch
+            - row "Active campaign team Best when the team needs more lead capacity, calls, active review flows, and a stronger provider-cost budget. Professional $99/mo Operator Assist optional Lead volume 5,000 leads/mo Live dispatch 1,000 dispatches/mo Voice 250 voice calls/mo Provider budget $50/mo AI work 50 proposals / $150 dry-run Calls and configured provider work remain quota-checked, audit-linked, and approval-gated before spend or dispatch can advance. Choose Professional Review Operator Assist" [ref=e308]:
+              - rowheader "Active campaign team Best when the team needs more lead capacity, calls, active review flows, and a stronger provider-cost budget." [ref=e309]:
+                - generic [ref=e310]: Active campaign team
+                - generic [ref=e311]: Best when the team needs more lead capacity, calls, active review flows, and a stronger provider-cost budget.
+              - cell "Professional $99/mo Operator Assist optional" [ref=e312]:
+                - generic [ref=e313]: Professional
+                - generic [ref=e314]: $99/mo
+                - generic [ref=e315]: Operator Assist optional
+              - cell "Lead volume 5,000 leads/mo Live dispatch 1,000 dispatches/mo Voice 250 voice calls/mo Provider budget $50/mo AI work 50 proposals / $150 dry-run" [ref=e316]:
+                - generic [ref=e317]:
+                  - generic [ref=e318]:
+                    - term [ref=e319]: Lead volume
+                    - definition [ref=e320]: 5,000 leads/mo
+                  - generic [ref=e321]:
+                    - term [ref=e322]: Live dispatch
+                    - definition [ref=e323]: 1,000 dispatches/mo
+                  - generic [ref=e324]:
+                    - term [ref=e325]: Voice
+                    - definition [ref=e326]: 250 voice calls/mo
+                  - generic [ref=e327]:
+                    - term [ref=e328]: Provider budget
+                    - definition [ref=e329]: $50/mo
+                  - generic [ref=e330]:
+                    - term [ref=e331]: AI work
+                    - definition [ref=e332]: 50 proposals / $150 dry-run
+              - cell "Calls and configured provider work remain quota-checked, audit-linked, and approval-gated before spend or dispatch can advance." [ref=e333]
+              - cell "Choose Professional Review Operator Assist" [ref=e334]:
+                - generic [ref=e335]:
+                  - link "Choose Professional" [ref=e336] [cursor=pointer]:
+                    - /url: /get-started?plan=pro&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=fit_active_team
+                    - text: Choose Professional
+                    - img [ref=e337]
+                  - link "Review Operator Assist" [ref=e339] [cursor=pointer]:
+                    - /url: /contact?intent=managed_services&utm_source=pricing&utm_medium=pricing_page&utm_campaign=managed_services_operator_assist&managedPackage=operator-assist&managedIntent=pricing_setup_review&pricingIntent=fit_active_team
+            - row "Scale governed operations Best when a larger team needs multi-seat scale, review-gated LinkedIn posture, higher volume, and rollout planning. Elite $249/mo Managed RevOps optional Lead volume 20,000 leads/mo Live dispatch 5,000 dispatches/mo Voice 1,000 voice calls/mo Provider budget $150/mo AI work 250 proposals / $500 dry-run Scale plans still separate software subscription, provider costs, managed-service scope, and customer-owned approval decisions. Choose Elite Review Managed RevOps" [ref=e340]:
+              - rowheader "Scale governed operations Best when a larger team needs multi-seat scale, review-gated LinkedIn posture, higher volume, and rollout planning." [ref=e341]:
+                - generic [ref=e342]: Scale governed operations
+                - generic [ref=e343]: Best when a larger team needs multi-seat scale, review-gated LinkedIn posture, higher volume, and rollout planning.
+              - cell "Elite $249/mo Managed RevOps optional" [ref=e344]:
+                - generic [ref=e345]: Elite
+                - generic [ref=e346]: $249/mo
+                - generic [ref=e347]: Managed RevOps optional
+              - cell "Lead volume 20,000 leads/mo Live dispatch 5,000 dispatches/mo Voice 1,000 voice calls/mo Provider budget $150/mo AI work 250 proposals / $500 dry-run" [ref=e348]:
+                - generic [ref=e349]:
+                  - generic [ref=e350]:
+                    - term [ref=e351]: Lead volume
+                    - definition [ref=e352]: 20,000 leads/mo
+                  - generic [ref=e353]:
+                    - term [ref=e354]: Live dispatch
+                    - definition [ref=e355]: 5,000 dispatches/mo
+                  - generic [ref=e356]:
+                    - term [ref=e357]: Voice
+                    - definition [ref=e358]: 1,000 voice calls/mo
+                  - generic [ref=e359]:
+                    - term [ref=e360]: Provider budget
+                    - definition [ref=e361]: $150/mo
+                  - generic [ref=e362]:
+                    - term [ref=e363]: AI work
+                    - definition [ref=e364]: 250 proposals / $500 dry-run
+              - cell "Scale plans still separate software subscription, provider costs, managed-service scope, and customer-owned approval decisions." [ref=e365]
+              - cell "Choose Elite Review Managed RevOps" [ref=e366]:
+                - generic [ref=e367]:
+                  - link "Choose Elite" [ref=e368] [cursor=pointer]:
+                    - /url: /get-started?plan=elite&utm_source=pricing&utm_medium=pricing_page&utm_campaign=plan_selection&pricingIntent=fit_scale_operations
+                    - text: Choose Elite
+                    - img [ref=e369]
+                  - link "Review Managed RevOps" [ref=e371] [cursor=pointer]:
+                    - /url: /contact?intent=managed_services&utm_source=pricing&utm_medium=pricing_page&utm_campaign=managed_services_managed_revops&managedPackage=managed-revops&managedIntent=pricing_setup_review&pricingIntent=fit_scale_operations
+      - generic [ref=e372]:
+        - generic [ref=e373]:
+          - generic [ref=e374]:
+            - paragraph [ref=e375]: Plan fit
+            - heading "Compare the limits that change cost and rollout scope." [level=2] [ref=e376]
+          - paragraph [ref=e377]: Plan boundaries are checked before provider work runs, so teams can scale lead volume, seats, channels, and provider spend deliberately.
+        - table [ref=e379]:
+          - rowgroup [ref=e380]:
+            - row "Boundary Free Starter Professional Elite" [ref=e381]:
+              - columnheader "Boundary" [ref=e382]
+              - columnheader "Free" [ref=e383]
+              - columnheader "Starter" [ref=e384]
+              - columnheader "Professional" [ref=e385]
+              - columnheader "Elite" [ref=e386]
+          - rowgroup [ref=e387]:
+            - row "Best fit The plan shape most buyers should map to first. Validate the workspace Launch founder-led email workflows Add calls and active review flows Scale governed multi-seat operations" [ref=e388]:
+              - rowheader "Best fit The plan shape most buyers should map to first." [ref=e389]:
+                - generic [ref=e390]: Best fit
+                - generic [ref=e391]: The plan shape most buyers should map to first.
+              - cell "Validate the workspace" [ref=e392]
+              - cell "Launch founder-led email workflows" [ref=e393]
+              - cell "Add calls and active review flows" [ref=e394]
+              - cell "Scale governed multi-seat operations" [ref=e395]
+            - row "Lead volume Monthly usage boundary for lead creation and discovery workflows. 100 leads/mo 1,000 leads/mo 5,000 leads/mo 20,000 leads/mo" [ref=e396]:
+              - rowheader "Lead volume Monthly usage boundary for lead creation and discovery workflows." [ref=e397]:
+                - generic [ref=e398]: Lead volume
+                - generic [ref=e399]: Monthly usage boundary for lead creation and discovery workflows.
+              - cell "100 leads/mo" [ref=e400]
+              - cell "1,000 leads/mo" [ref=e401]
+              - cell "5,000 leads/mo" [ref=e402]
+              - cell "20,000 leads/mo" [ref=e403]
+            - row "Outreach dispatches Monthly quota checked before campaign dispatch can create provider work. No live dispatch 100 dispatches/mo 1,000 dispatches/mo 5,000 dispatches/mo" [ref=e404]:
+              - rowheader "Outreach dispatches Monthly quota checked before campaign dispatch can create provider work." [ref=e405]:
+                - generic [ref=e406]: Outreach dispatches
+                - generic [ref=e407]: Monthly quota checked before campaign dispatch can create provider work.
+              - cell "No live dispatch" [ref=e408]
+              - cell "100 dispatches/mo" [ref=e409]
+              - cell "1,000 dispatches/mo" [ref=e410]
+              - cell "5,000 dispatches/mo" [ref=e411]
+            - row "Voice calls Monthly quota checked before voice dispatch can create provider work. No voice calls No voice calls 250 voice calls/mo 1,000 voice calls/mo" [ref=e412]:
+              - rowheader "Voice calls Monthly quota checked before voice dispatch can create provider work." [ref=e413]:
+                - generic [ref=e414]: Voice calls
+                - generic [ref=e415]: Monthly quota checked before voice dispatch can create provider work.
+              - cell "No voice calls" [ref=e416]
+              - cell "No voice calls" [ref=e417]
+              - cell "250 voice calls/mo" [ref=e418]
+              - cell "1,000 voice calls/mo" [ref=e419]
+            - row "Provider-cost budget Budget checked before configured provider work can run. $0/mo $15/mo $50/mo $150/mo" [ref=e420]:
+              - rowheader "Provider-cost budget Budget checked before configured provider work can run." [ref=e421]:
+                - generic [ref=e422]: Provider-cost budget
+                - generic [ref=e423]: Budget checked before configured provider work can run.
+              - cell "$0/mo" [ref=e424]
+              - cell "$15/mo" [ref=e425]
+              - cell "$50/mo" [ref=e426]
+              - cell "$150/mo" [ref=e427]
+            - row "AI worker proposals Monthly quota checked before approval-gated AI worker task proposals are created. 0 AI proposals/mo 10 AI proposals/mo 50 AI proposals/mo 250 AI proposals/mo" [ref=e428]:
+              - rowheader "AI worker proposals Monthly quota checked before approval-gated AI worker task proposals are created." [ref=e429]:
+                - generic [ref=e430]: AI worker proposals
+                - generic [ref=e431]: Monthly quota checked before approval-gated AI worker task proposals are created.
+              - cell "0 AI proposals/mo" [ref=e432]
+              - cell "10 AI proposals/mo" [ref=e433]
+              - cell "50 AI proposals/mo" [ref=e434]
+              - cell "250 AI proposals/mo" [ref=e435]
+            - row "AI dry-run budget Monthly plan budget checked before approved AI worker dry-run result cost is recorded. $0/mo AI dry-run $25/mo AI dry-run $150/mo AI dry-run $500/mo AI dry-run" [ref=e436]:
+              - rowheader "AI dry-run budget Monthly plan budget checked before approved AI worker dry-run result cost is recorded." [ref=e437]:
+                - generic [ref=e438]: AI dry-run budget
+                - generic [ref=e439]: Monthly plan budget checked before approved AI worker dry-run result cost is recorded.
+              - cell "$0/mo AI dry-run" [ref=e440]
+              - cell "$25/mo AI dry-run" [ref=e441]
+              - cell "$150/mo AI dry-run" [ref=e442]
+              - cell "$500/mo AI dry-run" [ref=e443]
+            - row "Included channels Outbound channels allowed by plan entitlement before dispatch. Email Email Email, Call Email, Call, Review-gated LinkedIn" [ref=e444]:
+              - rowheader "Included channels Outbound channels allowed by plan entitlement before dispatch." [ref=e445]:
+                - generic [ref=e446]: Included channels
+                - generic [ref=e447]: Outbound channels allowed by plan entitlement before dispatch.
+              - cell "Email" [ref=e448]
+              - cell "Email" [ref=e449]
+              - cell "Email, Call" [ref=e450]
+              - cell "Email, Call, Review-gated LinkedIn" [ref=e451]
+            - row "Workspace seats Seat boundary for workspace collaboration. 1 seat 3 seats 10 seats Unlimited" [ref=e452]:
+              - rowheader "Workspace seats Seat boundary for workspace collaboration." [ref=e453]:
+                - generic [ref=e454]: Workspace seats
+                - generic [ref=e455]: Seat boundary for workspace collaboration.
+              - cell "1 seat" [ref=e456]
+              - cell "3 seats" [ref=e457]
+              - cell "10 seats" [ref=e458]
+              - cell "Unlimited" [ref=e459]
+      - generic [ref=e461]:
+        - generic [ref=e462]:
+          - paragraph [ref=e463]: Need help launching the workflow?
+          - heading "Add managed setup, review cadence, and rollout support." [level=2] [ref=e464]
+          - paragraph [ref=e465]: Managed services are separate from the software subscription and help teams shape the Sales Blueprint, source strategy, approval operations, provider readiness, and reporting rhythm.
+        - generic [ref=e466]:
+          - link "Request setup review" [ref=e467] [cursor=pointer]:
+            - /url: /contact?intent=managed_services&utm_source=pricing&utm_medium=pricing_page&utm_campaign=managed_services_setup_sprint&managedPackage=setup-sprint&managedIntent=pricing_setup_review&pricingIntent=managed_services_addon
+            - text: Request setup review
+            - img [ref=e468]
+          - link "View service scope" [ref=e470] [cursor=pointer]:
+            - /url: /managed-services
+  - contentinfo [ref=e471]:
+    - generic [ref=e472]:
+      - generic [ref=e473]:
+        - img [ref=e475]
+        - generic [ref=e477]: Winrate
+      - generic [ref=e478]:
+        - link "Solutions" [ref=e479] [cursor=pointer]:
+          - /url: /solutions
+        - link "Platform" [ref=e480] [cursor=pointer]:
+          - /url: /ai-sales-automation-platform
+        - link "AI SDR" [ref=e481] [cursor=pointer]:
+          - /url: /ai-sdr-software
+        - link "Lead Gen" [ref=e482] [cursor=pointer]:
+          - /url: /ai-lead-generation-software
+        - link "Outbound" [ref=e483] [cursor=pointer]:
+          - /url: /ai-outbound-sales-automation
+        - link "Meetings" [ref=e484] [cursor=pointer]:
+          - /url: /ai-sales-meeting-scheduler
+        - link "Telegram" [ref=e485] [cursor=pointer]:
+          - /url: /telegram-sales-command-center
+        - link "Compare" [ref=e486] [cursor=pointer]:
+          - /url: /compare-sales-tools
+        - link "Integrations" [ref=e487] [cursor=pointer]:
+          - /url: /integrations
+        - link "Trust" [ref=e488] [cursor=pointer]:
+          - /url: /trust
+        - link "Resources" [ref=e489] [cursor=pointer]:
+          - /url: /resources
+        - link "Blueprint" [ref=e490] [cursor=pointer]:
+          - /url: /sales-blueprint
+        - link "ROI" [ref=e491] [cursor=pointer]:
+          - /url: /roi-calculator
+        - link "Managed" [ref=e492] [cursor=pointer]:
+          - /url: /managed-services
+        - link "Pricing" [ref=e493] [cursor=pointer]:
+          - /url: /pricing
+        - link "Privacy" [ref=e494] [cursor=pointer]:
+          - /url: /privacy
+        - link "Terms" [ref=e495] [cursor=pointer]:
+          - /url: /terms
+        - link "Contact" [ref=e496] [cursor=pointer]:
+          - /url: /contact
+        - link "Get started" [ref=e497] [cursor=pointer]:
+          - /url: /get-started
+      - paragraph [ref=e498]: © 2026 Winrate. Built for builders.

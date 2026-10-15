@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { acceptWorkspaceInvitationInputSchema } from "@sales/shared";
 import { createServerApiHeaders, getServerApiBaseUrl } from "@/lib/server-api-auth";
+import { rejectCrossOriginMutation } from "@/lib/same-origin";
 import { appendStatusParam, resolveReturnTo } from "@/lib/return-to";
 
 type ErrorResponse = {
@@ -17,6 +18,9 @@ async function readErrorResponse(response: Response): Promise<ErrorResponse> {
 }
 
 export async function POST(request: NextRequest) {
+  const crossOrigin = rejectCrossOriginMutation(request);
+  if (crossOrigin) return crossOrigin;
+
   try {
     const formData = await request.formData();
     const returnTo = resolveReturnTo(formData.get("returnTo"), "/dashboard");

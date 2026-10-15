@@ -1,5 +1,15 @@
 import { HeroHeader } from "../../components/blocks/hero-section";
 import { MarketingFooter } from "../../components/blocks/marketing-footer";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Terms of Service",
+    description:
+        "Terms for using the Winrate beta sales operations workspace and related provider-backed features.",
+    alternates: {
+        canonical: "/terms",
+    },
+};
 
 export default async function TermsPage() {
     return (

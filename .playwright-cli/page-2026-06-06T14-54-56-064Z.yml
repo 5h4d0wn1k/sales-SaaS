@@ -1,0 +1,191 @@
+- main [ref=e2]:
+  - generic [ref=e4]:
+    - link "Winrate" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - img [ref=e7]
+      - generic [ref=e9]: Winrate
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - img [ref=e13]
+        - generic [ref=e15]: Account
+      - generic [ref=e17]:
+        - generic [ref=e18]: "2"
+        - generic [ref=e19]: Plan
+      - generic [ref=e21]:
+        - generic [ref=e22]: "3"
+        - generic [ref=e23]: Checkout
+    - generic [ref=e24]:
+      - heading "Choose your plan" [level=1] [ref=e25]
+      - paragraph [ref=e26]: Pick the workspace capacity for this rollout. Paid plans still require verified billing and do not start provider work automatically.
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - paragraph [ref=e30]: Sales Blueprint checkpoint
+          - heading "Confirm the sales motion before choosing capacity." [level=2] [ref=e31]
+          - paragraph [ref=e32]: Plan limits are easier to choose when the ICP, lead target, source channels, outreach posture, and approval gates are visible first.
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - paragraph [ref=e35]: ICP and goals
+              - paragraph [ref=e36]: Confirm who the workspace should find, why they buy, and what lead and meeting targets matter.
+            - generic [ref=e37]:
+              - paragraph [ref=e38]: Source and outreach channels
+              - paragraph [ref=e39]: Separate available channels from guarded or roadmap channels before plan capacity is chosen.
+            - generic [ref=e40]:
+              - paragraph [ref=e41]: Approval policy
+              - paragraph [ref=e42]: Keep first outreach, calls, new channels, and Telegram actions reviewable before provider work starts.
+        - generic [ref=e43]:
+          - paragraph [ref=e44]: Context status
+          - paragraph [ref=e45]: No blueprint attached yet
+          - paragraph [ref=e46]: Use the public builder or request a rollout review when the sales motion needs operator help before launch.
+          - generic [ref=e47]:
+            - link "Open builder" [ref=e48] [cursor=pointer]:
+              - /url: /sales-blueprint?utm_source=get_started&utm_medium=activation_flow&utm_campaign=blueprint_checkpoint
+              - text: Open builder
+              - img [ref=e49]
+            - link "Request review" [ref=e51] [cursor=pointer]:
+              - /url: /contact?intent=managed_services&utm_source=get_started&utm_medium=activation_flow&utm_campaign=blueprint_checkpoint&managedIntent=blueprint_checkpoint_review
+      - generic [ref=e52]:
+        - button "Free A free workspace for validating your first outbound workflow Free to start Leads 100/mo Dispatches 0/mo Voice 0/mo Provider $0 1 seat and email channel posture included." [pressed] [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - heading "Free" [level=3] [ref=e57]
+              - paragraph [ref=e58]: A free workspace for validating your first outbound workflow
+            - img [ref=e59]
+          - generic [ref=e62]: Free to start
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - paragraph [ref=e65]: Leads
+              - paragraph [ref=e66]: 100/mo
+            - generic [ref=e67]:
+              - paragraph [ref=e68]: Dispatches
+              - paragraph [ref=e69]: 0/mo
+            - generic [ref=e70]:
+              - paragraph [ref=e71]: Voice
+              - paragraph [ref=e72]: 0/mo
+            - generic [ref=e73]:
+              - paragraph [ref=e74]: Provider
+              - paragraph [ref=e75]: $0
+          - paragraph [ref=e76]: 1 seat and email channel posture included.
+        - button "Starter For founders building a repeatable outbound motion $49/month Leads 1,000/mo Dispatches 100/mo Voice 0/mo Provider $15 3 seats and email channel posture included." [ref=e78]:
+          - generic [ref=e80]:
+            - heading "Starter" [level=3] [ref=e82]
+            - paragraph [ref=e83]: For founders building a repeatable outbound motion
+          - generic [ref=e84]:
+            - generic [ref=e85]: $49
+            - text: /month
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - paragraph [ref=e88]: Leads
+              - paragraph [ref=e89]: 1,000/mo
+            - generic [ref=e90]:
+              - paragraph [ref=e91]: Dispatches
+              - paragraph [ref=e92]: 100/mo
+            - generic [ref=e93]:
+              - paragraph [ref=e94]: Voice
+              - paragraph [ref=e95]: 0/mo
+            - generic [ref=e96]:
+              - paragraph [ref=e97]: Provider
+              - paragraph [ref=e98]: $15
+          - paragraph [ref=e99]: 3 seats and email channel posture included.
+        - button "Professional Popular For teams managing active campaigns and review flows $99/month Leads 5,000/mo Dispatches 1,000/mo Voice 250/mo Provider $50 10 seats and email, call channel posture included." [ref=e100]:
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - heading "Professional" [level=3] [ref=e104]
+              - generic [ref=e105]: Popular
+            - paragraph [ref=e106]: For teams managing active campaigns and review flows
+          - generic [ref=e107]:
+            - generic [ref=e108]: $99
+            - text: /month
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - paragraph [ref=e111]: Leads
+              - paragraph [ref=e112]: 5,000/mo
+            - generic [ref=e113]:
+              - paragraph [ref=e114]: Dispatches
+              - paragraph [ref=e115]: 1,000/mo
+            - generic [ref=e116]:
+              - paragraph [ref=e117]: Voice
+              - paragraph [ref=e118]: 250/mo
+            - generic [ref=e119]:
+              - paragraph [ref=e120]: Provider
+              - paragraph [ref=e121]: $50
+          - paragraph [ref=e122]: 10 seats and email, call channel posture included.
+        - button "Elite For larger teams operating at higher monthly volume $249/month Leads 20,000/mo Dispatches 5,000/mo Voice 1,000/mo Provider $150 Unlimited seats and email, call, linkedin channel posture included." [ref=e123]:
+          - generic [ref=e125]:
+            - heading "Elite" [level=3] [ref=e127]
+            - paragraph [ref=e128]: For larger teams operating at higher monthly volume
+          - generic [ref=e129]:
+            - generic [ref=e130]: $249
+            - text: /month
+          - generic [ref=e131]:
+            - generic [ref=e132]:
+              - paragraph [ref=e133]: Leads
+              - paragraph [ref=e134]: 20,000/mo
+            - generic [ref=e135]:
+              - paragraph [ref=e136]: Dispatches
+              - paragraph [ref=e137]: 5,000/mo
+            - generic [ref=e138]:
+              - paragraph [ref=e139]: Voice
+              - paragraph [ref=e140]: 1,000/mo
+            - generic [ref=e141]:
+              - paragraph [ref=e142]: Provider
+              - paragraph [ref=e143]: $150
+          - paragraph [ref=e144]: Unlimited seats and email, call, linkedin channel posture included.
+      - generic [ref=e145]:
+        - button "Back" [ref=e146]:
+          - img [ref=e147]
+          - text: Back
+        - button "Continue to Dashboard" [ref=e149]:
+          - text: Continue to Dashboard
+          - img [ref=e150]
+  - generic [ref=e152]:
+    - generic [ref=e153]:
+      - generic [ref=e154]:
+        - paragraph [ref=e155]: Activation brief
+        - heading "Start the workspace, then scale only what is review-ready." [level=2] [ref=e156]
+        - paragraph [ref=e157]: "This flow is designed for governed sales operations: context first, plan fit second, provider and automation gates after the workspace exists."
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - generic [ref=e160]: Step
+          - generic [ref=e161]: Plan fit
+        - generic [ref=e162]:
+          - generic [ref=e163]: Plan
+          - generic [ref=e164]: Free
+        - generic [ref=e165]:
+          - generic [ref=e166]: Context
+          - generic [ref=e167]: Direct signup
+      - generic [ref=e168]:
+        - generic [ref=e169]:
+          - img [ref=e171]
+          - generic [ref=e175]:
+            - heading "Business context" [level=3] [ref=e176]
+            - paragraph [ref=e177]: Account setup keeps the buyer path, selected plan, and attached context available.
+        - generic [ref=e178]:
+          - img [ref=e180]
+          - generic [ref=e183]:
+            - heading "Approval gates" [level=3] [ref=e184]
+            - paragraph [ref=e185]: Public signup never starts live lead sourcing, outreach, calls, or Telegram mutation.
+        - generic [ref=e186]:
+          - img [ref=e188]
+          - generic [ref=e190]:
+            - heading "Billing boundary" [level=3] [ref=e191]
+            - paragraph [ref=e192]: Paid checkout requires a verified email and keeps provider work separate from subscription setup.
+        - generic [ref=e193]:
+          - img [ref=e195]
+          - generic [ref=e198]:
+            - heading "Command posture" [level=3] [ref=e199]
+            - paragraph [ref=e200]: Telegram and AI-worker workflows remain read-only or proposal-based until configured and approved.
+    - generic [ref=e201]:
+      - paragraph [ref=e202]: Launch checklist
+      - generic [ref=e203]:
+        - generic [ref=e204]:
+          - img [ref=e205]
+          - generic [ref=e208]: Create or sign into a workspace account
+        - generic [ref=e209]:
+          - img [ref=e210]
+          - generic [ref=e213]: Choose a plan based on lead volume and review capacity
+        - generic [ref=e214]:
+          - img [ref=e215]
+          - generic [ref=e218]: Verify billing before paid subscription checkout
+        - generic [ref=e219]:
+          - img [ref=e220]
+          - generic [ref=e223]: Configure providers and approvals inside the dashboard

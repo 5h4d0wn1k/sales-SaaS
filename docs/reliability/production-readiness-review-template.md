@@ -33,7 +33,8 @@ Current release baseline for public beta:
   - get-started flow advances correctly
   - billing page loads and reflects current plan
   - dashboard loads for an authenticated user
-  - `/health` responds successfully
+  - web `/health` and API `/health` respond successfully for liveness
+  - web `/ready` and API `/ready` respond successfully for traffic readiness
 - Recommended targeted reruns:
   - billing unit tests for payment changes
   - E2E smoke for get-started, pricing, and dashboard when servers are running
@@ -41,7 +42,7 @@ Current release baseline for public beta:
 ## Operational Readiness
 
 - Dashboards in place: partial, not yet production-grade
-- Alerts in place: missing
+- Alerts in place: baseline scheduled readiness monitor and optional failure webhook when production URL/secrets are configured; richer paging still missing
 - Runbook linked: yes
 - Ownership clear: yes, single-owner model
 - On-call aware: not yet formalized
@@ -86,5 +87,6 @@ Current release baseline for public beta:
 
 - No repo-wide lint gate yet
 - Production observability and alerting are not complete
+- Scheduled readiness monitoring does not replace pager-backed incident response
 - Provider integrations beyond the current baseline are not fully mature
 - Demo-storage and Postgres behavior can diverge if not verified regularly

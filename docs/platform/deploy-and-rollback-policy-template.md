@@ -18,7 +18,7 @@ This policy covers the first public-beta release discipline for:
   - `npm run repo:audit`
 - For billing, auth, or schema changes:
   - targeted unit tests rerun
-  - manual smoke of `/get-started`, `/pricing`, `/billing`, `/dashboard`, and `/health`
+  - manual smoke of `/get-started`, `/pricing`, `/billing`, `/dashboard`, web `/health`, web `/ready`, API `/health`, and API `/ready`
 - Required eyes:
   - owner reviews diff and rollout notes before production promotion
 
@@ -39,7 +39,7 @@ This policy covers the first public-beta release discipline for:
 
 ## Abort Conditions
 
-- `/health` fails
+- web `/health`, web `/ready`, API `/health`, or API `/ready` fails
 - get-started or auth flow breaks
 - billing checkout creation fails
 - webhook verification errors spike

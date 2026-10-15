@@ -1,43 +1,73 @@
 import { Context, Next } from "hono";
 import { randomUUID } from "node:crypto";
+import { normalizeClientIpFromHeaders } from "../client-ip";
+import { applyRateLimitHeaders } from "../rate-limit-headers";
 import { createStorageAccessContext, getStorage } from "../storage";
 
-// Simple in-memory rate limiter (production should use Redis)
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 100;
+
+// Process-local rate limiter. Production deployments should pair this with edge/WAF
+// or durable rate limiting before horizontal scale.
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 export async function requestIdMiddleware(c: Context, next: Next) {
+  const startedAt = Date.now();
   const requestId = c.req.header("x-request-id")?.trim() || randomUUID();
   c.set("requestId", requestId);
+  c.set("requestStartedAt", startedAt);
 
-  await next();
-
-  c.res.headers.set("x-request-id", requestId);
+  try {
+    await next();
+  } finally {
+    const durationMs = Math.max(0, Date.now() - startedAt);
+    c.res.headers.set("x-request-id", requestId);
+    c.res.headers.set("x-response-time-ms", String(durationMs));
+    c.res.headers.set("Server-Timing", `app;dur=${durationMs}`);
+  }
 }
 
 export async function rateLimitMiddleware(c: Context, next: Next) {
   // Get user ID or IP for rate limiting
   const user = c.get("user") as { id?: string } | undefined;
-  const userId = user?.id ?? "anonymous";
-  const key = `rate:${userId}`;
+  const clientIp = normalizeClientIpFromHeaders({
+    forwardedFor: c.req.header("x-forwarded-for"),
+    realIp: c.req.header("x-real-ip"),
+    cloudflareConnectingIp: c.req.header("cf-connecting-ip"),
+  });
+  const key = user?.id ? `rate:user:${user.id}` : `rate:ip:${clientIp}`;
   const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute
-  const maxRequests = 100; // per minute
-
   const record = rateLimitStore.get(key);
+  let remaining = RATE_LIMIT_MAX_REQUESTS - 1;
+  let resetTime = now + RATE_LIMIT_WINDOW_MS;
 
   if (!record || now > record.resetTime) {
     rateLimitStore.set(key, {
       count: 1,
-      resetTime: now + windowMs,
+      resetTime,
     });
   } else {
-    if (record.count >= maxRequests) {
-      return c.json(
+    resetTime = record.resetTime;
+
+    if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+      const response = c.json(
         { error: "Too many requests. Please try again later." },
-        429
+        429,
       );
+      const retryAfterSeconds = applyRateLimitHeaders(response.headers, {
+        limit: RATE_LIMIT_MAX_REQUESTS,
+        remaining: 0,
+        resetAt: resetTime,
+        now,
+      });
+
+      response.headers.set("Retry-After", String(retryAfterSeconds));
+
+      return response;
     }
+
     record.count++;
+    remaining = RATE_LIMIT_MAX_REQUESTS - record.count;
   }
 
   // Clean old entries periodically
@@ -50,6 +80,15 @@ export async function rateLimitMiddleware(c: Context, next: Next) {
   }
 
   await next();
+
+  if (!c.res.headers.has("RateLimit-Limit")) {
+    applyRateLimitHeaders(c.res.headers, {
+      limit: RATE_LIMIT_MAX_REQUESTS,
+      remaining,
+      resetAt: resetTime,
+      now,
+    });
+  }
 }
 
 export async function auditLogMiddleware(c: Context, next: Next) {
@@ -84,8 +123,11 @@ export async function auditLogMiddleware(c: Context, next: Next) {
 
   if (isSensitive || user) {
     try {
-      // Get IP from headers
-      const ip = c.req.header("x-forwarded-for") ?? c.req.header("x-real-ip") ?? "unknown";
+      const ip = normalizeClientIpFromHeaders({
+        forwardedFor: c.req.header("x-forwarded-for"),
+        realIp: c.req.header("x-real-ip"),
+        cloudflareConnectingIp: c.req.header("cf-connecting-ip"),
+      });
 
       await storage.audit({
         organizationId,

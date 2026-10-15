@@ -60,10 +60,12 @@ These SLOs protect the first public SaaS/AaaS workflows that must not embarrass 
 ## Instrumentation Expectations
 
 - Minimum dashboards:
-  - API health and route latency
+  - API liveness, readiness, and route latency
   - auth callback failures
   - billing checkout initiation and webhook verification
   - dashboard load failures
+- Minimum scheduled checks:
+  - production web/API liveness and readiness monitor
 - Minimum logs:
   - subscription changes
   - provider event verification results

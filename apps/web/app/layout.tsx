@@ -2,26 +2,44 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { AnimatedBackground } from "../components/ui/animated-background";
 import { AppSessionProvider } from "../components/session-provider";
+import {
+  getDefaultOpenGraphImage,
+  getDefaultTwitterImage,
+  getSiteUrl,
+  siteConfig,
+} from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Winrate — A reviewable workspace for modern outbound operations.",
-  description:
-    "Winrate brings onboarding, lead planning, approval-gated outreach, activity tracking, and billing into one workspace.",
-  keywords: [
-    "sales automation",
-    "AI sales",
-    "automated outreach",
-    "lead generation",
-    "sales platform",
-    "startup sales",
-    "sales as a service",
-  ],
+  metadataBase: getSiteUrl(),
+  applicationName: siteConfig.name,
+  manifest: "/manifest.webmanifest",
+  title: {
+    default: "Winrate | AI-assisted sales workspace",
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  keywords: siteConfig.keywords,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Winrate — Reviewable outbound operations.",
-    description:
-      "A workspace for onboarding, lead planning, campaign review, activity tracking, and billing.",
+    title: "Winrate | AI-assisted sales workspace",
+    description: siteConfig.description,
+    url: "/",
+    siteName: siteConfig.name,
     type: "website",
+    images: [getDefaultOpenGraphImage()],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Winrate | AI-assisted sales workspace",
+    description: siteConfig.description,
+    images: [getDefaultTwitterImage()],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -30,14 +30,23 @@ Turn the repo from a promising foundation into a trustworthy, operable, revenue-
 ## Phase 4: Controlled channel expansion
 
 - expand only the channels that can be supported with guardrails and economics
-- keep voice, SMS, and LinkedIn-like surfaces explicitly gated until policy, provider, and cost posture are strong enough
-- treat content / SEO workflow as a higher-leverage adjacent expansion area once implementation exists
+- use outbound channel readiness to keep email/call live gates, SMS roadmap blockers, and LinkedIn-like review-only posture visible until policy, provider, quota, and cost posture are strong enough
+- graduate the beta content / SEO opportunity engine only after review quality, conversion value, and publishing governance are measured
 
 ## Phase 5: Enterprise governance and deeper automation
 
 - add richer approvals, auditability, settings, and reporting
 - improve provider management and integrations
 - expand automation only where trust, entitlement, and compliance posture are proven
+- harden the AI command center, beta Telegram read-only control surface, and AI workforce permission model as governed layers rather than ad hoc automations
+
+## Beyond year one: AI operating system expansion
+
+- introduce permissioned AI workers for revenue operations, customer operations, marketing support, executive assistance, HR workflow support, and finance visibility
+- add a command center that can summarize workspace state, recommend high-impact actions, and route approvals
+- expand Telegram and other chat surfaces beyond read-only commands only after command authorization, replay protection, audit logging, and emergency disable controls are mature
+- expand toward CRM, HRM, ERP, social, support, ads, analytics, calendar, and accounting integrations through a governed integration marketplace
+- keep legal, finance, employment, and compliance decisions human-owned and auditable
 
 ## Explicit upgrade triggers
 

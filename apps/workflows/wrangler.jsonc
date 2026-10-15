@@ -10,7 +10,7 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "sales-workflows",
-  "account_id": "e251f79bafcd5a50d2964251a5e53450",
+  "account_id": "07eae60a75b06661ea752a78cdf51565",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-03",
   "compatibility_flags": [

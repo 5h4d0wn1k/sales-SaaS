@@ -5,6 +5,7 @@ export interface AppVariables {
   user: AuthUser;
   storage: SalesStorage;
   requestId: string;
+  requestStartedAt: number;
 }
 
 export function getStorageContextFromUser(user?: Pick<AuthUser, "organizationId" | "workspaceId">) {

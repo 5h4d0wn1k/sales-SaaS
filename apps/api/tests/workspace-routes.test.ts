@@ -71,8 +71,8 @@ async function loadAppWithWorkspaceMocks(options: {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("../src/middleware/auth");
-  vi.unmock("../src/tenant-access");
+  vi.doUnmock("../src/middleware/auth");
+  vi.doUnmock("../src/tenant-access");
 });
 
 describe("workspace account routes", () => {

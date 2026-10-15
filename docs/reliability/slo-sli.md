@@ -75,7 +75,8 @@ These SLOs protect the launch-critical user journeys for the current Sales AaaS 
 
 ## Instrumentation expectations
 
-- route health and latency
+- route liveness, readiness, and latency using API `x-response-time-ms` / `Server-Timing`
+- production readiness failures from API `/ready` and web `/ready`
 - auth and lifecycle errors
 - billing checkout and webhook results
 - approval denials and dispatch results

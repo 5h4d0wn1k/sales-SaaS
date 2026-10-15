@@ -20,6 +20,16 @@ import {
   issueEmailVerification,
   issuePasswordReset,
 } from "../auth-lifecycle";
+import {
+  checkAuthRateLimit,
+  normalizeAuthClientIp,
+  type AuthRateLimitScope,
+} from "../auth-abuse";
+import { applyRateLimitHeaders } from "../rate-limit-headers";
+import {
+  invalidJsonPayloadResponse,
+  isJsonParseError,
+} from "../middleware/error-boundary";
 
 export const authRoutes = new Hono<{ Bindings: any }>();
 const bcrypt = "default" in bcryptModule ? bcryptModule.default : bcryptModule;
@@ -31,9 +41,43 @@ const registrationSchema = z.object({
   name: z.string().trim().min(2).max(120),
 });
 
+function authRateLimitResponse(c: Context, scope: AuthRateLimitScope) {
+  const clientIp = normalizeAuthClientIp(
+    c.req.header("x-forwarded-for"),
+    c.req.header("x-real-ip"),
+    c.req.header("cf-connecting-ip"),
+  );
+  const result = checkAuthRateLimit(scope, clientIp);
+
+  if (result.allowed) {
+    return null;
+  }
+
+  const response = c.json(
+    {
+      error: "Too many account requests. Please try again later.",
+      retryAfterSeconds: result.retryAfterSeconds,
+    },
+    { status: 429 },
+  );
+  const retryAfterSeconds = applyRateLimitHeaders(response.headers, {
+    limit: result.limit,
+    remaining: 0,
+    resetAt: result.resetAt,
+  });
+  response.headers.set("Retry-After", String(retryAfterSeconds));
+
+  return response;
+}
+
 // Public registration endpoint
 authRoutes.post("/register", async (c: Context) => {
   try {
+    const rateLimitResponse = authRateLimitResponse(c, "register");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const payload = await c.req.json();
     const { email, password, name } = registrationSchema.parse(payload);
 
@@ -95,6 +139,10 @@ authRoutes.post("/register", async (c: Context) => {
       { status: 201 }
     );
   } catch (error) {
+    if (isJsonParseError(error)) {
+      return invalidJsonPayloadResponse(c, "Invalid registration JSON payload.");
+    }
+
     if (error instanceof z.ZodError) {
       const issue = error.issues[0];
       return c.json(
@@ -113,7 +161,12 @@ authRoutes.post("/register", async (c: Context) => {
 
 authRoutes.post("/verify-email/request", async (c: Context) => {
   try {
-    const payload = requestEmailVerificationInputSchema.parse(await c.req.json().catch(() => ({})));
+    const rateLimitResponse = authRateLimitResponse(c, "email_verification_request");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
+    const payload = requestEmailVerificationInputSchema.parse(await c.req.json());
     if (!payload.email) {
       return c.json({ error: "Email address is required" }, { status: 400 });
     }
@@ -149,6 +202,10 @@ authRoutes.post("/verify-email/request", async (c: Context) => {
       }),
     );
   } catch (error) {
+    if (isJsonParseError(error)) {
+      return invalidJsonPayloadResponse(c, "Invalid verification request JSON payload.");
+    }
+
     if (error instanceof z.ZodError) {
       const issue = error.issues[0];
       return c.json(
@@ -164,6 +221,11 @@ authRoutes.post("/verify-email/request", async (c: Context) => {
 
 authRoutes.post("/verify-email/confirm", async (c: Context) => {
   try {
+    const rateLimitResponse = authRateLimitResponse(c, "email_verification_confirm");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const payload = confirmEmailVerificationInputSchema.parse(await c.req.json());
     const result = await consumeEmailVerification(payload.email, payload.token);
 
@@ -179,6 +241,10 @@ authRoutes.post("/verify-email/confirm", async (c: Context) => {
       }),
     );
   } catch (error) {
+    if (isJsonParseError(error)) {
+      return invalidJsonPayloadResponse(c, "Invalid verification confirmation JSON payload.");
+    }
+
     if (error instanceof z.ZodError) {
       const issue = error.issues[0];
       return c.json(
@@ -194,6 +260,11 @@ authRoutes.post("/verify-email/confirm", async (c: Context) => {
 
 authRoutes.post("/password-reset/request", async (c: Context) => {
   try {
+    const rateLimitResponse = authRateLimitResponse(c, "password_reset_request");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const payload = requestPasswordResetInputSchema.parse(await c.req.json());
     const user = await findLifecycleUserByEmail(payload.email);
     let delivery: { mode: "email" | "preview" | "unavailable"; previewUrl?: string } | undefined;
@@ -216,6 +287,10 @@ authRoutes.post("/password-reset/request", async (c: Context) => {
       }),
     );
   } catch (error) {
+    if (isJsonParseError(error)) {
+      return invalidJsonPayloadResponse(c, "Invalid password reset request JSON payload.");
+    }
+
     if (error instanceof z.ZodError) {
       const issue = error.issues[0];
       return c.json(
@@ -231,6 +306,11 @@ authRoutes.post("/password-reset/request", async (c: Context) => {
 
 authRoutes.post("/password-reset/confirm", async (c: Context) => {
   try {
+    const rateLimitResponse = authRateLimitResponse(c, "password_reset_confirm");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const payload = confirmPasswordResetInputSchema.parse(await c.req.json());
     const passwordHash = await hash(payload.password, 12);
     const result = await consumePasswordReset({
@@ -250,6 +330,10 @@ authRoutes.post("/password-reset/confirm", async (c: Context) => {
       }),
     );
   } catch (error) {
+    if (isJsonParseError(error)) {
+      return invalidJsonPayloadResponse(c, "Invalid password reset confirmation JSON payload.");
+    }
+
     if (error instanceof z.ZodError) {
       const issue = error.issues[0];
       return c.json(

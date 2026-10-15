@@ -1,0 +1,360 @@
+- generic [active] [ref=e1]:
+  - banner:
+    - navigation [ref=e2]:
+      - generic [ref=e4]:
+        - link "home" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - generic [ref=e10]: Winrate
+        - list [ref=e12]:
+          - listitem [ref=e13]:
+            - link "Solutions" [ref=e14] [cursor=pointer]:
+              - /url: /solutions
+          - listitem [ref=e15]:
+            - link "Platform" [ref=e16] [cursor=pointer]:
+              - /url: /ai-sales-automation-platform
+          - listitem [ref=e17]:
+            - link "AI SDR" [ref=e18] [cursor=pointer]:
+              - /url: /ai-sdr-software
+          - listitem [ref=e19]:
+            - link "Lead Gen" [ref=e20] [cursor=pointer]:
+              - /url: /ai-lead-generation-software
+          - listitem [ref=e21]:
+            - link "Outbound" [ref=e22] [cursor=pointer]:
+              - /url: /ai-outbound-sales-automation
+          - listitem [ref=e23]:
+            - link "Meetings" [ref=e24] [cursor=pointer]:
+              - /url: /ai-sales-meeting-scheduler
+          - listitem [ref=e25]:
+            - link "Telegram" [ref=e26] [cursor=pointer]:
+              - /url: /telegram-sales-command-center
+          - listitem [ref=e27]:
+            - link "Compare" [ref=e28] [cursor=pointer]:
+              - /url: /compare-sales-tools
+          - listitem [ref=e29]:
+            - link "Integrations" [ref=e30] [cursor=pointer]:
+              - /url: /integrations
+          - listitem [ref=e31]:
+            - link "Resources" [ref=e32] [cursor=pointer]:
+              - /url: /resources
+          - listitem [ref=e33]:
+            - link "Blueprint" [ref=e34] [cursor=pointer]:
+              - /url: /sales-blueprint
+          - listitem [ref=e35]:
+            - link "ROI" [ref=e36] [cursor=pointer]:
+              - /url: /roi-calculator
+          - listitem [ref=e37]:
+            - link "Trust" [ref=e38] [cursor=pointer]:
+              - /url: /trust
+          - listitem [ref=e39]:
+            - link "Pricing" [ref=e40] [cursor=pointer]:
+              - /url: /pricing
+        - generic [ref=e41]:
+          - link "Contact" [ref=e42] [cursor=pointer]:
+            - /url: /contact
+          - link "Get started" [ref=e43] [cursor=pointer]:
+            - /url: /get-started
+  - main [ref=e44]:
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - paragraph [ref=e50]: Public Sales Blueprint
+              - heading "Score the sales context before lead sourcing or outreach starts." [level=1] [ref=e51]
+              - paragraph [ref=e52]: Model the ICP, targets, source channels, outreach channels, and guardrails that a governed Winrate workspace needs before scaling pipeline work.
+            - generic [ref=e53]:
+              - img [ref=e54]
+              - text: 100/100
+          - generic [ref=e57]:
+            - button "Founder-led team Validate repeatable pipeline before hiring a larger RevOps stack." [ref=e58]:
+              - text: Founder-led team
+              - generic [ref=e59]: Validate repeatable pipeline before hiring a larger RevOps stack.
+            - button "Agency pipeline desk Keep client-facing lead work structured, auditable, and easier to explain." [ref=e60]:
+              - text: Agency pipeline desk
+              - generic [ref=e61]: Keep client-facing lead work structured, auditable, and easier to explain.
+            - button "SMB sales team Move from scattered sales tasks into a governed revenue workflow." [ref=e62]:
+              - text: SMB sales team
+              - generic [ref=e63]: Move from scattered sales tasks into a governed revenue workflow.
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - text: Industry or market
+              - textbox "Industry or market" [ref=e66]: B2B SaaS
+            - generic [ref=e67]:
+              - text: Regions
+              - textbox "Regions" [ref=e68]:
+                - /placeholder: US, UK, India
+                - text: US, UK
+          - generic [ref=e69]:
+            - text: Target audience
+            - textbox "Target audience" [ref=e70]: Founder-led software teams with 10 to 100 employees
+          - generic [ref=e71]:
+            - generic [ref=e72]:
+              - generic [ref=e73]:
+                - generic [ref=e74]: Monthly lead target
+                - generic [ref=e75]: "250"
+              - slider "Monthly lead target slider" [ref=e76]: "251"
+              - spinbutton "Monthly lead target" [ref=e77]: "250"
+            - generic [ref=e78]:
+              - generic [ref=e79]:
+                - generic [ref=e80]: Meeting target
+                - generic [ref=e81]: "20"
+              - slider "Meeting target slider" [ref=e82]: "20"
+              - spinbutton "Meeting target" [ref=e83]: "20"
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - generic [ref=e86]: Average contract value
+                - generic [ref=e87]: $8,000
+              - slider "Average contract value slider" [ref=e88]: "8000"
+              - spinbutton "Average contract value" [ref=e89]: "8000"
+          - generic [ref=e90]:
+            - group "Source channels" [ref=e91]:
+              - generic [ref=e92]: Source channels
+              - generic [ref=e93]:
+                - generic [ref=e94]:
+                  - generic [ref=e95]:
+                    - checkbox "Website signals available" [checked] [ref=e96]
+                    - text: Website signals
+                  - generic [ref=e97]: available
+                - generic [ref=e98]:
+                  - generic [ref=e99]:
+                    - checkbox "Search results available" [checked] [ref=e100]
+                    - text: Search results
+                  - generic [ref=e101]: available
+                - generic [ref=e102]:
+                  - generic [ref=e103]:
+                    - checkbox "Directories available" [checked] [ref=e104]
+                    - text: Directories
+                  - generic [ref=e105]: available
+                - generic [ref=e106]:
+                  - generic [ref=e107]:
+                    - checkbox "Content demand guarded" [ref=e108]
+                    - text: Content demand
+                  - generic [ref=e109]: guarded
+                - generic [ref=e110]:
+                  - generic [ref=e111]:
+                    - checkbox "CRM import roadmap" [ref=e112]
+                    - text: CRM import
+                  - generic [ref=e113]: roadmap
+            - group "Outreach channels" [ref=e114]:
+              - generic [ref=e115]: Outreach channels
+              - generic [ref=e116]:
+                - generic [ref=e117]:
+                  - generic [ref=e118]:
+                    - checkbox "Email available" [checked] [ref=e119]
+                    - text: Email
+                  - generic [ref=e120]: available
+                - generic [ref=e121]:
+                  - generic [ref=e122]:
+                    - checkbox "LinkedIn review guarded" [checked] [ref=e123]
+                    - text: LinkedIn review
+                  - generic [ref=e124]: guarded
+                - generic [ref=e125]:
+                  - generic [ref=e126]:
+                    - checkbox "Calls guarded" [ref=e127]
+                    - text: Calls
+                  - generic [ref=e128]: guarded
+                - generic [ref=e129]:
+                  - generic [ref=e130]:
+                    - checkbox "SMS roadmap" [ref=e131]
+                    - text: SMS
+                  - generic [ref=e132]: roadmap
+          - group "Guardrails and constraints" [ref=e133]:
+            - generic [ref=e134]: Guardrails and constraints
+            - generic [ref=e135]:
+              - generic [ref=e136]:
+                - checkbox "suppression checks" [checked] [ref=e137]
+                - generic [ref=e138]: suppression checks
+              - generic [ref=e139]:
+                - checkbox "human approval before first outreach" [checked] [ref=e140]
+                - generic [ref=e141]: human approval before first outreach
+              - generic [ref=e142]:
+                - checkbox "sender reputation limits" [ref=e143]
+                - generic [ref=e144]: sender reputation limits
+              - generic [ref=e145]:
+                - checkbox "regional consent review" [ref=e146]
+                - generic [ref=e147]: regional consent review
+              - generic [ref=e148]:
+                - checkbox "no cold SMS without consent" [ref=e149]
+                - generic [ref=e150]: no cold SMS without consent
+              - generic [ref=e151]:
+                - checkbox "provider readiness required" [ref=e152]
+                - generic [ref=e153]: provider readiness required
+        - complementary [ref=e154]:
+          - generic [ref=e155]:
+            - generic [ref=e156]:
+              - generic [ref=e157]:
+                - paragraph [ref=e158]: Blueprint readiness
+                - paragraph [ref=e159]: 100/100
+              - img [ref=e160]
+            - paragraph [ref=e164]: Request a rollout review with provider readiness and approval gates attached.
+            - generic [ref=e165]:
+              - generic [ref=e166]:
+                - paragraph [ref=e167]: Pipeline modeled
+                - paragraph [ref=e168]: $160,000
+              - generic [ref=e169]:
+                - paragraph [ref=e170]: Lead to meeting
+                - paragraph [ref=e171]: 8%
+              - generic [ref=e172]:
+                - paragraph [ref=e173]: Mode
+                - paragraph [ref=e174]: approval gated
+              - generic [ref=e175]:
+                - paragraph [ref=e176]: Level
+                - paragraph [ref=e177]: rollout ready
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - generic [ref=e180]:
+                - paragraph [ref=e181]: Commercial fit
+                - heading "Plan and rollout advisory" [level=2] [ref=e182]
+              - img [ref=e183]
+            - generic [ref=e185]:
+              - generic [ref=e186]:
+                - generic [ref=e187]:
+                  - paragraph [ref=e188]: Recommended SaaS plan
+                  - paragraph [ref=e189]: Starter / $49/mo
+                - paragraph [ref=e190]: Starter is the first shared plan that can cover the lead target and reviewed dispatch estimate.
+              - generic [ref=e191]:
+                - generic [ref=e192]:
+                  - paragraph [ref=e193]: Reviewed dispatch estimate
+                  - paragraph [ref=e194]: 80/mo
+                - paragraph [ref=e195]: Estimated operator-reviewed dispatch posture, not an automatic send quota.
+              - generic [ref=e196]:
+                - generic [ref=e197]:
+                  - paragraph [ref=e198]: Voice posture
+                  - paragraph [ref=e199]: Not selected
+                - paragraph [ref=e200]: Calls still require provider readiness, eligibility, and approval controls.
+            - generic [ref=e201]:
+              - generic [ref=e202]:
+                - paragraph [ref=e203]: Provider budget pressure
+                - generic [ref=e204]: Medium pressure
+              - paragraph [ref=e205]: Starter includes $15/mo provider-cost budget; provider invoices, source quality, and consent posture still need review.
+            - generic [ref=e207]:
+              - img [ref=e208]
+              - generic [ref=e212]:
+                - paragraph [ref=e213]: Operator Assist
+                - paragraph [ref=e214]: Agencies or SMB teams that need review cadence while the product matures
+            - generic [ref=e215]:
+              - paragraph [ref=e216]: Next steps
+              - list [ref=e217]:
+                - listitem [ref=e218]:
+                  - generic [ref=e219]: "1"
+                  - generic [ref=e220]: Use Starter as the plan-fit starting point for 250 leads/mo and 80 reviewed dispatches/mo.
+                - listitem [ref=e221]:
+                  - generic [ref=e222]: "2"
+                  - generic [ref=e223]: Review $15/mo provider-cost budget before live source expansion.
+                - listitem [ref=e224]:
+                  - generic [ref=e225]: "3"
+                  - generic [ref=e226]: Scope Operator Assist only if the team wants paid rollout support separate from the software subscription.
+                - listitem [ref=e227]:
+                  - generic [ref=e228]: "4"
+                  - generic [ref=e229]: Create a workspace Sales Blueprint and route first outreach through approval gates.
+            - paragraph [ref=e230]: Commercial recommendations are guidance for review; they do not start checkout, provider work, lead sourcing, outreach, billing changes, AI execution, or Telegram-controlled mutation.
+          - generic [ref=e231]:
+            - generic [ref=e232]:
+              - paragraph [ref=e233]: Source plan
+              - img [ref=e234]
+            - generic [ref=e237]:
+              - generic [ref=e238]:
+                - generic [ref=e239]:
+                  - paragraph [ref=e240]: Website signals
+                  - generic [ref=e241]: available
+                - paragraph [ref=e242]: Use site copy, offers, regions, and proof points as source evidence.
+              - generic [ref=e243]:
+                - generic [ref=e244]:
+                  - paragraph [ref=e245]: Search results
+                  - generic [ref=e246]: available
+                - paragraph [ref=e247]: Use search terms to discover relevant account and buyer signals.
+              - generic [ref=e248]:
+                - generic [ref=e249]:
+                  - paragraph [ref=e250]: Directories
+                  - generic [ref=e251]: available
+                - paragraph [ref=e252]: Use directories with dedupe, quality review, and rejection reasons.
+          - generic [ref=e253]:
+            - generic [ref=e254]:
+              - paragraph [ref=e255]: Approval gates
+              - img [ref=e256]
+            - generic [ref=e260]:
+              - generic [ref=e261]: first outreach
+              - generic [ref=e262]: new source channels
+              - generic [ref=e263]: phone calls
+              - generic [ref=e264]: provider changes
+              - generic [ref=e265]: suppression overrides
+          - generic [ref=e267]:
+            - img [ref=e268]
+            - generic [ref=e271]:
+              - heading "Turn this into a governed workspace plan." [level=2] [ref=e272]
+              - paragraph [ref=e273]: Attach this score to intake so the first review can focus on ICP, source evidence, provider readiness, and a realistic launch sequence.
+              - generic [ref=e274]:
+                - link "Request blueprint review" [ref=e275] [cursor=pointer]:
+                  - /url: /contact?intent=managed_services&utm_source=sales_blueprint_tool&utm_medium=owned_tool&utm_campaign=blueprint_readiness&monthlyLeadGoal=250&budgetRange=5000_plus&blueprintSegment=founder&blueprintIndustry=B2B+SaaS&blueprintAudience=Founder-led+software+teams+with+10+to+100+employees&blueprintMeetings=20&blueprintAcv=8000&blueprintReadiness=100&blueprintLevel=rollout_ready&blueprintSources=website%2Csearch%2Cdirectory&blueprintOutreach=email%2Clinkedin_review&blueprintRegions=US%2CUK&blueprintConstraints=suppression+checks%2Chuman+approval+before+first+outreach&blueprintPlan=starter&managedPackage=operator-assist&managedIntent=blueprint_commercial_fit
+                  - text: Request blueprint review
+                  - img [ref=e276]
+                - link "Start workspace" [ref=e278] [cursor=pointer]:
+                  - /url: /get-started?intent=managed_services&utm_source=sales_blueprint_tool&utm_medium=owned_tool&utm_campaign=blueprint_readiness&monthlyLeadGoal=250&budgetRange=5000_plus&blueprintSegment=founder&blueprintIndustry=B2B+SaaS&blueprintAudience=Founder-led+software+teams+with+10+to+100+employees&blueprintMeetings=20&blueprintAcv=8000&blueprintReadiness=100&blueprintLevel=rollout_ready&blueprintSources=website%2Csearch%2Cdirectory&blueprintOutreach=email%2Clinkedin_review&blueprintRegions=US%2CUK&blueprintConstraints=suppression+checks%2Chuman+approval+before+first+outreach&blueprintPlan=starter&managedPackage=operator-assist&managedIntent=blueprint_commercial_fit&plan=starter
+      - generic [ref=e279]:
+        - article [ref=e280]:
+          - img [ref=e282]
+          - heading "What this builds" [level=2] [ref=e286]
+          - paragraph [ref=e287]: A structured readiness view of ICP clarity, lead targets, source channels, outreach channels, approval gates, and rollout gaps.
+        - article [ref=e288]:
+          - img [ref=e290]
+          - heading "What happens next" [level=2] [ref=e293]
+          - paragraph [ref=e294]: The blueprint can seed a contact review or workspace setup where source-run evidence, dedupe, and lead quality are reviewed before outreach.
+        - article [ref=e295]:
+          - img [ref=e297]
+          - heading "What stays guarded" [level=2] [ref=e300]
+          - paragraph [ref=e301]: It keeps source planning, meeting assumptions, outreach, and compliance posture visible without promising outcomes across every channel and region.
+      - generic [ref=e303]:
+        - generic [ref=e304]:
+          - paragraph [ref=e305]: Workspace handoff
+          - heading "Save the real version inside an authenticated workspace." [level=2] [ref=e306]
+          - paragraph [ref=e307]: The public builder is a planning surface. The workspace Sales Blueprint is where owners can persist ICP details, targets, compliance notes, approval policy, and readiness gaps for downstream lead and outreach workflows.
+        - link "Start workspace" [ref=e308] [cursor=pointer]:
+          - /url: /get-started
+          - text: Start workspace
+          - img [ref=e309]
+  - contentinfo [ref=e311]:
+    - generic [ref=e312]:
+      - generic [ref=e313]:
+        - img [ref=e315]
+        - generic [ref=e317]: Winrate
+      - generic [ref=e318]:
+        - link "Solutions" [ref=e319] [cursor=pointer]:
+          - /url: /solutions
+        - link "Platform" [ref=e320] [cursor=pointer]:
+          - /url: /ai-sales-automation-platform
+        - link "AI SDR" [ref=e321] [cursor=pointer]:
+          - /url: /ai-sdr-software
+        - link "Lead Gen" [ref=e322] [cursor=pointer]:
+          - /url: /ai-lead-generation-software
+        - link "Outbound" [ref=e323] [cursor=pointer]:
+          - /url: /ai-outbound-sales-automation
+        - link "Meetings" [ref=e324] [cursor=pointer]:
+          - /url: /ai-sales-meeting-scheduler
+        - link "Telegram" [ref=e325] [cursor=pointer]:
+          - /url: /telegram-sales-command-center
+        - link "Compare" [ref=e326] [cursor=pointer]:
+          - /url: /compare-sales-tools
+        - link "Integrations" [ref=e327] [cursor=pointer]:
+          - /url: /integrations
+        - link "Trust" [ref=e328] [cursor=pointer]:
+          - /url: /trust
+        - link "Resources" [ref=e329] [cursor=pointer]:
+          - /url: /resources
+        - link "Blueprint" [ref=e330] [cursor=pointer]:
+          - /url: /sales-blueprint
+        - link "ROI" [ref=e331] [cursor=pointer]:
+          - /url: /roi-calculator
+        - link "Managed" [ref=e332] [cursor=pointer]:
+          - /url: /managed-services
+        - link "Pricing" [ref=e333] [cursor=pointer]:
+          - /url: /pricing
+        - link "Privacy" [ref=e334] [cursor=pointer]:
+          - /url: /privacy
+        - link "Terms" [ref=e335] [cursor=pointer]:
+          - /url: /terms
+        - link "Contact" [ref=e336] [cursor=pointer]:
+          - /url: /contact
+        - link "Get started" [ref=e337] [cursor=pointer]:
+          - /url: /get-started
+      - paragraph [ref=e338]: © 2026 Winrate. Built for builders.

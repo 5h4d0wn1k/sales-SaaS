@@ -4,6 +4,7 @@ import {
   db,
   organizationMemberships,
   organizations,
+  sessions,
   subscriptions,
   users,
   workspaceInvitations,
@@ -71,6 +72,20 @@ export interface CreateWorkspaceInvitationResult {
   delivery: InvitationEmailDelivery;
 }
 
+export interface WorkspaceTeamMemberMutationResult {
+  member: WorkspaceTeamMemberSummary;
+}
+
+export interface WorkspaceTeamMemberRemovalResult {
+  removedUserId: string;
+  removedEmail: string;
+}
+
+export interface WorkspaceOwnershipTransferResult {
+  transferredToUserId: string;
+  transferredToEmail: string;
+}
+
 export interface TeamActorContext extends ResolvedTenantAccess {
   id: string;
   email: string;
@@ -130,6 +145,14 @@ function rolePriority(role: MembershipRole) {
 
 function maxRole(left: MembershipRole, right: MembershipRole): MembershipRole {
   return rolePriority(left) >= rolePriority(right) ? left : right;
+}
+
+function highestRole(roles: MembershipRole[]): MembershipRole | null {
+  if (roles.length === 0) {
+    return null;
+  }
+
+  return roles.reduce((current, role) => maxRole(current, role));
 }
 
 async function ensureOrganizationWorkspace(
@@ -256,6 +279,170 @@ async function loadWorkspaceMemberships(
     )
     .where(eq(workspaceMemberships.userId, userId))
     .orderBy(asc(organizations.createdAt), asc(workspaces.createdAt), asc(workspaces.id));
+}
+
+async function loadOrganizationWorkspaceRolesForUser(
+  executor: DatabaseExecutor,
+  organizationId: string,
+  userId: string,
+) {
+  return executor
+    .select({
+      workspaceId: workspaceMemberships.workspaceId,
+      role: workspaceMemberships.role,
+    })
+    .from(workspaceMemberships)
+    .innerJoin(workspaces, eq(workspaceMemberships.workspaceId, workspaces.id))
+    .where(
+      and(
+        eq(workspaceMemberships.userId, userId),
+        eq(workspaces.organizationId, organizationId),
+      ),
+    )
+    .orderBy(asc(workspaces.createdAt), asc(workspaces.id));
+}
+
+async function countOrganizationOwners(
+  executor: DatabaseExecutor,
+  organizationId: string,
+) {
+  const owners = await executor
+    .select({
+      id: organizationMemberships.id,
+    })
+    .from(organizationMemberships)
+    .where(
+      and(
+        eq(organizationMemberships.organizationId, organizationId),
+        eq(organizationMemberships.role, "owner"),
+      ),
+    );
+
+  return owners.length;
+}
+
+async function invalidateUserSessions(
+  executor: DatabaseExecutor,
+  userId: string,
+  now: Date,
+) {
+  await executor
+    .update(users)
+    .set({
+      sessionInvalidBefore: now,
+      updatedAt: now,
+    })
+    .where(eq(users.id, userId));
+
+  await executor.delete(sessions).where(eq(sessions.userId, userId));
+}
+
+async function reconcileLegacyTenantState(
+  executor: DatabaseExecutor,
+  userId: string,
+) {
+  const memberships = await loadWorkspaceMemberships(executor, userId);
+  const [user] = await executor
+    .select({
+      activeWorkspaceId: users.activeWorkspaceId,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (memberships.length === 0) {
+    await executor
+      .update(users)
+      .set({
+        organizationId: null,
+        activeWorkspaceId: null,
+        role: "member",
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    return;
+  }
+
+  const activeMembership =
+    memberships.find((membership) => membership.workspaceId === user?.activeWorkspaceId) ?? null;
+  const fallbackMembership = activeMembership ?? memberships[0]!;
+
+  await executor
+    .update(users)
+    .set({
+      organizationId: fallbackMembership.organizationId,
+      activeWorkspaceId:
+        activeMembership?.workspaceId ?? (memberships.length === 1 ? fallbackMembership.workspaceId : null),
+      role: coerceMembershipRole(fallbackMembership.role),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+}
+
+type WorkspaceTeamMemberRecord = {
+  membershipId: string;
+  organizationMembershipId: string;
+  userId: string;
+  email: string;
+  displayName: string | null;
+  workspaceRole: string;
+  organizationRole: string;
+  activeWorkspaceId: string | null;
+};
+
+async function loadWorkspaceTeamMemberRecord(
+  executor: DatabaseExecutor,
+  actor: TeamActorContext,
+  userId: string,
+): Promise<WorkspaceTeamMemberRecord | null> {
+  const [member] = await executor
+    .select({
+      membershipId: workspaceMemberships.id,
+      organizationMembershipId: organizationMemberships.id,
+      userId: users.id,
+      email: users.email,
+      displayName: users.displayName,
+      workspaceRole: workspaceMemberships.role,
+      organizationRole: organizationMemberships.role,
+      activeWorkspaceId: users.activeWorkspaceId,
+    })
+    .from(workspaceMemberships)
+    .innerJoin(users, eq(workspaceMemberships.userId, users.id))
+    .innerJoin(workspaces, eq(workspaceMemberships.workspaceId, workspaces.id))
+    .innerJoin(
+      organizationMemberships,
+      and(
+        eq(organizationMemberships.userId, users.id),
+        eq(organizationMemberships.organizationId, workspaces.organizationId),
+      ),
+    )
+    .where(
+      and(
+        eq(workspaceMemberships.workspaceId, actor.workspaceId),
+        eq(workspaces.organizationId, actor.organizationId),
+        eq(users.id, userId),
+      ),
+    )
+    .limit(1);
+
+  return member ?? null;
+}
+
+function toWorkspaceTeamMemberSummary(
+  record: WorkspaceTeamMemberRecord,
+  actor: TeamActorContext,
+  overrides?: Partial<WorkspaceTeamMemberSummary>,
+): WorkspaceTeamMemberSummary {
+  return {
+    userId: overrides?.userId ?? record.userId,
+    email: overrides?.email ?? record.email,
+    displayName: overrides?.displayName ?? record.displayName,
+    workspaceRole: overrides?.workspaceRole ?? coerceMembershipRole(record.workspaceRole),
+    organizationRole: overrides?.organizationRole ?? coerceMembershipRole(record.organizationRole),
+    activeWorkspace: overrides?.activeWorkspace ?? record.activeWorkspaceId === actor.workspaceId,
+    currentUser: overrides?.currentUser ?? record.userId === actor.id,
+  };
 }
 
 async function persistActiveWorkspaceSelection(
@@ -592,6 +779,14 @@ export async function createWorkspaceInvitationForActor(
   const email = input.email.trim().toLowerCase();
   const role = coerceMembershipRole(input.role);
 
+  if (actor.role === "admin" && role !== "member") {
+    throw new TenantAccessError(
+      "Only workspace owners can invite admins or additional owners.",
+      403,
+      "invite_role_forbidden",
+    );
+  }
+
   if (email === actor.email.trim().toLowerCase()) {
     throw new TenantAccessError(
       "This account already belongs to the active workspace.",
@@ -923,6 +1118,321 @@ export async function acceptWorkspaceInvitationForUser(user: TenantUserRecord, t
     access,
     memberships,
   };
+}
+
+export async function updateWorkspaceTeamMemberRoleForActor(
+  actor: TeamActorContext,
+  userId: string,
+  input: {
+    role: MembershipRole;
+  },
+): Promise<WorkspaceTeamMemberMutationResult> {
+  if (actor.role !== "owner") {
+    throw new TenantAccessError(
+      "Only workspace owners can change member roles.",
+      403,
+      "owner_role_required",
+    );
+  }
+
+  return db.transaction(async (tx) => {
+    const member = await loadWorkspaceTeamMemberRecord(tx, actor, userId);
+    if (!member) {
+      throw new TenantAccessError(
+        "Team member not found for this workspace.",
+        404,
+        "team_member_not_found",
+      );
+    }
+
+    if (member.userId === actor.id) {
+      throw new TenantAccessError(
+        "Use a dedicated ownership-transfer flow for your own role changes.",
+        409,
+        "self_team_management_disabled",
+      );
+    }
+
+    const nextWorkspaceRole = coerceMembershipRole(input.role);
+    const currentWorkspaceRole = coerceMembershipRole(member.workspaceRole);
+    const currentOrganizationRole = coerceMembershipRole(member.organizationRole);
+
+    if (currentWorkspaceRole === nextWorkspaceRole) {
+      return {
+        member: toWorkspaceTeamMemberSummary(member, actor),
+      };
+    }
+
+    const organizationWorkspaceRoles = await loadOrganizationWorkspaceRolesForUser(
+      tx,
+      actor.organizationId,
+      userId,
+    );
+    const nextOrganizationRole = highestRole(
+      organizationWorkspaceRoles.map((workspaceRole) =>
+        workspaceRole.workspaceId === actor.workspaceId
+          ? nextWorkspaceRole
+          : coerceMembershipRole(workspaceRole.role),
+      ),
+    );
+
+    if (!nextOrganizationRole) {
+      throw new TenantAccessError(
+        "Team member must retain at least one organization role.",
+        409,
+        "organization_role_required",
+      );
+    }
+
+    if (currentOrganizationRole === "owner" && nextOrganizationRole !== "owner") {
+      const ownerCount = await countOrganizationOwners(tx, actor.organizationId);
+      if (ownerCount <= 1) {
+        throw new TenantAccessError(
+          "At least one owner must keep organization access.",
+          409,
+          "last_owner_required",
+        );
+      }
+    }
+
+    const now = new Date();
+    await tx
+      .update(workspaceMemberships)
+      .set({
+        role: nextWorkspaceRole,
+        updatedAt: now,
+      })
+      .where(eq(workspaceMemberships.id, member.membershipId));
+
+    await tx
+      .update(organizationMemberships)
+      .set({
+        role: nextOrganizationRole,
+        updatedAt: now,
+      })
+      .where(eq(organizationMemberships.id, member.organizationMembershipId));
+
+    await invalidateUserSessions(tx, userId, now);
+    await reconcileLegacyTenantState(tx, userId);
+
+    return {
+      member: toWorkspaceTeamMemberSummary(member, actor, {
+        workspaceRole: nextWorkspaceRole,
+        organizationRole: nextOrganizationRole,
+      }),
+    };
+  });
+}
+
+export async function removeWorkspaceTeamMemberForActor(
+  actor: TeamActorContext,
+  userId: string,
+): Promise<WorkspaceTeamMemberRemovalResult> {
+  if (actor.role !== "owner") {
+    throw new TenantAccessError(
+      "Only workspace owners can remove team members.",
+      403,
+      "owner_role_required",
+    );
+  }
+
+  return db.transaction(async (tx) => {
+    const member = await loadWorkspaceTeamMemberRecord(tx, actor, userId);
+    if (!member) {
+      throw new TenantAccessError(
+        "Team member not found for this workspace.",
+        404,
+        "team_member_not_found",
+      );
+    }
+
+    if (member.userId === actor.id) {
+      throw new TenantAccessError(
+        "Use a dedicated ownership-transfer flow before removing your own access.",
+        409,
+        "self_team_management_disabled",
+      );
+    }
+
+    const currentOrganizationRole = coerceMembershipRole(member.organizationRole);
+    const remainingOrganizationWorkspaceRoles = (
+      await loadOrganizationWorkspaceRolesForUser(tx, actor.organizationId, userId)
+    ).filter((workspaceRole) => workspaceRole.workspaceId !== actor.workspaceId);
+    const nextOrganizationRole = highestRole(
+      remainingOrganizationWorkspaceRoles.map((workspaceRole) =>
+        coerceMembershipRole(workspaceRole.role),
+      ),
+    );
+
+    if (currentOrganizationRole === "owner" && nextOrganizationRole !== "owner") {
+      const ownerCount = await countOrganizationOwners(tx, actor.organizationId);
+      if (ownerCount <= 1) {
+        throw new TenantAccessError(
+          "At least one owner must keep organization access.",
+          409,
+          "last_owner_required",
+        );
+      }
+    }
+
+    const now = new Date();
+    await tx.delete(workspaceMemberships).where(eq(workspaceMemberships.id, member.membershipId));
+
+    if (nextOrganizationRole) {
+      await tx
+        .update(organizationMemberships)
+        .set({
+          role: nextOrganizationRole,
+          updatedAt: now,
+        })
+        .where(eq(organizationMemberships.id, member.organizationMembershipId));
+    } else {
+      await tx
+        .delete(organizationMemberships)
+        .where(eq(organizationMemberships.id, member.organizationMembershipId));
+    }
+
+    await invalidateUserSessions(tx, userId, now);
+    await reconcileLegacyTenantState(tx, userId);
+
+    return {
+      removedUserId: member.userId,
+      removedEmail: member.email,
+    };
+  });
+}
+
+export async function transferWorkspaceOwnershipForActor(
+  actor: TeamActorContext,
+  targetUserId: string,
+): Promise<WorkspaceOwnershipTransferResult> {
+  if (actor.role !== "owner") {
+    throw new TenantAccessError(
+      "Only workspace owners can transfer ownership.",
+      403,
+      "owner_role_required",
+    );
+  }
+
+  if (targetUserId === actor.id) {
+    throw new TenantAccessError(
+      "Select another team member before transferring ownership.",
+      409,
+      "ownership_transfer_target_required",
+    );
+  }
+
+  return db.transaction(async (tx) => {
+    const actorRecord = await loadWorkspaceTeamMemberRecord(tx, actor, actor.id);
+    const targetRecord = await loadWorkspaceTeamMemberRecord(tx, actor, targetUserId);
+
+    if (!actorRecord) {
+      throw new TenantAccessError(
+        "Current owner record could not be resolved for this workspace.",
+        404,
+        "team_member_not_found",
+      );
+    }
+
+    if (!targetRecord) {
+      throw new TenantAccessError(
+        "Select an existing workspace member before transferring ownership.",
+        404,
+        "team_member_not_found",
+      );
+    }
+
+    const organizationWorkspaceRows = await tx
+      .select({
+        workspaceId: workspaces.id,
+      })
+      .from(workspaces)
+      .where(eq(workspaces.organizationId, actor.organizationId))
+      .orderBy(asc(workspaces.createdAt), asc(workspaces.id));
+
+    const organizationWorkspaceIds = organizationWorkspaceRows.map((workspace) => workspace.workspaceId);
+    const targetWorkspaceRoleRows = await loadOrganizationWorkspaceRolesForUser(
+      tx,
+      actor.organizationId,
+      targetUserId,
+    );
+    const targetWorkspaceIds = new Set(targetWorkspaceRoleRows.map((row) => row.workspaceId));
+    const missingTargetWorkspaceMemberships = organizationWorkspaceIds
+      .filter((workspaceId) => !targetWorkspaceIds.has(workspaceId))
+      .map((workspaceId) => ({
+        workspaceId,
+        userId: targetUserId,
+        role: "owner" as const,
+      }));
+
+    const now = new Date();
+    await tx
+      .update(organizationMemberships)
+      .set({
+        role: "owner",
+        updatedAt: now,
+      })
+      .where(eq(organizationMemberships.id, targetRecord.organizationMembershipId));
+
+    if (targetWorkspaceRoleRows.length > 0) {
+      await tx
+        .update(workspaceMemberships)
+        .set({
+          role: "owner",
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(workspaceMemberships.userId, targetUserId),
+            inArray(workspaceMemberships.workspaceId, organizationWorkspaceIds),
+          ),
+        );
+    }
+
+    if (missingTargetWorkspaceMemberships.length > 0) {
+      await tx.insert(workspaceMemberships).values(missingTargetWorkspaceMemberships);
+    }
+
+    if (!targetRecord.activeWorkspaceId) {
+      await tx
+        .update(users)
+        .set({
+          activeWorkspaceId: actor.workspaceId,
+          updatedAt: now,
+        })
+        .where(eq(users.id, targetUserId));
+    }
+
+    await tx
+      .update(organizationMemberships)
+      .set({
+        role: "admin",
+        updatedAt: now,
+      })
+      .where(eq(organizationMemberships.id, actorRecord.organizationMembershipId));
+
+    await tx
+      .update(workspaceMemberships)
+      .set({
+        role: "admin",
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(workspaceMemberships.userId, actor.id),
+          inArray(workspaceMemberships.workspaceId, organizationWorkspaceIds),
+          eq(workspaceMemberships.role, "owner"),
+        ),
+      );
+
+    await reconcileLegacyTenantState(tx, targetUserId);
+    await reconcileLegacyTenantState(tx, actor.id);
+
+    return {
+      transferredToUserId: targetRecord.userId,
+      transferredToEmail: targetRecord.email,
+    };
+  });
 }
 
 export async function backfillWorkspaceMembershipsForUsers(userIds: string[]) {

@@ -75,12 +75,76 @@ async function loadAuthApp(existingUsers: unknown[] = []) {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("@sales/database");
-  vi.unmock("bcryptjs");
-  vi.unmock("../src/auth-lifecycle");
+  vi.doUnmock("@sales/database");
+  vi.doUnmock("bcryptjs");
+  vi.doUnmock("../src/auth-lifecycle");
 });
 
 describe("registration route", () => {
+  it("returns a client error for malformed registration JSON", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { app, dbMock, hashMock, issueEmailVerificationMock } = await loadAuthApp();
+
+    const response = await app.request("/v1/auth/register", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: "{",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Invalid registration JSON payload.",
+      code: "invalid_json",
+      requestId: null,
+    });
+    expect(dbMock.valuesMock).not.toHaveBeenCalled();
+    expect(hashMock).not.toHaveBeenCalled();
+    expect(issueEmailVerificationMock).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalledWith(
+      "Registration error:",
+      expect.anything(),
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("returns client errors for malformed auth lifecycle JSON", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { app, dbMock, hashMock, issueEmailVerificationMock } = await loadAuthApp();
+
+    for (const [path, message] of [
+      ["/v1/auth/verify-email/request", "Invalid verification request JSON payload."],
+      ["/v1/auth/verify-email/confirm", "Invalid verification confirmation JSON payload."],
+      ["/v1/auth/password-reset/request", "Invalid password reset request JSON payload."],
+      ["/v1/auth/password-reset/confirm", "Invalid password reset confirmation JSON payload."],
+    ] as const) {
+      const response = await app.request(path, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: "{",
+      });
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toMatchObject({
+        error: message,
+        code: "invalid_json",
+        requestId: null,
+      });
+    }
+
+    expect(dbMock.valuesMock).not.toHaveBeenCalled();
+    expect(hashMock).not.toHaveBeenCalled();
+    expect(issueEmailVerificationMock).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/error/i),
+      expect.anything(),
+    );
+    errorSpy.mockRestore();
+  });
+
   it("rejects invalid registration payloads server-side", async () => {
     const { app } = await loadAuthApp();
 
@@ -128,6 +192,53 @@ describe("registration route", () => {
       displayName: "Jamie Founder",
       role: "owner",
       emailVerified: null,
+    });
+  });
+
+  it("rate-limits repeated registration attempts from the same client", async () => {
+    const { app } = await loadAuthApp();
+
+    for (let index = 0; index < 5; index += 1) {
+      const response = await app.request("/v1/auth/register", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.44",
+        },
+        body: JSON.stringify({
+          email: `buyer-${index}@example.com`,
+          password: "strong-pass-123",
+          name: "Jamie Founder",
+        }),
+      });
+
+      expect(response.status).toBe(201);
+    }
+
+    const response = await app.request("/v1/auth/register", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "203.0.113.44",
+      },
+      body: JSON.stringify({
+        email: "buyer-limited@example.com",
+        password: "strong-pass-123",
+        name: "Jamie Founder",
+      }),
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(0);
+    expect(response.headers.get("RateLimit-Limit")).toBe("5");
+    expect(response.headers.get("RateLimit-Remaining")).toBe("0");
+    expect(Number(response.headers.get("RateLimit-Reset"))).toBeGreaterThan(0);
+    expect(response.headers.get("X-RateLimit-Limit")).toBe("5");
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
+    expect(Number(response.headers.get("X-RateLimit-Reset"))).toBeGreaterThan(0);
+    expect(payload).toMatchObject({
+      error: "Too many account requests. Please try again later.",
     });
   });
 });

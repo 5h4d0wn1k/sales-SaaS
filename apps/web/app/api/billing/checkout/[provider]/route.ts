@@ -4,6 +4,7 @@ import {
   getServerApiBaseUrl,
   isServerApiUnauthorizedError,
 } from "@/lib/server-api-auth";
+import { rejectCrossOriginMutation } from "@/lib/same-origin";
 
 const ALLOWED_PROVIDERS = new Set(["stripe", "razorpay"]);
 
@@ -14,6 +15,9 @@ type RouteContext = {
 };
 
 export async function POST(request: Request, context: RouteContext) {
+  const crossOrigin = rejectCrossOriginMutation(request);
+  if (crossOrigin) return crossOrigin;
+
   const { provider } = await context.params;
   if (!ALLOWED_PROVIDERS.has(provider)) {
     return NextResponse.json({ error: "Provider not found" }, { status: 404 });

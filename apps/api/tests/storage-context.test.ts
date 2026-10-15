@@ -44,8 +44,8 @@ const dashboardFixture: DashboardResponse = {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("../src/storage");
-  vi.unmock("../src/middleware/auth");
+  vi.doUnmock("../src/storage");
+  vi.doUnmock("../src/middleware/auth");
 });
 
 describe("request-scoped storage context", () => {
@@ -125,6 +125,6 @@ describe("request-scoped storage context", () => {
     const response = await app.request("/health");
 
     expect(response.status).toBe(200);
-    expect(getStorageMock.mock.calls.some((call) => call.length === 0)).toBe(true);
+    expect(getStorageMock.mock.calls.some((call: unknown[]) => call.length === 0)).toBe(true);
   }, APP_BOOT_TIMEOUT_MS);
 });

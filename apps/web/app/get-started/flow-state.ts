@@ -8,8 +8,46 @@ export type InviteQueryContext = {
   inviteWorkspace?: string | null;
   inviteOrganization?: string | null;
 };
+export type AcquisitionQueryContext = Record<string, string | null | undefined>;
 
 const validPlanKeys = new Set(PRICING_PLANS.map((plan) => plan.key));
+const acquisitionParamKeys = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "solutionSegment",
+  "segment",
+  "monthlyLeadGoal",
+  "budgetRange",
+  "roiQualifiedRate",
+  "roiMeetingRate",
+  "roiCloseRate",
+  "roiAcv",
+  "roiBudget",
+  "roiHoursSaved",
+  "roiAnnualNet",
+  "blueprintSegment",
+  "blueprintIndustry",
+  "blueprintAudience",
+  "blueprintMeetings",
+  "blueprintAcv",
+  "blueprintReadiness",
+  "blueprintLevel",
+  "blueprintSources",
+  "blueprintOutreach",
+  "blueprintRegions",
+  "blueprintConstraints",
+  "pricingIntent",
+  "resource",
+  "resourceIntent",
+  "platformIntent",
+  "aiSdrIntent",
+  "leadGenIntent",
+  "outboundIntent",
+  "meetingIntent",
+  "telegramIntent",
+  "comparisonIntent",
+] as const;
 
 export function normalizePlanKey(planKey?: string | null) {
   if (planKey && validPlanKeys.has(planKey)) {
@@ -61,16 +99,46 @@ export function resolveInitialGetStartedStep({
   return "plan_selection" satisfies GetStartedStep;
 }
 
+function firstParam(value: string | string[] | undefined) {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+export function readAcquisitionQueryContext(
+  params?: Record<string, string | string[] | undefined> | null,
+): AcquisitionQueryContext | undefined {
+  if (!params) {
+    return undefined;
+  }
+
+  const acquisition: AcquisitionQueryContext = {};
+
+  for (const key of acquisitionParamKeys) {
+    const value = firstParam(params[key])?.trim();
+
+    if (value) {
+      acquisition[key] = value.slice(0, 500);
+    }
+  }
+
+  return Object.keys(acquisition).length ? acquisition : undefined;
+}
+
 export function buildGetStartedUrl({
   planKey,
   step,
   checkout,
   invite,
+  acquisition,
 }: {
   planKey?: string;
   step?: GetStartedStep | null;
   checkout?: CheckoutState;
   invite?: InviteQueryContext;
+  acquisition?: AcquisitionQueryContext | null;
 }) {
   const params = new URLSearchParams();
   params.set("plan", normalizePlanKey(planKey));
@@ -96,15 +164,92 @@ export function buildGetStartedUrl({
     params.set("inviteOrganization", invite.inviteOrganization);
   }
 
+  if (acquisition) {
+    for (const key of acquisitionParamKeys) {
+      const value = acquisition[key]?.trim();
+
+      if (value) {
+        params.set(key, value.slice(0, 500));
+      }
+    }
+  }
+
   return `/get-started?${params.toString()}`;
 }
 
-export function buildDashboardUrl(checkout?: "success") {
-  if (!checkout) {
-    return "/dashboard";
+export function buildDashboardUrl(
+  checkoutOrOptions?:
+    | "success"
+    | {
+        checkout?: "success";
+        planKey?: string;
+        acquisition?: AcquisitionQueryContext | null;
+      },
+) {
+  const options =
+    typeof checkoutOrOptions === "string"
+      ? { checkout: checkoutOrOptions }
+      : checkoutOrOptions;
+  const params = new URLSearchParams();
+
+  if (options?.checkout) {
+    params.set("checkout", options.checkout);
   }
 
+  if (options?.planKey) {
+    params.set("plan", normalizePlanKey(options.planKey));
+  }
+
+  if (options?.acquisition) {
+    for (const key of acquisitionParamKeys) {
+      const value = options.acquisition[key]?.trim();
+
+      if (value) {
+        params.set(key, value.slice(0, 500));
+      }
+    }
+  }
+
+  const query = params.toString();
+  return query ? `/dashboard?${query}` : "/dashboard";
+}
+
+function acquisitionSourceLabel(acquisition?: AcquisitionQueryContext | null) {
+  const source = acquisition?.utm_source?.trim();
+
+  if (!source) {
+    return undefined;
+  }
+
+  return source.slice(0, 120);
+}
+
+export function buildSalesBlueprintBuilderUrl(acquisition?: AcquisitionQueryContext | null) {
   const params = new URLSearchParams();
-  params.set("checkout", checkout);
-  return `/dashboard?${params.toString()}`;
+  params.set("utm_source", "get_started");
+  params.set("utm_medium", "activation_flow");
+  params.set("utm_campaign", "blueprint_checkpoint");
+
+  const priorSource = acquisitionSourceLabel(acquisition);
+  if (priorSource) {
+    params.set("sourceContext", priorSource);
+  }
+
+  return `/sales-blueprint?${params.toString()}`;
+}
+
+export function buildBlueprintReviewContactUrl(acquisition?: AcquisitionQueryContext | null) {
+  const params = new URLSearchParams();
+  params.set("intent", "managed_services");
+  params.set("utm_source", "get_started");
+  params.set("utm_medium", "activation_flow");
+  params.set("utm_campaign", "blueprint_checkpoint");
+  params.set("managedIntent", "blueprint_checkpoint_review");
+
+  const priorSource = acquisitionSourceLabel(acquisition);
+  if (priorSource) {
+    params.set("sourceContext", priorSource);
+  }
+
+  return `/contact?${params.toString()}`;
 }

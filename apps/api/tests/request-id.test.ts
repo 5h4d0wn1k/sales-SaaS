@@ -42,8 +42,8 @@ const dashboardFixture: DashboardResponse = {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("../src/storage");
-  vi.unmock("../src/middleware/auth");
+  vi.doUnmock("../src/storage");
+  vi.doUnmock("../src/middleware/auth");
 });
 
 describe("request id middleware", () => {
@@ -90,6 +90,8 @@ describe("request id middleware", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-request-id")).toBe("req-test-123");
+    expect(Number(response.headers.get("x-response-time-ms"))).toBeGreaterThanOrEqual(0);
+    expect(response.headers.get("server-timing")).toMatch(/^app;dur=\d+$/);
     expect(auditMock).toHaveBeenCalledTimes(1);
     const auditEntry = auditMock.mock.calls.at(0)?.at(0);
     expect(auditEntry).toMatchObject({
@@ -130,5 +132,97 @@ describe("request id middleware", () => {
     expect(requestId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
+    expect(Number(response.headers.get("x-response-time-ms"))).toBeGreaterThanOrEqual(0);
+  }, APP_BOOT_TIMEOUT_MS);
+
+  it("returns sanitized validation errors with the request id", async () => {
+    const { createApp } = await import("../src/app");
+    const app = createApp();
+    const response = await app.request("/v1/campaigns", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-request-id": "req-validation-test",
+      },
+      body: JSON.stringify({
+        name: "x",
+        channel: "email",
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("x-request-id")).toBe("req-validation-test");
+    expect(Number(response.headers.get("x-response-time-ms"))).toBeGreaterThanOrEqual(0);
+    expect(body).toMatchObject({
+      code: "validation_failed",
+      requestId: "req-validation-test",
+    });
+    expect(body.error).not.toContain("stack");
+  }, APP_BOOT_TIMEOUT_MS);
+
+  it("returns sanitized internal errors with request metadata", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    vi.doMock("../src/storage", async () => {
+      const actual = await vi.importActual<typeof import("../src/storage")>("../src/storage");
+      return {
+        ...actual,
+        getStorage: vi.fn(async () => ({
+          mode: "postgres" as const,
+          getDashboard: vi.fn(async () => {
+            throw new Error("database exploded with provider secret");
+          }),
+          audit: vi.fn(async () => undefined),
+        })),
+      };
+    });
+
+    vi.doMock("../src/middleware/auth", async () => {
+      const actual = await vi.importActual<typeof import("../src/middleware/auth")>("../src/middleware/auth");
+      return {
+        ...actual,
+        authMiddleware: async (c: any, next: () => Promise<void>) => {
+          c.set("user", {
+            id: "user-1",
+            email: "owner@example.com",
+            role: "owner",
+            emailVerified: true,
+            organizationId: "org-1",
+            workspaceId: "ws-1",
+          });
+          await next();
+        },
+      };
+    });
+
+    const { createApp } = await import("../src/app");
+    const app = createApp();
+    const response = await app.request("/v1/dashboard", {
+      headers: {
+        "x-request-id": "req-internal-error-test",
+      },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("x-request-id")).toBe("req-internal-error-test");
+    expect(Number(response.headers.get("x-response-time-ms"))).toBeGreaterThanOrEqual(0);
+    expect(body).toEqual({
+      error: "Internal server error",
+      code: "internal_server_error",
+      requestId: "req-internal-error-test",
+    });
+    expect(JSON.stringify(body)).not.toContain("provider secret");
+    expect(consoleError).toHaveBeenCalledWith(
+      "Unhandled API error:",
+      expect.objectContaining({
+        requestId: "req-internal-error-test",
+        method: "GET",
+        path: "/v1/dashboard",
+      }),
+    );
+
+    consoleError.mockRestore();
   }, APP_BOOT_TIMEOUT_MS);
 });

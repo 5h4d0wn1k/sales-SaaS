@@ -10,7 +10,7 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "sales-api",
-  "account_id": "e251f79bafcd5a50d2964251a5e53450",
+  "account_id": "07eae60a75b06661ea752a78cdf51565",
   "main": "src/worker.ts",
   "compatibility_date": "2026-05-03",
   "compatibility_flags": [
@@ -35,12 +35,13 @@
       "hyperdrive": [
         {
           "binding": "HYPERDRIVE",
-          "id": "08eda5f0a1714b69b1abb3df8c3b897e"
+          "id": "9c1c36b38d064425b8e7e3587c12635d"
         }
       ],
       "vars": {
         "APP_ENV": "staging",
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "FRONTEND_URL": "https://sales-web-staging.salesxgrowth.workers.dev"
       }
     },
     "production": {
@@ -56,9 +57,16 @@
             "RAZORPAY_WEBHOOK_SECRET"
           ]
         },
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "9c1c36b38d064425b8e7e3587c12635d"
+        }
+      ],
       "vars": {
         "APP_ENV": "production",
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "FRONTEND_URL": "https://salesxgrowth.com"
       }
     }
   }

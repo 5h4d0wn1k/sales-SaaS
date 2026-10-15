@@ -21,4 +21,3 @@ test-results/
 supabase/.temp/
 .codex/reports/
 __pycache__/
-output/

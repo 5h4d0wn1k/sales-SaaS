@@ -85,9 +85,9 @@ async function loadAuthLifecycleApp() {
 afterEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
-  vi.unmock("@sales/database");
-  vi.unmock("bcryptjs");
-  vi.unmock("../src/auth-lifecycle");
+  vi.doUnmock("@sales/database");
+  vi.doUnmock("bcryptjs");
+  vi.doUnmock("../src/auth-lifecycle");
 });
 
 describe("auth lifecycle routes", () => {
@@ -159,6 +159,52 @@ describe("auth lifecycle routes", () => {
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
       email: "missing@example.com",
+    });
+    expect(issuePasswordResetMock).not.toHaveBeenCalled();
+  });
+
+  it("rate-limits repeated password reset requests from the same client", async () => {
+    const { app, findLifecycleUserByEmailMock, issuePasswordResetMock } =
+      await loadAuthLifecycleApp();
+    findLifecycleUserByEmailMock.mockResolvedValue(null);
+
+    for (let index = 0; index < 5; index += 1) {
+      const response = await app.request("/v1/auth/password-reset/request", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "198.51.100.80",
+        },
+        body: JSON.stringify({
+          email: `missing-${index}@example.com`,
+        }),
+      });
+
+      expect(response.status).toBe(200);
+    }
+
+    const response = await app.request("/v1/auth/password-reset/request", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "198.51.100.80",
+      },
+      body: JSON.stringify({
+        email: "limited@example.com",
+      }),
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThan(0);
+    expect(response.headers.get("RateLimit-Limit")).toBe("5");
+    expect(response.headers.get("RateLimit-Remaining")).toBe("0");
+    expect(Number(response.headers.get("RateLimit-Reset"))).toBeGreaterThan(0);
+    expect(response.headers.get("X-RateLimit-Limit")).toBe("5");
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
+    expect(Number(response.headers.get("X-RateLimit-Reset"))).toBeGreaterThan(0);
+    expect(payload).toMatchObject({
+      error: "Too many account requests. Please try again later.",
     });
     expect(issuePasswordResetMock).not.toHaveBeenCalled();
   });

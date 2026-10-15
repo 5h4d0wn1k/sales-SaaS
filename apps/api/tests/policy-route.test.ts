@@ -24,6 +24,33 @@ describe("sales api flow", () => {
     expect(result.reason).toContain("approval");
   });
 
+  it("rejects malformed campaign action JSON before campaign work", async () => {
+    const app = createApp();
+
+    for (const path of [
+      "/v1/campaigns/campaign_does_not_exist/approve",
+      "/v1/campaigns/campaign_does_not_exist/run",
+      "/v1/campaigns/campaign_does_not_exist/dispatch",
+    ] as const) {
+      const response = await app.request(path, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: "{",
+      });
+      const result = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(result).toMatchObject({
+        error: "Invalid JSON payload.",
+        code: "invalid_json",
+        requestId: expect.any(String),
+      });
+      expect(response.headers.get("x-request-id")).toBe(result.requestId);
+    }
+  });
+
   it("returns a seeded dashboard with onboarding and source data", async () => {
     const app = createApp();
     const response = await app.request("/v1/dashboard");
@@ -168,6 +195,30 @@ describe("sales api flow", () => {
     expect(dispatchedCall.call.id).toBeTruthy();
   });
 
+  it("creates draft campaigns from qualified leads only", async () => {
+    const app = createApp();
+
+    const leadsResponse = await app.request("/v1/leads");
+    const leads = await leadsResponse.json();
+    const qualifiedLeadCount = leads.filter((lead: any) => lead.status === "qualified").length;
+
+    const createdCampaignResponse = await app.request("/v1/campaigns", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Qualified-only draft campaign",
+        channel: "email",
+      }),
+    });
+    const createdCampaign = await createdCampaignResponse.json();
+
+    expect(createdCampaignResponse.status).toBe(201);
+    expect(createdCampaign.campaign.leadsEnrolled).toBe(qualifiedLeadCount);
+    expect(createdCampaign.campaign.approved).toBe(false);
+  });
+
   it("keeps a campaign approved until dispatch acceptance updates customer-facing state", async () => {
     const app = createApp();
 
@@ -217,6 +268,10 @@ describe("sales api flow", () => {
 
     expect(dispatched.campaign.stage).toBe("running");
     expect(dispatched.campaign.firstActionCompleted).toBe(true);
+    expect(dispatched.campaign.nextActionAt).toMatch(/approved touch/i);
+    expect(dispatched.campaign.nextActionAt.toLowerCase()).not.toContain(
+      "autonomous",
+    );
     expect(["queued", "sent"]).toContain(dispatched.activity.status);
 
     const leadsAfterDispatchResponse = await app.request("/v1/leads");
@@ -265,7 +320,133 @@ describe("sales api flow", () => {
 
     const leadsAfterDispatchResponse = await app.request("/v1/leads");
     const leadsAfterDispatch = await leadsAfterDispatchResponse.json();
-    expect(leadsAfterDispatch.find((lead: any) => lead.id === leadId)?.status).toBe("meeting_booked");
+    const updatedLead = leadsAfterDispatch.find((lead: any) => lead.id === leadId);
+    const lastTouchpoint = String(updatedLead?.lastTouchpoint ?? "");
+    expect(updatedLead?.status).toBe("meeting_booked");
+    expect(lastTouchpoint).toContain("AI-assisted call");
+    expect(lastTouchpoint.toLowerCase()).not.toContain("autonomous");
+
+    const dashboardAfterDispatchResponse = await app.request("/v1/dashboard");
+    const dashboardAfterDispatch = await dashboardAfterDispatchResponse.json();
+    const assistedMeeting = dashboardAfterDispatch.meetings.find(
+      (meeting: any) =>
+        meeting.leadId === leadId && meeting.owner === "Guarded AI assistant",
+    );
+    expect(assistedMeeting).toBeTruthy();
+    expect(assistedMeeting?.notes).toContain("AI-assisted call");
+    expect(JSON.stringify(assistedMeeting ?? {}).toLowerCase()).not.toContain(
+      "autonomous",
+    );
+  });
+
+  it("moves leads through meeting conversion outcomes", async () => {
+    const app = createApp();
+
+    const wonLeadResponse = await app.request("/v1/leads", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName: "Priya Raman",
+        email: "priya@example.com",
+        company: "Northstar Buying Committee",
+        source: "manual-conversion-test",
+        score: 92,
+      }),
+    });
+    const wonLead = await wonLeadResponse.json();
+
+    const scheduledResponse = await app.request("/v1/meetings", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        leadId: wonLead.id,
+        scheduledFor: "2026-06-03T10:30:00.000Z",
+        owner: "sales-ops",
+        notes: "Manual meeting booked from dashboard conversion workflow.",
+      }),
+    });
+    const scheduledMeeting = await scheduledResponse.json();
+
+    expect(scheduledResponse.status).toBe(201);
+
+    const leadsAfterScheduleResponse = await app.request("/v1/leads");
+    const leadsAfterSchedule = await leadsAfterScheduleResponse.json();
+    expect(leadsAfterSchedule.find((lead: any) => lead.id === wonLead.id)?.status).toBe("meeting_booked");
+
+    const completedResponse = await app.request(`/v1/meetings/${scheduledMeeting.id}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        status: "completed",
+        notes: "Meeting completed with clear next steps.",
+        dealValueCents: 1250000,
+        dealCurrency: "USD",
+      }),
+    });
+    const completedMeeting = await completedResponse.json();
+
+    expect(completedResponse.status).toBe(200);
+    expect(completedMeeting).toMatchObject({
+      status: "completed",
+      dealValueCents: 1250000,
+      dealCurrency: "USD",
+    });
+
+    const leadsAfterCompletedResponse = await app.request("/v1/leads");
+    const leadsAfterCompleted = await leadsAfterCompletedResponse.json();
+    expect(leadsAfterCompleted.find((lead: any) => lead.id === wonLead.id)?.status).toBe("won");
+
+    const lostLeadResponse = await app.request("/v1/leads", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName: "Arjun Mehta",
+        email: "arjun@example.com",
+        company: "Canceled Opportunity Co",
+        source: "manual-conversion-test",
+        score: 88,
+      }),
+    });
+    const lostLead = await lostLeadResponse.json();
+
+    const canceledMeetingResponse = await app.request("/v1/meetings", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        leadId: lostLead.id,
+        scheduledFor: "2026-06-04T10:30:00.000Z",
+        owner: "sales-ops",
+        notes: "Manual meeting booked from dashboard conversion workflow.",
+      }),
+    });
+    const canceledMeeting = await canceledMeetingResponse.json();
+
+    const canceledResponse = await app.request(`/v1/meetings/${canceledMeeting.id}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        status: "canceled",
+        notes: "Lead canceled the meeting and declined follow-up.",
+      }),
+    });
+
+    expect(canceledResponse.status).toBe(200);
+
+    const leadsAfterCanceledResponse = await app.request("/v1/leads");
+    const leadsAfterCanceled = await leadsAfterCanceledResponse.json();
+    expect(leadsAfterCanceled.find((lead: any) => lead.id === lostLead.id)?.status).toBe("lost");
   });
 
   it("uses the authenticated actor for campaign approval instead of trusting request input", async () => {

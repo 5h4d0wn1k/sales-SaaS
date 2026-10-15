@@ -29,6 +29,13 @@ export const platformModules: PlatformModule[] = [
     capabilities: ["Sequence drafts", "Approval-gated sends", "Retry safety", "Audit logs"],
   },
   {
+    slug: "content-demand",
+    title: "Content Demand",
+    summary: "Turn Sales Blueprint context into reviewable SEO opportunities and lead-capture offers.",
+    phase: "Phase 2",
+    capabilities: ["SEO opportunities", "Brief guardrails", "Lead-capture offers", "Claim review"],
+  },
+  {
     slug: "voice",
     title: "AI Calling",
     summary: "Support outbound call flows, dispositions, and meeting creation with control guardrails.",
@@ -46,7 +53,7 @@ export const platformModules: PlatformModule[] = [
 
 export const dashboardSnapshot = {
   metrics: [
-    { label: "Core product modules defined", value: "5" },
+    { label: "Core product modules defined", value: "6" },
     { label: "High-risk actions covered by policy", value: "100%" },
     { label: "Schema domains bootstrapped", value: "9" },
   ],
@@ -66,7 +73,7 @@ export const readinessChecklist = [
   },
   {
     label: "Autonomy policy",
-    detail: "First outbound action stays approval-gated before fully autonomous execution continues.",
+    detail: "Outbound autonomy remains approval-gated until provider policy, audit, and operator controls prove readiness.",
     status: "ready",
   },
   {
@@ -75,4 +82,3 @@ export const readinessChecklist = [
     status: "next",
   },
 ] as const;
-

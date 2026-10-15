@@ -113,11 +113,12 @@ Hybrid SaaS + AaaS:
 - meeting and call records
 - billing and payment visibility
 - account lifecycle foundations such as email verification and password reset
+- beta content / SEO opportunity planning tied to the Sales Blueprint
 
 #### What is roadmap, not current truth?
 
-- fully mature ownership transfer, last-owner protection, and org administration
-- content/SEO generation and publishing workflow as a finished product
+- fully mature org administration across all settings surfaces and workflows
+- content/SEO publishing, distribution automation, and scaled content operations as a finished product
 - broad SMS expansion
 - fully autonomous voice or LinkedIn-like outbound execution
 - enterprise compliance and governance depth

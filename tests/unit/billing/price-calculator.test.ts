@@ -17,6 +17,12 @@ describe("Pricing Plans", () => {
       expect(plan.price.usd).toBeGreaterThanOrEqual(0);
       expect(plan.price.inr).toBeGreaterThanOrEqual(0);
       expect(plan.usageLimit).toBeGreaterThan(0);
+      expect(plan.outreachDispatchLimit).toBeGreaterThanOrEqual(0);
+      expect(plan.voiceCallLimit).toBeGreaterThanOrEqual(0);
+      expect(plan.providerCostBudgetCents).toBeGreaterThanOrEqual(0);
+      expect(plan.aiWorkerTaskProposalLimit).toBeGreaterThanOrEqual(0);
+      expect(plan.aiWorkerExecutionBudgetCents).toBeGreaterThanOrEqual(0);
+      expect(plan.includedChannels.length).toBeGreaterThan(0);
       expect(plan.seats).toBeGreaterThan(0);
       expect(plan.stripePriceId).toBeTruthy();
       expect(plan.razorpayPlanId).toBeTruthy();
@@ -37,6 +43,26 @@ describe("Pricing Plans", () => {
     expect(free?.usageLimit).toBeLessThan(starter?.usageLimit ?? Infinity);
     expect(starter?.usageLimit).toBeLessThan(pro?.usageLimit ?? Infinity);
     expect(pro?.usageLimit).toBeLessThan(elite?.usageLimit ?? Infinity);
+
+    expect(free?.outreachDispatchLimit).toBeLessThan(starter?.outreachDispatchLimit ?? Infinity);
+    expect(starter?.outreachDispatchLimit).toBeLessThan(pro?.outreachDispatchLimit ?? Infinity);
+    expect(pro?.outreachDispatchLimit).toBeLessThan(elite?.outreachDispatchLimit ?? Infinity);
+
+    expect(free?.voiceCallLimit).toBeLessThanOrEqual(starter?.voiceCallLimit ?? Infinity);
+    expect(starter?.voiceCallLimit).toBeLessThan(pro?.voiceCallLimit ?? Infinity);
+    expect(pro?.voiceCallLimit).toBeLessThan(elite?.voiceCallLimit ?? Infinity);
+
+    expect(free?.providerCostBudgetCents).toBeLessThan(starter?.providerCostBudgetCents ?? Infinity);
+    expect(starter?.providerCostBudgetCents).toBeLessThan(pro?.providerCostBudgetCents ?? Infinity);
+    expect(pro?.providerCostBudgetCents).toBeLessThan(elite?.providerCostBudgetCents ?? Infinity);
+
+    expect(free?.aiWorkerTaskProposalLimit).toBeLessThan(starter?.aiWorkerTaskProposalLimit ?? Infinity);
+    expect(starter?.aiWorkerTaskProposalLimit).toBeLessThan(pro?.aiWorkerTaskProposalLimit ?? Infinity);
+    expect(pro?.aiWorkerTaskProposalLimit).toBeLessThan(elite?.aiWorkerTaskProposalLimit ?? Infinity);
+
+    expect(free?.aiWorkerExecutionBudgetCents).toBeLessThan(starter?.aiWorkerExecutionBudgetCents ?? Infinity);
+    expect(starter?.aiWorkerExecutionBudgetCents).toBeLessThan(pro?.aiWorkerExecutionBudgetCents ?? Infinity);
+    expect(pro?.aiWorkerExecutionBudgetCents).toBeLessThan(elite?.aiWorkerExecutionBudgetCents ?? Infinity);
   });
 
   it("should calculate correct INR amounts", () => {

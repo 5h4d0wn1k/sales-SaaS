@@ -1,0 +1,276 @@
+- generic [active] [ref=e1]:
+  - banner:
+    - navigation [ref=e2]:
+      - generic [ref=e4]:
+        - link "home" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img [ref=e8]
+          - generic [ref=e10]: Winrate
+        - list [ref=e12]:
+          - listitem [ref=e13]:
+            - link "Solutions" [ref=e14] [cursor=pointer]:
+              - /url: /solutions
+          - listitem [ref=e15]:
+            - link "Platform" [ref=e16] [cursor=pointer]:
+              - /url: /ai-sales-automation-platform
+          - listitem [ref=e17]:
+            - link "AI SDR" [ref=e18] [cursor=pointer]:
+              - /url: /ai-sdr-software
+          - listitem [ref=e19]:
+            - link "Lead Gen" [ref=e20] [cursor=pointer]:
+              - /url: /ai-lead-generation-software
+          - listitem [ref=e21]:
+            - link "Outbound" [ref=e22] [cursor=pointer]:
+              - /url: /ai-outbound-sales-automation
+          - listitem [ref=e23]:
+            - link "Meetings" [ref=e24] [cursor=pointer]:
+              - /url: /ai-sales-meeting-scheduler
+          - listitem [ref=e25]:
+            - link "Telegram" [ref=e26] [cursor=pointer]:
+              - /url: /telegram-sales-command-center
+          - listitem [ref=e27]:
+            - link "Compare" [ref=e28] [cursor=pointer]:
+              - /url: /compare-sales-tools
+          - listitem [ref=e29]:
+            - link "Integrations" [ref=e30] [cursor=pointer]:
+              - /url: /integrations
+          - listitem [ref=e31]:
+            - link "Resources" [ref=e32] [cursor=pointer]:
+              - /url: /resources
+          - listitem [ref=e33]:
+            - link "Blueprint" [ref=e34] [cursor=pointer]:
+              - /url: /sales-blueprint
+          - listitem [ref=e35]:
+            - link "ROI" [ref=e36] [cursor=pointer]:
+              - /url: /roi-calculator
+          - listitem [ref=e37]:
+            - link "Trust" [ref=e38] [cursor=pointer]:
+              - /url: /trust
+          - listitem [ref=e39]:
+            - link "Pricing" [ref=e40] [cursor=pointer]:
+              - /url: /pricing
+        - generic [ref=e41]:
+          - link "Contact" [ref=e42] [cursor=pointer]:
+            - /url: /contact
+          - link "Get started" [ref=e43] [cursor=pointer]:
+            - /url: /get-started
+  - main [ref=e44]:
+    - generic [ref=e46]:
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - img [ref=e49]
+          - text: Contact and rollout intake
+        - heading "Tell us what sales system you want Winrate to help launch." [level=1] [ref=e51]
+        - paragraph [ref=e52]: Share your company context, target workflow, lead goals, timeline, and channels. Winrate routes the request for beta onboarding, managed implementation, billing, support, or product feedback without claiming unsupported automation.
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - img [ref=e56]
+            - generic [ref=e59]:
+              - heading "Sales-fit routing" [level=2] [ref=e60]
+              - paragraph [ref=e61]: Submissions are scored by intent, timeline, budget posture, lead target, and selected channels.
+          - generic [ref=e62]:
+            - img [ref=e64]
+            - generic [ref=e67]:
+              - heading "No automation bypass" [level=2] [ref=e68]
+              - paragraph [ref=e69]: Managed support and setup requests do not bypass approval gates, provider readiness, or suppression checks.
+          - generic [ref=e70]:
+            - img [ref=e72]
+            - generic [ref=e75]:
+              - heading "Beta response target" [level=2] [ref=e76]
+              - paragraph [ref=e77]: High-priority setup and managed-service requests target one business day during the public beta.
+        - generic [ref=e79]:
+          - img [ref=e80]
+          - generic [ref=e83]:
+            - heading "Email fallback" [level=2] [ref=e84]
+            - paragraph [ref=e85]:
+              - text: If the form is unavailable, send the same details directly to
+              - link "hello@winrate.ai" [ref=e86] [cursor=pointer]:
+                - /url: mailto:hello@winrate.ai
+              - text: .
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - paragraph [ref=e89]: Revenue intake
+          - heading "Route the request with useful context" [level=2] [ref=e90]
+        - generic [ref=e91]:
+          - paragraph [ref=e92]: Priority request captured
+          - paragraph [ref=e93]: Your request was captured for priority review.
+          - generic [ref=e94]:
+            - paragraph [ref=e95]: Next steps
+            - list [ref=e96]:
+              - listitem [ref=e97]:
+                - img [ref=e98]
+                - generic [ref=e101]: Review company fit, sales goals, budget posture, and rollout blockers.
+              - listitem [ref=e102]:
+                - img [ref=e103]
+                - generic [ref=e106]: Confirm plan, provider, approval, and managed-service boundaries before live work starts.
+              - listitem [ref=e107]:
+                - img [ref=e108]
+                - generic [ref=e111]: Follow up through hello@winrate.ai with the safest onboarding or rollout path.
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - text: Request type
+              - combobox "Request type" [ref=e115]:
+                - option "Sales workflow assessment" [selected]
+                - option "Managed rollout support"
+                - option "Setup help"
+                - option "Billing or plan question"
+                - option "Product feedback"
+                - option "Partnership"
+            - generic [ref=e116]:
+              - text: Timeline
+              - combobox "Timeline" [ref=e117]:
+                - option "This week"
+                - option "This month" [selected]
+                - option "This quarter"
+                - option "Exploring"
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - text: Name
+              - textbox "Name" [ref=e120]:
+                - /placeholder: Priya Shah
+            - generic [ref=e121]:
+              - text: Work email
+              - textbox "Work email" [ref=e122]:
+                - /placeholder: priya@company.com
+          - generic [ref=e123]:
+            - generic [ref=e124]:
+              - text: Company
+              - textbox "Company" [ref=e125]:
+                - /placeholder: OrbitOps
+            - generic [ref=e126]:
+              - text: Website
+              - textbox "Website" [ref=e127]:
+                - /placeholder: https://company.com
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - text: Role
+              - textbox "Role" [ref=e130]:
+                - /placeholder: Founder
+            - generic [ref=e131]:
+              - text: Team size
+              - textbox "Team size" [ref=e132]:
+                - /placeholder: "12"
+            - generic [ref=e133]:
+              - text: Monthly lead goal
+              - spinbutton "Monthly lead goal" [ref=e134]
+          - generic [ref=e135]:
+            - generic [ref=e136]:
+              - text: Budget posture
+              - combobox "Budget posture" [ref=e137]:
+                - option "Under $500/mo"
+                - option "$500-$1,500/mo"
+                - option "$1,500-$5,000/mo"
+                - option "$5,000+/mo"
+                - option "Not sure yet" [selected]
+            - generic [ref=e138]:
+              - text: Likely channels
+              - generic [ref=e139]:
+                - generic [ref=e140]:
+                  - checkbox "email" [ref=e141]
+                  - generic [ref=e142]: email
+                - generic [ref=e143]:
+                  - checkbox "call" [ref=e144]
+                  - generic [ref=e145]: call
+                - generic [ref=e146]:
+                  - checkbox "linkedin review" [ref=e147]
+                  - generic [ref=e148]: linkedin review
+                - generic [ref=e149]:
+                  - checkbox "website" [ref=e150]
+                  - generic [ref=e151]: website
+                - generic [ref=e152]:
+                  - checkbox "directory" [ref=e153]
+                  - generic [ref=e154]: directory
+                - generic [ref=e155]:
+                  - checkbox "telegram" [ref=e156]
+                  - generic [ref=e157]: telegram
+          - group "What should the system help with?" [ref=e158]:
+            - generic [ref=e159]: What should the system help with?
+            - generic [ref=e160]:
+              - generic [ref=e161]:
+                - checkbox "Build a Sales Blueprint" [ref=e162]
+                - generic [ref=e163]: Build a Sales Blueprint
+              - generic [ref=e164]:
+                - checkbox "Generate qualified leads" [ref=e165]
+                - generic [ref=e166]: Generate qualified leads
+              - generic [ref=e167]:
+                - checkbox "Launch approval-gated outreach" [ref=e168]
+                - generic [ref=e169]: Launch approval-gated outreach
+              - generic [ref=e170]:
+                - checkbox "Add managed rollout support" [ref=e171]
+                - generic [ref=e172]: Add managed rollout support
+              - generic [ref=e173]:
+                - checkbox "Connect Telegram command center" [ref=e174]
+                - generic [ref=e175]: Connect Telegram command center
+              - generic [ref=e176]:
+                - checkbox "Improve meetings and conversion" [ref=e177]
+                - generic [ref=e178]: Improve meetings and conversion
+          - generic [ref=e179]:
+            - text: Context, blockers, and ideal outcome
+            - textbox "Context, blockers, and ideal outcome" [ref=e180]:
+              - /placeholder: Tell us your current sales motion, target customers, lead sources, outreach channels, rollout timeline, and what success would look like.
+          - generic [ref=e181]: We use this information to route your request and prepare a useful first response. Live outreach, provider changes, and high-risk actions still require in-app approval and configured provider readiness.
+          - generic [ref=e182]:
+            - button "Submit request" [ref=e183]:
+              - text: Submit request
+              - img [ref=e184]
+            - link "Review managed support" [ref=e186] [cursor=pointer]:
+              - /url: /managed-services
+    - generic [ref=e188]:
+      - generic [ref=e189]:
+        - img [ref=e191]
+        - heading "Setup" [level=2] [ref=e198]
+        - paragraph [ref=e199]: Blueprint, source plan, provider readiness, and launch sequence.
+      - generic [ref=e200]:
+        - img [ref=e202]
+        - heading "Support" [level=2] [ref=e209]
+        - paragraph [ref=e210]: Billing, beta feedback, workflow blockers, and account questions.
+      - generic [ref=e211]:
+        - img [ref=e213]
+        - heading "Growth" [level=2] [ref=e220]
+        - paragraph [ref=e221]: Managed services, SEO demand planning, lead ops, and conversion review.
+  - contentinfo [ref=e222]:
+    - generic [ref=e223]:
+      - generic [ref=e224]:
+        - img [ref=e226]
+        - generic [ref=e228]: Winrate
+      - generic [ref=e229]:
+        - link "Solutions" [ref=e230] [cursor=pointer]:
+          - /url: /solutions
+        - link "Platform" [ref=e231] [cursor=pointer]:
+          - /url: /ai-sales-automation-platform
+        - link "AI SDR" [ref=e232] [cursor=pointer]:
+          - /url: /ai-sdr-software
+        - link "Lead Gen" [ref=e233] [cursor=pointer]:
+          - /url: /ai-lead-generation-software
+        - link "Outbound" [ref=e234] [cursor=pointer]:
+          - /url: /ai-outbound-sales-automation
+        - link "Meetings" [ref=e235] [cursor=pointer]:
+          - /url: /ai-sales-meeting-scheduler
+        - link "Telegram" [ref=e236] [cursor=pointer]:
+          - /url: /telegram-sales-command-center
+        - link "Compare" [ref=e237] [cursor=pointer]:
+          - /url: /compare-sales-tools
+        - link "Integrations" [ref=e238] [cursor=pointer]:
+          - /url: /integrations
+        - link "Trust" [ref=e239] [cursor=pointer]:
+          - /url: /trust
+        - link "Resources" [ref=e240] [cursor=pointer]:
+          - /url: /resources
+        - link "Blueprint" [ref=e241] [cursor=pointer]:
+          - /url: /sales-blueprint
+        - link "ROI" [ref=e242] [cursor=pointer]:
+          - /url: /roi-calculator
+        - link "Managed" [ref=e243] [cursor=pointer]:
+          - /url: /managed-services
+        - link "Pricing" [ref=e244] [cursor=pointer]:
+          - /url: /pricing
+        - link "Privacy" [ref=e245] [cursor=pointer]:
+          - /url: /privacy
+        - link "Terms" [ref=e246] [cursor=pointer]:
+          - /url: /terms
+        - link "Contact" [ref=e247] [cursor=pointer]:
+          - /url: /contact
+        - link "Get started" [ref=e248] [cursor=pointer]:
+          - /url: /get-started
+      - paragraph [ref=e249]: © 2026 Winrate. Built for builders.

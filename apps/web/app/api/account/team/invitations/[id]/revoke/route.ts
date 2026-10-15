@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerApiHeaders, getServerApiBaseUrl } from "@/lib/server-api-auth";
+import { rejectCrossOriginMutation } from "@/lib/same-origin";
 import { appendStatusParam, resolveReturnTo } from "@/lib/return-to";
 
 type ErrorResponse = {
@@ -18,6 +19,9 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  const crossOrigin = rejectCrossOriginMutation(request);
+  if (crossOrigin) return crossOrigin;
+
   try {
     const { id } = await context.params;
     const formData = await request.formData();
