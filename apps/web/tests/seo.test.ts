@@ -40,17 +40,17 @@ describe("seo url helpers", () => {
 
     const { absoluteUrl, getSiteUrl } = await loadSeo();
 
-    expect(getSiteUrl().origin).toBe("https://winrate.ai");
-    expect(absoluteUrl("/sitemap.xml")).toBe("https://winrate.ai/sitemap.xml");
+    expect(getSiteUrl().origin).toBe("https://salesxgrowth.com");
+    expect(absoluteUrl("/sitemap.xml")).toBe("https://salesxgrowth.com/sitemap.xml");
   });
 
   it("allows an explicit public site URL override", async () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.winrate.ai");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.salesxgrowth.com");
 
     const { absoluteUrl, getSiteUrl } = await loadSeo();
 
-    expect(getSiteUrl().origin).toBe("https://app.winrate.ai");
-    expect(absoluteUrl("/pricing")).toBe("https://app.winrate.ai/pricing");
+    expect(getSiteUrl().origin).toBe("https://app.salesxgrowth.com");
+    expect(absoluteUrl("/pricing")).toBe("https://app.salesxgrowth.com/pricing");
   });
 
   it("exposes branded social preview image metadata", async () => {
@@ -65,7 +65,7 @@ describe("seo url helpers", () => {
     expect(siteConfig.socialImage).toMatchObject({
       path: "/opengraph-image",
       twitterPath: "/twitter-image",
-      alt: "Winrate AI-assisted sales workspace preview",
+      alt: "salesxgrowth AI-assisted sales workspace preview",
       width: 1200,
       height: 630,
     });
@@ -74,27 +74,27 @@ describe("seo url helpers", () => {
       url: "/opengraph-image",
       width: 1200,
       height: 630,
-      alt: "Winrate AI-assisted sales workspace preview",
+      alt: "salesxgrowth AI-assisted sales workspace preview",
     });
     expect(getDefaultTwitterImage()).toEqual({
       url: "/twitter-image",
-      alt: "Winrate AI-assisted sales workspace preview",
+      alt: "salesxgrowth AI-assisted sales workspace preview",
     });
     expect(
-      getDefaultTwitterCard("Winrate Pricing", "Compare beta plans."),
+      getDefaultTwitterCard("salesxgrowth Pricing", "Compare beta plans."),
     ).toMatchObject({
       card: "summary_large_image",
-      title: "Winrate Pricing",
+      title: "salesxgrowth Pricing",
       description: "Compare beta plans.",
       images: [
         {
           url: "/twitter-image",
-          alt: "Winrate AI-assisted sales workspace preview",
+          alt: "salesxgrowth AI-assisted sales workspace preview",
         },
       ],
     });
     expect(absoluteUrl(siteConfig.socialImage.path)).toBe(
-      "https://winrate.ai/opengraph-image",
+      "https://salesxgrowth.com/opengraph-image",
     );
   });
 
@@ -104,8 +104,8 @@ describe("seo url helpers", () => {
     const copy = JSON.stringify(manifest).toLowerCase();
 
     expect(manifest).toMatchObject({
-      name: "Winrate AI-assisted sales workspace",
-      short_name: "Winrate",
+      name: "salesxgrowth AI-assisted sales workspace",
+      short_name: "salesxgrowth",
       start_url: "/",
       scope: "/",
       display: "standalone",
@@ -148,8 +148,8 @@ describe("seo url helpers", () => {
         "/verify-email",
       ]),
     );
-    expect(robots.sitemap).toBe("https://winrate.ai/sitemap.xml");
-    expect(robots.host).toBe("https://winrate.ai");
+    expect(robots.sitemap).toBe("https://salesxgrowth.com/sitemap.xml");
+    expect(robots.host).toBe("https://salesxgrowth.com");
   });
 
   it("uses a stable public content freshness date for sitemap lastmod", async () => {
@@ -162,7 +162,7 @@ describe("seo url helpers", () => {
     );
 
     expect(pricingEntry).toMatchObject({
-      url: "https://winrate.ai/pricing",
+      url: "https://salesxgrowth.com/pricing",
       changeFrequency: "weekly",
       priority: 0.9,
     });
@@ -170,7 +170,7 @@ describe("seo url helpers", () => {
       new Date("2026-05-15T00:00:00.000Z"),
     );
     expect(telegramResourceEntry).toMatchObject({
-      url: "https://winrate.ai/resources/telegram-sales-command-center",
+      url: "https://salesxgrowth.com/resources/telegram-sales-command-center",
       changeFrequency: "monthly",
       priority: 0.74,
     });
@@ -190,10 +190,10 @@ describe("seo url helpers", () => {
 
   it("sets page-specific Twitter metadata on high-intent conversion pages", async () => {
     const highIntentPages = [
-      ["app/pricing/page.tsx", "Winrate Pricing"],
+      ["app/pricing/page.tsx", "salesxgrowth Pricing"],
       [
         "app/contact/page.tsx",
-        "Contact Winrate for AI sales onboarding and managed rollout",
+        "Contact salesxgrowth for AI sales onboarding and managed rollout",
       ],
       ["app/sales-blueprint/page.tsx", "AI Sales Blueprint Builder"],
       ["app/roi-calculator/page.tsx", "AI Sales ROI Calculator"],
@@ -365,8 +365,8 @@ describe("seo url helpers", () => {
   it("escapes json-ld payloads before injecting them into metadata scripts", async () => {
     const { jsonLd } = await loadSeo();
 
-    expect(jsonLd({ name: "Winrate <script>" })).toBe(
-      '{"name":"Winrate \\u003cscript>"}',
+    expect(jsonLd({ name: "salesxgrowth <script>" })).toBe(
+      '{"name":"salesxgrowth \\u003cscript>"}',
     );
   });
 

@@ -144,7 +144,7 @@ describe("API readiness route", () => {
     const app = await loadApp({
       storageMode: "memory",
       nodeEnv: "production",
-      frontendUrl: "https://app.winrate.ai",
+      frontendUrl: "https://app.salesxgrowth.com",
     });
 
     const healthResponse = await app.request("/health");
@@ -188,7 +188,7 @@ describe("API readiness route", () => {
       nodeEnv: "production",
       productionBlockers: [],
       authSecret: productionSafeAuthSecret,
-      frontendUrl: "https://app.winrate.ai",
+      frontendUrl: "https://app.salesxgrowth.com",
       releaseCommitSha: "abc123release",
       releaseDeploymentId: "deploy-456",
       rateLimitBackend: "edge",
@@ -248,7 +248,7 @@ describe("API readiness route", () => {
       nodeEnv: "production",
       productionBlockers: [],
       authSecret: productionSafeAuthSecret,
-      frontendUrl: "https://app.winrate.ai",
+      frontendUrl: "https://app.salesxgrowth.com",
     });
 
     const response = await app.request("/ready");
@@ -277,7 +277,7 @@ describe("API readiness route", () => {
       nodeEnv: "production",
       productionBlockers: [],
       authSecret: productionSafeAuthSecret,
-      frontendUrl: "https://app.winrate.ai",
+      frontendUrl: "https://app.salesxgrowth.com",
       trustProxyHeaders: "true",
     });
 
@@ -303,7 +303,7 @@ describe("API readiness route", () => {
       nodeEnv: "production",
       productionBlockers: [],
       authSecret: "your-secret-key-min-32-chars-change-in-production",
-      frontendUrl: "https://app.winrate.ai",
+      frontendUrl: "https://app.salesxgrowth.com",
     });
 
     const response = await app.request("/ready");
@@ -379,7 +379,7 @@ describe("API readiness route", () => {
       nodeEnv: "production",
       productionBlockers: [],
       authSecret: productionSafeAuthSecret,
-      frontendUrl: "https://app.winrate.ai/settings?tab=billing#provider",
+      frontendUrl: "https://app.salesxgrowth.com/settings?tab=billing#provider",
     });
     const pathResponse = await pathFrontendApp.request("/ready");
     const pathBody = await pathResponse.json();

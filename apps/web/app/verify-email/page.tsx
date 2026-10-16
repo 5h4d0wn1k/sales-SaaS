@@ -4,7 +4,7 @@ import { getServerApiBaseUrl } from "@/lib/server-api-auth";
 
 export const metadata: Metadata = {
   title: "Verify Email",
-  description: "Verify the email address connected to your Winrate account.",
+  description: "Verify the email address connected to your salesxgrowth account.",
   robots: {
     index: false,
     follow: false,

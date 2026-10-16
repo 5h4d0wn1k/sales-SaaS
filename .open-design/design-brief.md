@@ -2,7 +2,7 @@
 
 ## Product
 
-Winrate AI is a production-grade sales SaaS workspace for business onboarding, lead planning,
+salesxgrowth AI is a production-grade sales SaaS workspace for business onboarding, lead planning,
 approval-gated outreach, meeting conversion, billing, team administration, and future governed AI
 command-center workflows.
 

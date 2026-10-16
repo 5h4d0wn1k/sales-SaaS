@@ -191,7 +191,7 @@ function sourcePlanFor(input: PublicSalesBlueprintInput): PublicSalesBlueprintRe
 }
 
 function formatPlanPrice(plan: PricingPlan) {
-  return plan.price.usd === 0 ? "Free" : `$${plan.price.usd}/mo`;
+  return plan.price.usd === 0 ? "7-Day Trial" : `$${plan.price.usd}/mo`;
 }
 
 function formatProviderBudget(cents: number) {
@@ -553,7 +553,7 @@ export function buildBlueprintGetStartedUrl(
   result: PublicSalesBlueprintResult,
   planKey?: string,
 ) {
-  const contactUrl = new URL(buildBlueprintContactUrl(rawInput, result), "https://winrate.ai");
+  const contactUrl = new URL(buildBlueprintContactUrl(rawInput, result), "https://salesxgrowth.com");
   contactUrl.pathname = "/get-started";
   contactUrl.searchParams.set("plan", planKey ?? result.commercialFit.planKey);
   return `${contactUrl.pathname}?${contactUrl.searchParams.toString()}`;

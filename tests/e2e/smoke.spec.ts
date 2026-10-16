@@ -47,7 +47,7 @@ test.describe('Pricing Page', () => {
     await page.goto('/pricing');
 
     await expect(page.getByRole('heading', { name: 'Straightforward pricing for the current public beta' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Free', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '7-Day Trial', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Starter', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Professional', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Elite', exact: true })).toBeVisible();
@@ -56,9 +56,9 @@ test.describe('Pricing Page', () => {
   test('should show the canonical shared pricing values', async ({ page }) => {
     await page.goto('/pricing');
 
-    await expect(page.getByText('$49', { exact: true })).toBeVisible();
-    await expect(page.getByText('$99', { exact: true })).toBeVisible();
-    await expect(page.getByText('$249', { exact: true })).toBeVisible();
+    await expect(page.getByText('$20', { exact: true })).toBeVisible();
+    await expect(page.getByText('$45', { exact: true })).toBeVisible();
+    await expect(page.getByText('$100', { exact: true })).toBeVisible();
   });
 
   test('should show plan-fit advisor recommendations from pricing', async ({ page }) => {
@@ -137,8 +137,8 @@ test.describe('Navigation', () => {
 
     expect(securityResponse.ok()).toBeTruthy();
     expect(securityResponse.headers()['content-type']).toContain('text/plain');
-    expect(securityText).toContain('Contact: mailto:hello@winrate.ai');
-    expect(securityText).toContain('Policy: https://winrate.ai/trust');
+    expect(securityText).toContain('Contact: mailto:hello@salesxgrowth.com');
+    expect(securityText).toContain('Policy: https://salesxgrowth.com/trust');
     expect(securityText.toLowerCase()).not.toContain('bug bounty');
     expect(securityText.toLowerCase()).not.toContain('safe harbor');
 
@@ -155,7 +155,7 @@ test.describe('Navigation', () => {
     );
     await expect(page.getByRole('link', { name: /email security contact/i })).toHaveAttribute(
       'href',
-      'mailto:hello@winrate.ai',
+      'mailto:hello@salesxgrowth.com',
     );
 
     const body = (await page.locator('body').innerText()).toLowerCase();
@@ -169,7 +169,7 @@ test.describe('Navigation', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: 'Winrate turns business context into reviewable sales pipeline.',
+        name: 'salesxgrowth turns business context into reviewable sales pipeline.',
       }),
     ).toBeVisible();
     await expect(page.getByText('No live scraping or outreach starts from a public page.')).toBeVisible();
@@ -918,7 +918,7 @@ test.describe('Navigation', () => {
 
     await expect(
       page.getByRole('heading', {
-        name: 'Tell us what sales system you want Winrate to help launch.',
+        name: 'Tell us what sales system you want salesxgrowth to help launch.',
       }),
     ).toBeVisible();
     await expect(page.getByLabel('Work email')).toBeVisible();

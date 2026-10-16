@@ -11,7 +11,7 @@ function securityTxtExpires() {
 
 export function buildSecurityTxt() {
   return [
-    "Contact: mailto:hello@winrate.ai",
+    "Contact: mailto:hello@salesxgrowth.com",
     `Expires: ${securityTxtExpires()}`,
     `Canonical: ${absoluteUrl("/.well-known/security.txt")}`,
     `Policy: ${absoluteUrl("/trust")}`,

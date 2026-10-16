@@ -490,7 +490,7 @@ export default function GetStartedFlow({
                         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-teal-700">
                             <Zap className="h-4 w-4 text-white" />
                         </div>
-                        <span className="text-xl font-semibold tracking-normal text-slate-950">Winrate</span>
+                        <span className="text-xl font-semibold tracking-normal text-slate-950">salesxgrowth</span>
                     </Link>
 
                     {/* Step Indicator */}

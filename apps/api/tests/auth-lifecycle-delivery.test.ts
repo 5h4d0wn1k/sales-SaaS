@@ -88,7 +88,7 @@ describe("auth lifecycle email delivery", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("RESEND_API_KEY", "secret-value");
     vi.stubEnv("RESEND_FROM_EMAIL", "sales@example.com");
-    vi.stubEnv("FRONTEND_URL", "https://app.winrate.ai");
+    vi.stubEnv("FRONTEND_URL", "https://app.salesxgrowth.com");
     const { issueEmailVerification, sendMock } = await loadAuthLifecycleDelivery();
 
     const result = await issueEmailVerification({
@@ -101,8 +101,8 @@ describe("auth lifecycle email delivery", () => {
 
     expect(result.delivery).toEqual({ mode: "email" });
     expect(message?.to).toBe("owner@example.com");
-    expect(message?.subject).toBe("Verify your Winrate account");
-    expect(message?.text).toContain("https://app.winrate.ai/verify-email?");
-    expect(message?.html).toContain("https://app.winrate.ai/verify-email?");
+    expect(message?.subject).toBe("Verify your salesxgrowth account");
+    expect(message?.text).toContain("https://app.salesxgrowth.com/verify-email?");
+    expect(message?.html).toContain("https://app.salesxgrowth.com/verify-email?");
   });
 });

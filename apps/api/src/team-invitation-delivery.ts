@@ -69,7 +69,7 @@ export async function sendWorkspaceInvitationEmail({
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY!);
-  const subject = `Join ${safeHeaderText(organizationName)} in Winrate`;
+  const subject = `Join ${safeHeaderText(organizationName)} in salesxgrowth`;
   const safeInvitedByName = safeHtmlText(invitedByName);
   const safeWorkspaceName = safeHtmlText(workspaceName);
   const safeOrganizationName = safeHtmlText(organizationName);

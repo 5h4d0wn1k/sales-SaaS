@@ -22,28 +22,28 @@ import {
 export const metadata: Metadata = {
     title: "Pricing",
     description:
-        "Compare Winrate beta plans for AI-assisted lead planning, approval-gated outreach, dashboard visibility, and billing controls.",
+        "Compare salesxgrowth plans for AI-assisted lead planning, approval-gated outreach, dashboard visibility, and billing controls.",
     alternates: {
         canonical: "/pricing",
     },
     openGraph: {
-        title: "Winrate Pricing",
+        title: "salesxgrowth Pricing",
         description:
-            "Current public beta pricing for AI-assisted lead planning, approval-gated outreach, usage limits, provider-cost budgets, seats, and managed rollout support.",
+            "Current public pricing for AI-assisted lead planning, approval-gated outreach, usage limits, provider-cost budgets, seats, and managed rollout support.",
         url: "/pricing",
         siteName: siteConfig.name,
         type: "website",
         images: [getDefaultOpenGraphImage()],
     },
     twitter: getDefaultTwitterCard(
-        "Winrate Pricing",
+        "salesxgrowth Pricing",
         "Compare public beta plans, usage limits, provider-cost budgets, seats, and managed rollout support.",
     ),
 };
 
 function formatPlanPrice(usd: number) {
     if (usd === 0) {
-        return "Free";
+        return "$0";
     }
 
     return `$${usd}`;
@@ -75,8 +75,8 @@ export default async function PricingPage() {
                     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                         {publicPlans.map((plan) => {
                             const isPopular = Boolean(plan.popular);
-                            const isFreePlan = plan.key === "free";
-                            const ctaLabel = isFreePlan ? "Start Free" : "Choose Plan";
+                            const isTrialPlan = plan.key === "free";
+                            const ctaLabel = isTrialPlan ? "Start Trial" : "Choose Plan";
 
                             return (
                                 <div
@@ -97,7 +97,8 @@ export default async function PricingPage() {
                                     <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
                                     <div className="mt-6 mb-8">
                                         <span className="text-4xl font-bold">{formatPlanPrice(plan.price.usd)}</span>
-                                        {!isFreePlan && <span className="text-muted-foreground">/mo</span>}
+                                        {isTrialPlan && <span className="text-muted-foreground">/7 days</span>}
+                                        {!isTrialPlan && <span className="text-muted-foreground">/mo</span>}
                                     </div>
                                     <ul className="space-y-3 mb-8 flex-1">
                                         {plan.features.map((feature, i) => (

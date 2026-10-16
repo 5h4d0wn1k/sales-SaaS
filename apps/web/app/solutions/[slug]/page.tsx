@@ -204,7 +204,7 @@ export default async function SolutionSegmentPage({ params }: SolutionSegmentPag
               </h2>
               <p className="mt-4 text-sm leading-6 text-muted-foreground">
                 These pages are designed for search intent and buying clarity. They explain where
-                Winrate is useful today and where the roadmap still requires configuration,
+                salesxgrowth is useful today and where the roadmap still requires configuration,
                 approval, and provider maturity.
               </p>
             </div>
@@ -293,7 +293,7 @@ export default async function SolutionSegmentPage({ params }: SolutionSegmentPag
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Commercial path
                     </p>
-                    <h2 className="mt-1 text-lg font-bold">How the segment can grow with Winrate</h2>
+                    <h2 className="mt-1 text-lg font-bold">How the segment can grow with salesxgrowth</h2>
                   </div>
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default async function SolutionSegmentPage({ params }: SolutionSegmentPag
                 Clear enough to buy, cautious enough to operate.
               </h2>
               <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                Winrate can become more automated over time, but today the best value is a
+                salesxgrowth can become more automated over time, but today the best value is a
                 reviewable operating layer for source planning, outreach approval, conversion
                 follow-through, and revenue visibility.
               </p>

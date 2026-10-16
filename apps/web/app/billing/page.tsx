@@ -32,7 +32,7 @@ import {
 export const metadata: Metadata = {
   title: "Billing Command Center",
   description:
-    "Manage your Winrate subscription, payment history, workspace usage, and billing guardrails.",
+    "Manage your salesxgrowth subscription, payment history, workspace usage, and billing guardrails.",
   robots: {
     index: false,
     follow: false,

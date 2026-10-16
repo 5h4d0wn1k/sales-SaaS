@@ -149,7 +149,7 @@ export function buildRoiGetStartedUrl(
   result: RevenueImpactResult,
   planKey = "free",
 ) {
-  const contactUrl = new URL(buildRoiContactUrl(input, result), "https://winrate.ai");
+  const contactUrl = new URL(buildRoiContactUrl(input, result), "https://salesxgrowth.com");
   contactUrl.pathname = "/get-started";
   contactUrl.searchParams.set("plan", planKey);
   return `${contactUrl.pathname}?${contactUrl.searchParams.toString()}`;

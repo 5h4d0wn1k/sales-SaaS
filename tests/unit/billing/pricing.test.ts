@@ -22,9 +22,9 @@ describe("Billing Pricing Plans", () => {
     const elite = getPlanByKey("elite");
 
     expect(free?.price.usd).toBe(0);
-    expect(starter?.price.usd).toBe(49);
-    expect(pro?.price.usd).toBe(99);
-    expect(elite?.price.usd).toBe(249);
+    expect(starter?.price.usd).toBe(20);
+    expect(pro?.price.usd).toBe(45);
+    expect(elite?.price.usd).toBe(100);
   });
 
   it("should have increasing usage limits", () => {

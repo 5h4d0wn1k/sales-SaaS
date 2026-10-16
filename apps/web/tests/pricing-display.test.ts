@@ -61,7 +61,7 @@ describe("pricing display helpers", () => {
       intent: "fit_active_team",
       intentLabel: "Active campaign team fit",
       planName: "Professional",
-      priceLabel: "$99/mo",
+      priceLabel: "$45/mo",
       managedTier: "Operator Assist",
       managedIntent: "pricing_setup_review",
       boundaries: expect.arrayContaining([
@@ -144,7 +144,7 @@ describe("pricing display helpers", () => {
     expect(rows.find((row) => row.key === "active_team")).toMatchObject({
       scenario: "Active campaign team",
       recommendedPlanName: "Professional",
-      priceLabel: "$99/mo",
+      priceLabel: "$45/mo",
       commercialPath: "Operator Assist optional",
       guardrail:
         "Calls and configured provider work remain quota-checked, audit-linked, and approval-gated before spend or dispatch can advance.",

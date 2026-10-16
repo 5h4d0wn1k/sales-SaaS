@@ -28,7 +28,7 @@ import {
 export const metadata: Metadata = {
   title: "AI outbound sales automation with approval-gated outreach",
   description:
-    "Evaluate Winrate for AI outbound sales automation with Sales Blueprint context, sequence planning, suppression checks, email and call handoff, approval gates, Telegram visibility, meetings, and audit evidence.",
+    "Evaluate salesxgrowth for AI outbound sales automation with Sales Blueprint context, sequence planning, suppression checks, email and call handoff, approval gates, Telegram visibility, meetings, and audit evidence.",
   keywords: [
     "AI outbound sales automation",
     "outbound sales automation",
@@ -139,7 +139,7 @@ const outboundJsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "Winrate AI outbound sales automation",
+      name: "salesxgrowth AI outbound sales automation",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: absoluteUrl("/ai-outbound-sales-automation"),
@@ -197,7 +197,7 @@ export default function AiOutboundSalesAutomationPage() {
                 Automate outbound only after the sequence is reviewable.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                Winrate helps teams turn Sales Blueprint context and reviewed leads into sequence
+                salesxgrowth helps teams turn Sales Blueprint context and reviewed leads into sequence
                 plans, approval proposals, email and call handoff, Telegram visibility, meeting
                 follow-through, and audit evidence without hiding risky outreach behind a prompt.
               </p>

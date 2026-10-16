@@ -96,7 +96,7 @@ function telegram(overrides: Partial<TelegramIntegrationResponse> = {}): Telegra
     integration: {
       id: "telegram-1",
       status: "active",
-      botUsername: "@winrate_ops_bot",
+      botUsername: "@salesxgrowth_ops_bot",
       chatIdMask: "-1***7890",
       allowedCommands: ["status", "brief", "sequence", "forecast", "pause"],
       lastUpdateId: 123,

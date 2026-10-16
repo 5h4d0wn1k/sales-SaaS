@@ -67,7 +67,7 @@ describe("Pricing Plans", () => {
 
   it("should calculate correct INR amounts", () => {
     const starter = getPlanByKey("starter");
-    expect(starter?.price.inr).toBe(3999); // $49 ≈ ₹3999
+    expect(starter?.price.inr).toBe(1499); // $20 ≈ ₹1499
   });
 
   it("should have pro marked as popular", () => {

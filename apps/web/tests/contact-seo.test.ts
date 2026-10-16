@@ -37,7 +37,7 @@ afterEach(() => {
 
 describe("contact structured data", () => {
   it("builds a claim-safe contact graph for sales intake conversion", async () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.winrate.ai");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.salesxgrowth.com");
     const { buildContactPageJsonLd } = await loadContactSeo();
     const jsonLd = buildContactPageJsonLd();
     const graph = jsonLd["@graph"] as JsonLdNode[];
@@ -53,25 +53,25 @@ describe("contact structured data", () => {
     );
 
     expect(contactPage).toMatchObject({
-      name: "Contact Winrate",
-      url: "https://app.winrate.ai/contact",
+      name: "Contact salesxgrowth",
+      url: "https://app.salesxgrowth.com/contact",
     });
     expect(organization?.contactPoint).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           contactType: "sales",
-          email: "hello@winrate.ai",
+          email: "hello@salesxgrowth.com",
         }),
         expect.objectContaining({
           contactType: "customer support",
-          email: "hello@winrate.ai",
+          email: "hello@salesxgrowth.com",
         }),
       ]),
     );
     expect(service).toMatchObject({
-      name: "Winrate AI sales onboarding and managed rollout intake",
+      name: "salesxgrowth AI sales onboarding and managed rollout intake",
       serviceType: "AI-assisted sales operations onboarding",
-      url: "https://app.winrate.ai/contact",
+      url: "https://app.salesxgrowth.com/contact",
     });
     expect(service?.audience?.map((item) => item.audienceType)).toEqual(
       expect.arrayContaining([
@@ -87,7 +87,7 @@ describe("contact structured data", () => {
     expect(answerList?.itemListElement?.map((entry) => entry.item.name)).toEqual(
       expect.arrayContaining([
         "Does submitting the contact form start lead sourcing or outreach?",
-        "Can Winrate help with Telegram command-center setup?",
+        "Can salesxgrowth help with Telegram command-center setup?",
       ]),
     );
   });

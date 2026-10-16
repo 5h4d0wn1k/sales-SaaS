@@ -158,7 +158,7 @@ export default function OpenGraphImage() {
               gap: 16,
             }}
           >
-            <span style={{ color: "#0f766e", fontWeight: 900 }}>winrate.ai</span>
+            <span style={{ color: "#0f766e", fontWeight: 900 }}>salesxgrowth.com</span>
             <span>Context first. Approval gated. Built for careful operators.</span>
           </div>
         </div>

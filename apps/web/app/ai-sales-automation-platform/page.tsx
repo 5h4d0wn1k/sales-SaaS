@@ -29,7 +29,7 @@ import {
 export const metadata: Metadata = {
   title: "AI sales automation platform for governed lead generation and outreach",
   description:
-    "Evaluate Winrate as an AI sales automation platform for Sales Blueprint context, lead source evidence, approval-gated outreach, meeting conversion, revenue visibility, Telegram command control, provider readiness, and audit evidence.",
+    "Evaluate salesxgrowth as an AI sales automation platform for Sales Blueprint context, lead source evidence, approval-gated outreach, meeting conversion, revenue visibility, Telegram command control, provider readiness, and audit evidence.",
   keywords: [
     "AI sales automation platform",
     "AI sales platform",
@@ -146,7 +146,7 @@ const platformJsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "Winrate AI sales automation platform",
+      name: "salesxgrowth AI sales automation platform",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: absoluteUrl("/ai-sales-automation-platform"),
@@ -204,7 +204,7 @@ export default function AiSalesAutomationPlatformPage() {
                 Run the full sales workflow without turning AI into a black box.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                Winrate connects business context, source evidence, approval-gated outreach,
+                salesxgrowth connects business context, source evidence, approval-gated outreach,
                 meeting conversion, revenue visibility, Telegram command posture, provider
                 readiness, billing controls, and audit evidence in one governed sales workspace.
               </p>

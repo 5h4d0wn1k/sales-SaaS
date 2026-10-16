@@ -2,15 +2,15 @@ import { resourceArticleRoutes } from "./resources";
 import { solutionSegmentRoutes } from "./solution-segments";
 
 export const siteConfig = {
-  name: "Winrate",
-  url: "https://winrate.ai",
+  name: "salesxgrowth",
+  url: "https://salesxgrowth.com",
   contentUpdatedAt: "2026-06-06T00:00:00.000Z",
   description:
     "AI-assisted revenue execution workspace for business context capture, lead planning, approval-gated outreach, meetings, and billing.",
   socialImage: {
     path: "/opengraph-image",
     twitterPath: "/twitter-image",
-    alt: "Winrate AI-assisted sales workspace preview",
+    alt: "salesxgrowth AI-assisted sales workspace preview",
     width: 1200,
     height: 630,
   },

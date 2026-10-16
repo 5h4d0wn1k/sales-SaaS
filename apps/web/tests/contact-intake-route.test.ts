@@ -16,7 +16,7 @@ function createPostRequest(
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
-      referer: "https://winrate.ai/contact?utm_source=google",
+      referer: "https://salesxgrowth.com/contact?utm_source=google",
       ...headers,
     },
     body,
@@ -31,7 +31,7 @@ async function loadRoute(response: Response) {
 
   vi.stubGlobal("fetch", fetchMock);
   vi.stubEnv("NEXT_PUBLIC_API_URL", "https://api.example.com");
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://winrate.ai");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://salesxgrowth.com");
 
   const route = await import("../app/api/contact/intake/route");
   return {
@@ -57,7 +57,7 @@ const intakeResponse = {
     channels: ["email", "call"],
     message: "We need managed setup for a governed outbound launch.",
     sourcePath: "/contact",
-    referrer: "https://winrate.ai/contact?utm_source=google",
+    referrer: "https://salesxgrowth.com/contact?utm_source=google",
     utm: {
       source: "google",
       medium: "search",

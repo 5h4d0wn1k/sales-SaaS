@@ -57,7 +57,7 @@ describe("telegram notification test proxy route", () => {
           mode: "preview",
           provider: "telegram",
           chatIdMask: "-1***7890",
-          messagePreview: "Winrate Operator brief digest",
+          messagePreview: "salesxgrowth Operator brief digest",
           detail:
             "Telegram notification delivery preview generated. No network message was sent.",
           guardrails: [
@@ -93,7 +93,7 @@ describe("telegram notification test proxy route", () => {
     expect(location.searchParams.get("telegramNotificationChat")).toBe(
       "-1***7890",
     );
-    expect(location.toString()).not.toContain("Winrate+Operator+brief+digest");
+    expect(location.toString()).not.toContain("salesxgrowth+Operator+brief+digest");
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.example.com/v1/command-center/telegram-notifications/test",
       expect.objectContaining({
@@ -118,7 +118,7 @@ describe("telegram notification test proxy route", () => {
           mode: "blocked",
           provider: "telegram",
           chatIdMask: "-1***7890",
-          messagePreview: "Winrate Operator brief digest",
+          messagePreview: "salesxgrowth Operator brief digest",
           detail:
             "TELEGRAM_NOTIFICATION_TARGET_CHAT_ID does not match the active workspace chat binding.",
           guardrails: ["Summary-only Telegram notification."],
@@ -163,7 +163,7 @@ describe("telegram notification test proxy route", () => {
           mode: "failed",
           provider: "telegram",
           chatIdMask: "-1***7890",
-          messagePreview: "Winrate Operator brief digest",
+          messagePreview: "salesxgrowth Operator brief digest",
           detail: "Telegram message failed with status 500.",
           guardrails: ["Summary-only Telegram notification."],
           auditEventId: "audit_123",

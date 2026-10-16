@@ -9,7 +9,7 @@ export function MarketingFooter() {
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
             <Zap className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-sm font-bold tracking-tight">Winrate</span>
+          <span className="text-sm font-bold tracking-tight">salesxgrowth</span>
         </div>
         <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
           <Link href="/pricing" className="hover:text-foreground transition-colors">
@@ -28,7 +28,7 @@ export function MarketingFooter() {
             Get started
           </Link>
         </div>
-        <p className="text-xs text-muted-foreground">© 2026 Winrate. Built for builders.</p>
+        <p className="text-xs text-muted-foreground">© 2026 salesxgrowth. Built for builders.</p>
       </div>
     </footer>
   );

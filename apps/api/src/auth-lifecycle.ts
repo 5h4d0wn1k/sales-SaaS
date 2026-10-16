@@ -203,7 +203,7 @@ export async function issueEmailVerification(user: LifecycleUser) {
     token: rawToken,
   });
 
-  const subject = "Verify your Winrate account";
+  const subject = "Verify your salesxgrowth account";
   const text =
     `Verify your email to unlock billing and live outbound actions.\n\n` +
     `Open this link: ${previewUrl}\n\n` +
@@ -239,13 +239,13 @@ export async function issuePasswordReset(user: LifecycleUser) {
     token: rawToken,
   });
 
-  const subject = "Reset your Winrate password";
+  const subject = "Reset your salesxgrowth password";
   const text =
-    `Reset the password for your Winrate account.\n\n` +
+    `Reset the password for your salesxgrowth account.\n\n` +
     `Open this link: ${previewUrl}\n\n` +
     `If you did not request this reset, you can ignore this email.`;
   const html =
-    `<p>Reset the password for your Winrate account.</p>` +
+    `<p>Reset the password for your salesxgrowth account.</p>` +
     `<p><a href="${previewUrl}">Reset password</a></p>` +
     `<p>If you did not request this reset, you can ignore this email.</p>`;
 

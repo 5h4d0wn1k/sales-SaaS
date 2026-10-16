@@ -20,7 +20,7 @@ describe("public sales blueprint", () => {
     expect(result.commercialFit).toMatchObject({
       planKey: "starter",
       planName: "Starter",
-      priceLabel: "$49/mo",
+      priceLabel: "$20/mo",
       estimatedReviewedDispatches: 80,
       estimatedVoiceCalls: 0,
       providerBudgetPressure: "medium",
@@ -60,8 +60,8 @@ describe("public sales blueprint", () => {
     const result = evaluatePublicSalesBlueprint(defaultPublicSalesBlueprintInput);
     const contactUrl = buildBlueprintContactUrl(defaultPublicSalesBlueprintInput, result);
     const getStartedUrl = buildBlueprintGetStartedUrl(defaultPublicSalesBlueprintInput, result);
-    const url = new URL(contactUrl, "https://winrate.ai");
-    const getStarted = new URL(getStartedUrl, "https://winrate.ai");
+    const url = new URL(contactUrl, "https://salesxgrowth.com");
+    const getStarted = new URL(getStartedUrl, "https://salesxgrowth.com");
     const context = parseBlueprintContactContext({
       utm_source: url.searchParams.get("utm_source") ?? undefined,
       monthlyLeadGoal: url.searchParams.get("monthlyLeadGoal") ?? undefined,

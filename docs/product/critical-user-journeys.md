@@ -215,7 +215,7 @@ The owner can trust subscription, account, and recent sensitive-action evidence 
 
 ### Completion condition
 
-The buyer understands what Winrate can support today, what remains guarded or roadmap, and reaches a next step that can turn search intent into workspace activation or managed-service revenue.
+The buyer understands what salesxgrowth can support today, what remains guarded or roadmap, and reaches a next step that can turn search intent into workspace activation or managed-service revenue.
 
 ### Main failure modes
 

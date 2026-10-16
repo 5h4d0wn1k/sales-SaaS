@@ -28,14 +28,14 @@ import { solutionSegmentPages } from "@/lib/solution-segments";
 export const metadata: Metadata = {
   title: "AI sales solutions for founders, agencies, SMB, local service, and SaaS teams",
   description:
-    "Explore Winrate solutions for business onboarding, lead planning, approval-gated outreach, meeting conversion, billing visibility, and governed AI sales operations.",
+    "Explore salesxgrowth solutions for business onboarding, lead planning, approval-gated outreach, meeting conversion, billing visibility, and governed AI sales operations.",
   alternates: {
     canonical: "/solutions",
   },
   openGraph: {
     title: "AI sales solutions for founders, agencies, SMB, local service, and SaaS teams",
     description:
-      "A claim-safe guide to the Winrate beta for teams building reviewable lead generation, outreach, and meeting conversion workflows.",
+      "A claim-safe guide to the salesxgrowth beta for teams building reviewable lead generation, outreach, and meeting conversion workflows.",
     url: "/solutions",
     siteName: siteConfig.name,
     type: "website",
@@ -94,17 +94,17 @@ const trustControls = [
 
 const solutionFaqs = [
   {
-    question: "Can Winrate run sales work without operator review?",
+    question: "Can salesxgrowth run sales work without operator review?",
     answer:
       "No. The current beta is AI-assisted and approval-gated. High-impact sales actions still require eligible human review.",
   },
   {
-    question: "Can Winrate generate leads from every source today?",
+    question: "Can salesxgrowth generate leads from every source today?",
     answer:
-      "No. Winrate supports guarded source planning, evidence review, mock/configured adapters, and a roadmap for broader provider integrations.",
+      "No. salesxgrowth supports guarded source planning, evidence review, mock/configured adapters, and a roadmap for broader provider integrations.",
   },
   {
-    question: "Who is the best fit for Winrate now?",
+    question: "Who is the best fit for salesxgrowth now?",
     answer:
       "Founders, agencies, SMB operators, local service businesses, B2B SaaS teams, and professional-services firms that want structured lead planning, reviewable outreach, meeting visibility, and usage-aware billing.",
   },
@@ -191,7 +191,7 @@ export default async function SolutionsPage() {
                 A reviewable sales operating system for teams that need pipeline with control.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                Winrate helps founders, agencies, SMB operators, local service businesses, B2B SaaS
+                salesxgrowth helps founders, agencies, SMB operators, local service businesses, B2B SaaS
                 teams, and professional-services firms capture business context, plan lead sources,
                 approve outreach, track meetings, and control billing from one AI-assisted workspace.
               </p>
@@ -348,7 +348,7 @@ export default async function SolutionsPage() {
                 Advanced sales automation should start with guardrails, not unchecked sends.
               </h2>
               <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                Winrate is being built for serious outbound operations: tenant-aware workspaces,
+                salesxgrowth is being built for serious outbound operations: tenant-aware workspaces,
                 approval-aware actions, billing boundaries, provider readiness, suppression checks,
                 and a future command center that stays governed.
               </p>

@@ -44,7 +44,7 @@ const blueprintFaqs = [
   {
     question: "Why does the blueprint include approval gates?",
     answer:
-      "Lead generation and outreach can create compliance, brand, cost, and deliverability risk. Winrate keeps high-impact actions reviewable before they run.",
+      "Lead generation and outreach can create compliance, brand, cost, and deliverability risk. salesxgrowth keeps high-impact actions reviewable before they run.",
   },
   {
     question: "Can this become a workspace Sales Blueprint?",
@@ -76,7 +76,7 @@ export default function SalesBlueprintPage() {
       },
       {
         "@type": "SoftwareApplication",
-        name: "Winrate AI Sales Blueprint Builder",
+        name: "salesxgrowth AI Sales Blueprint Builder",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         offers: {

@@ -43,10 +43,10 @@ Disallow: /api/
 Sitemap: https://web.example.test/sitemap.xml'}"
     ;;
   *web.example.test/.well-known/security.txt)
-    printf '%s' "\${WEB_SECURITY_RESPONSE:-'Contact: mailto:hello@winrate.ai
+    printf '%s' "\${WEB_SECURITY_RESPONSE:-'Contact: mailto:hello@salesxgrowth.com
 Expires: 2026-12-31T00:00:00.000Z
 Canonical: https://web.example.test/.well-known/security.txt
-Policy: https://winrate.ai/trust
+Policy: https://salesxgrowth.com/trust
 Preferred-Languages: en'}"
     ;;
   *web.example.test/opengraph-image)
@@ -225,7 +225,7 @@ describe("Cloudflare production smoke script", () => {
       runSmoke({
         apiReadyResponse: readyPayload("sales-api"),
         webSecurityResponse:
-          "Contact: mailto:hello@winrate.ai\nPolicy: https://winrate.ai/trust\nSafe Harbor: yes",
+          "Contact: mailto:hello@salesxgrowth.com\nPolicy: https://salesxgrowth.com/trust\nSafe Harbor: yes",
       }),
     ).rejects.toMatchObject({
       code: 1,

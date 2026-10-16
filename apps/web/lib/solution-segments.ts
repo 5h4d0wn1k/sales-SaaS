@@ -149,12 +149,12 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "/get-started?plan=free&utm_source=solution_segment&utm_medium=seo&utm_campaign=founders_validating_outbound&solutionSegment=founders-validating-outbound&segment=founder",
     faq: [
       {
-        question: "Can a founder use Winrate before hiring a sales team?",
+        question: "Can a founder use salesxgrowth before hiring a sales team?",
         answer:
           "Yes. The current fit is a founder who wants a structured workspace for ICP, source planning, draft outreach, approval gates, and meeting follow-through before scaling spend.",
       },
       {
-        question: "Will Winrate automatically scrape every source and book meetings?",
+        question: "Will salesxgrowth automatically scrape every source and book meetings?",
         answer:
           "No. The beta keeps lead planning, source evidence, outreach, and meetings reviewable. Broader provider automation remains gated by configuration, policy, and roadmap maturity.",
       },
@@ -255,7 +255,7 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "/get-started?plan=free&utm_source=solution_segment&utm_medium=seo&utm_campaign=agencies_running_client_pipeline&solutionSegment=agencies-running-client-pipeline&segment=agency",
     faq: [
       {
-        question: "Can an agency manage multiple clients in Winrate?",
+        question: "Can an agency manage multiple clients in salesxgrowth?",
         answer:
           "The platform has workspace and membership foundations. Agency operators should still keep client setup, access, billing, and provider configuration separated and reviewed.",
       },
@@ -363,10 +363,10 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       {
         question: "Is this a CRM replacement for SMB teams?",
         answer:
-          "Not entirely. Winrate is currently strongest as an outbound and revenue execution workspace around planning, approvals, meetings, usage, and handoff visibility.",
+          "Not entirely. salesxgrowth is currently strongest as an outbound and revenue execution workspace around planning, approvals, meetings, usage, and handoff visibility.",
       },
       {
-        question: "Can the team control Winrate from Telegram?",
+        question: "Can the team control salesxgrowth from Telegram?",
         answer:
           "Telegram currently supports guarded status, brief, sequence, forecast, approvals, provider, suppression, and pause-proposal flows. It does not approve outreach or mutate campaigns directly.",
       },
@@ -404,7 +404,7 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "Appointments, estimates, no-shows, and won/lost outcomes need a clearer operating loop.",
     ],
     guardrails: [
-      "No claim is made that Winrate scrapes every local directory or bypasses provider rules.",
+      "No claim is made that salesxgrowth scrapes every local directory or bypasses provider rules.",
       "SMS, calling, and email execution still depend on configured providers, consent posture, and plan/channel eligibility.",
       "Local compliance, licensing, pricing, and service-area decisions remain customer-owned.",
       "Telegram can expose safe status and proposal flows; it does not mutate outreach or billing directly.",
@@ -467,12 +467,12 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "/get-started?plan=free&utm_source=solution_segment&utm_medium=seo&utm_campaign=local_service_businesses_booking_jobs&solutionSegment=local-service-businesses-booking-jobs&segment=local_services",
     faq: [
       {
-        question: "Can a local service business use Winrate without a sales team?",
+        question: "Can a local service business use salesxgrowth without a sales team?",
         answer:
           "Yes. The current fit is an owner or operator who wants a reviewable workflow for local inquiries, follow-up planning, appointment visibility, and conversion outcomes.",
       },
       {
-        question: "Does Winrate automatically message every local lead?",
+        question: "Does salesxgrowth automatically message every local lead?",
         answer:
           "No. Follow-up is approval-gated and provider-aware. The product helps plan and review outreach before live sending is allowed.",
       },
@@ -510,7 +510,7 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "The team wants AI assistance but cannot allow unchecked sending, provider spend, or CRM mutations.",
     ],
     guardrails: [
-      "Winrate does not promise booked meetings, pipeline, or revenue from AI-generated activity.",
+      "salesxgrowth does not promise booked meetings, pipeline, or revenue from AI-generated activity.",
       "CRM, calendar, and provider mutations remain bounded by configured integrations and approval gates.",
       "Forecast and ROI views are planning aids, not autonomous revenue optimization.",
       "Unsupported browser automation and social-platform auto-DM workflows are not sold as active capabilities.",
@@ -573,12 +573,12 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "/get-started?plan=free&utm_source=solution_segment&utm_medium=seo&utm_campaign=b2b_saas_teams_scaling_pipeline&solutionSegment=b2b-saas-teams-scaling-pipeline&segment=b2b_saas",
     faq: [
       {
-        question: "Can a B2B SaaS team use Winrate before connecting every sales tool?",
+        question: "Can a B2B SaaS team use salesxgrowth before connecting every sales tool?",
         answer:
           "Yes. The current value is a reviewable workspace for ICP, account source planning, sequences, meetings, and outcomes before deeper integrations are configured.",
       },
       {
-        question: "Does Winrate replace a CRM for SaaS sales?",
+        question: "Does salesxgrowth replace a CRM for SaaS sales?",
         answer:
           "No. It is strongest as a sales execution and planning layer around outbound, approvals, meetings, and handoff visibility.",
       },
@@ -616,7 +616,7 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "The team wants AI help with structure and draft quality while keeping judgment human-owned.",
     ],
     guardrails: [
-      "Winrate does not send relationship-sensitive outreach without approval and provider readiness.",
+      "salesxgrowth does not send relationship-sensitive outreach without approval and provider readiness.",
       "Legal, financial, strategic, or regulated advice remains the responsibility of the professional firm.",
       "The product does not claim to infer buyer intent from private sources or bypass platform rules.",
       "Managed services support setup and review cadence; they do not replace partner-owned sales judgment.",
@@ -679,7 +679,7 @@ export const solutionSegmentPages: readonly SolutionSegmentPage[] = [
       "/get-started?plan=free&utm_source=solution_segment&utm_medium=seo&utm_campaign=professional_services_selling_retainers&solutionSegment=professional-services-selling-retainers&segment=professional_services",
     faq: [
       {
-        question: "Is Winrate safe for relationship-led professional services sales?",
+        question: "Is salesxgrowth safe for relationship-led professional services sales?",
         answer:
           "The product is designed around review, context, and approval. It is not positioned as a mass-send tool for relationship-sensitive sales.",
       },

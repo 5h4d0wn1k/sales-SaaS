@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { isTrustedMutationOrigin, rejectCrossOriginMutation } from "../lib/same-origin";
 
 function request(headers: Record<string, string> = {}) {
-  return new Request("https://app.winrate.ai/api/campaigns/create", {
+  return new Request("https://app.salesxgrowth.com/api/campaigns/create", {
     method: "POST",
     headers,
   });
@@ -18,13 +18,13 @@ describe("same-origin mutation guard", () => {
   });
 
   it("allows the current request origin", () => {
-    expect(isTrustedMutationOrigin(request({ origin: "https://app.winrate.ai" }))).toBe(true);
+    expect(isTrustedMutationOrigin(request({ origin: "https://app.salesxgrowth.com" }))).toBe(true);
   });
 
   it("allows explicitly configured app origins", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://workspace.winrate.ai");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://workspace.salesxgrowth.com");
 
-    expect(isTrustedMutationOrigin(request({ origin: "https://workspace.winrate.ai" }))).toBe(true);
+    expect(isTrustedMutationOrigin(request({ origin: "https://workspace.salesxgrowth.com" }))).toBe(true);
   });
 
   it("allows non-cross-site fetch metadata without origin evidence", () => {
@@ -38,7 +38,7 @@ describe("same-origin mutation guard", () => {
     expect(
       isTrustedMutationOrigin(
         request({
-          origin: "https://app.winrate.ai",
+          origin: "https://app.salesxgrowth.com",
           "sec-fetch-site": "cross-site",
         }),
       ),

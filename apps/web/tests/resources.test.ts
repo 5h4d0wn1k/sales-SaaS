@@ -83,7 +83,7 @@ describe("resource article registry", () => {
       throw new Error("Expected the Telegram command-center resource article to exist");
     }
 
-    expect(resourceArticleAuthorName).toBe("Winrate Revenue Systems Team");
+    expect(resourceArticleAuthorName).toBe("salesxgrowth Revenue Systems Team");
     expect(getResourceArticleUpdatedAt(article)).toBe("2026-06-06");
     expect(formatResourceArticleDate(article.publishedAt)).toBe("Jun 4, 2026");
     expect(formatResourceArticleDate(getResourceArticleUpdatedAt(article))).toBe(

@@ -178,7 +178,7 @@ describe("command center capabilities", () => {
       integration: {
         id: "tg-1",
         status: "pending_verification",
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatIdMask: "-1***7010",
         allowedCommands: [
           "status",

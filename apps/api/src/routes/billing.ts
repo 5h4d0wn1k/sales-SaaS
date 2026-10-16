@@ -398,7 +398,7 @@ billingRoutes.post("/checkout/razorpay", async (c) => {
             keyId: process.env.RAZORPAY_KEY_ID,
             amount: plan.price.inr * 100, // in paise (for initial payment if any)
             currency: "INR",
-            name: "Winrate Sales SaaS",
+            name: "salesxgrowth Sales SaaS",
             description: plan.name,
         });
     } catch (error: any) {

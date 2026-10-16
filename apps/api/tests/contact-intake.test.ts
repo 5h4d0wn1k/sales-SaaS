@@ -113,7 +113,7 @@ describe("contact intake API", () => {
       },
       body: JSON.stringify(validContactIntake({
         sourcePath: "/sales-blueprint",
-        referrer: "https://winrate.example/sales-blueprint?blueprintReadiness=90",
+        referrer: "https://salesxgrowth.example/sales-blueprint?blueprintReadiness=90",
         utm: {
           source: "sales_blueprint_tool",
           medium: "owned_tool",
@@ -145,7 +145,7 @@ describe("contact intake API", () => {
         replyTo: "nina@example.com",
         subject: expect.stringContaining("VectrCloud"),
         text: expect.stringMatching(
-          /Source path: \/sales-blueprint[\s\S]*Referrer: https:\/\/winrate\.example\/sales-blueprint\?blueprintReadiness=90[\s\S]*Acquisition source: sales_blueprint_tool[\s\S]*Acquisition campaign: blueprint_readiness[\s\S]*Pricing plan: starter[\s\S]*Pricing intent: blueprint_commercial_fit[\s\S]*Managed package: operator-assist[\s\S]*Managed intent: blueprint_commercial_fit[\s\S]*Solution segment: founders-validating-outbound[\s\S]*Segment label: Founder-led software teams[\s\S]*Requested integration: telegram-command-center[\s\S]*Integration intent: beta_rollout[\s\S]*Integration status: Guarded beta[\s\S]*Integration commercial path: Pilot with review gates[\s\S]*Monthly lead goal: 500/,
+          /Source path: \/sales-blueprint[\s\S]*Referrer: https:\/\/salesxgrowth\.example\/sales-blueprint\?blueprintReadiness=90[\s\S]*Acquisition source: sales_blueprint_tool[\s\S]*Acquisition campaign: blueprint_readiness[\s\S]*Pricing plan: starter[\s\S]*Pricing intent: blueprint_commercial_fit[\s\S]*Managed package: operator-assist[\s\S]*Managed intent: blueprint_commercial_fit[\s\S]*Solution segment: founders-validating-outbound[\s\S]*Segment label: Founder-led software teams[\s\S]*Requested integration: telegram-command-center[\s\S]*Integration intent: beta_rollout[\s\S]*Integration status: Guarded beta[\s\S]*Integration commercial path: Pilot with review gates[\s\S]*Monthly lead goal: 500/,
         ),
       }),
     );
@@ -343,7 +343,7 @@ describe("contact intake API", () => {
       provider: "resend",
     });
     expect(message?.subject).toBe(
-      "[Winrate high] VectrCloud Bcc: buyer@example.com sales assessment",
+      "[salesxgrowth high] VectrCloud Bcc: buyer@example.com sales assessment",
     );
     expect(message?.subject).not.toMatch(/[\r\n]/);
     expect(errorSpy).toHaveBeenCalledWith(

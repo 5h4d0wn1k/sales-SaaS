@@ -98,7 +98,7 @@ function buildMessage(input: {
   const leadCount = input.dashboard.leads.length;
 
   return compactList([
-    `Winrate ${notificationLabels[input.notificationType]}`,
+    `salesxgrowth ${notificationLabels[input.notificationType]}`,
     `Workspace: ${input.dashboard.workspace.workspaceName}`,
     `Plan: ${input.dashboard.subscription.planKey}`,
     `Pending approvals: ${input.proposals.summary.pending}`,

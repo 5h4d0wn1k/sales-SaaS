@@ -31,7 +31,7 @@ import {
 export const metadata: Metadata = {
   title: "Compare AI sales software, CRMs, outreach tools, lead lists, and agencies",
   description:
-    "Compare Winrate with CRM-only tools, outreach sequencers, lead-list vendors, sales agencies, and generic AI agents across lead planning, approval-gated outreach, meetings, Telegram visibility, billing controls, and audit evidence.",
+    "Compare salesxgrowth with CRM-only tools, outreach sequencers, lead-list vendors, sales agencies, and generic AI agents across lead planning, approval-gated outreach, meetings, Telegram visibility, billing controls, and audit evidence.",
   keywords: [
     "AI sales platform comparison",
     "compare sales automation tools",
@@ -64,7 +64,7 @@ const comparisonRows = [
     alternative: "CRM-only workflow",
     bestAt: "Accounts, contacts, opportunities, and manager reporting once the sales motion is already defined.",
     gap: "Usually does not create a Sales Blueprint, source evidence, approval gates, or provider-cost controls before outreach.",
-    winrate:
+    salesxgrowth:
       "Adds business-context capture, lead-source evidence, reviewed outreach, meeting handoff, billing visibility, and audit posture around the CRM workflow.",
     fit: "Use with CRM",
   },
@@ -73,7 +73,7 @@ const comparisonRows = [
     alternative: "Outreach sequencer",
     bestAt: "Email sequence execution, reply capture, and team activity cadence after lists and messaging are approved.",
     gap: "Can push volume faster than the team has inspected ICP fit, suppression posture, provider readiness, or brand risk.",
-    winrate:
+    salesxgrowth:
       "Keeps source review, draft campaign approval, suppression checks, channel entitlement, and provider acceptance visible before the first touch.",
     fit: "Govern before send",
   },
@@ -82,7 +82,7 @@ const comparisonRows = [
     alternative: "Lead-list or enrichment vendor",
     bestAt: "Finding records, adding firmographic fields, and supplying raw prospect data.",
     gap: "Often leaves quality scoring, rejection reasons, dedupe posture, consent review, and next action outside the buying workflow.",
-    winrate:
+    salesxgrowth:
       "Treats source runs as reviewable evidence with provider mode, dedupe count, quality score, rejection reasons, compliance checks, freshness, and next action.",
     fit: "Review before outreach",
   },
@@ -91,7 +91,7 @@ const comparisonRows = [
     alternative: "Traditional sales agency",
     bestAt: "Human execution, strategy, and managed operational support for teams without internal bandwidth.",
     gap: "The customer may not see the operating system, evidence trail, approval policy, usage posture, or repeatable workflow.",
-    winrate:
+    salesxgrowth:
       "Combines software plus optional managed rollout so setup support, plan controls, approvals, and customer-owned decisions remain explicit.",
     fit: "Software plus support",
   },
@@ -100,7 +100,7 @@ const comparisonRows = [
     alternative: "Generic AI agent builder",
     bestAt: "Flexible prompts, custom automation experiments, and internal task assistants.",
     gap: "Broad agents can blur read-only, approval-gated, blocked, and live actions unless policy is modeled before execution.",
-    winrate:
+    salesxgrowth:
       "Models command previews, policy explanations, Approval Inbox proposals, AI-worker scopes, Telegram aliases, and blocked unsupported automation before mutation.",
     fit: "Control plane first",
   },
@@ -124,22 +124,22 @@ const currentTruthRows = [
 
 const faqs = [
   {
-    question: "Is Winrate a CRM replacement?",
+    question: "Is salesxgrowth a CRM replacement?",
     answer:
-      "No. Winrate is positioned as a governed sales workspace around business context, source evidence, approval-gated outreach, meetings, billing, and audit posture. CRM sync is a roadmap integration path, and manual CRM handoff exists today.",
+      "No. salesxgrowth is positioned as a governed sales workspace around business context, source evidence, approval-gated outreach, meetings, billing, and audit posture. CRM sync is a roadmap integration path, and manual CRM handoff exists today.",
   },
   {
-    question: "Is Winrate an outreach sequencer replacement?",
+    question: "Is salesxgrowth an outreach sequencer replacement?",
     answer:
-      "Winrate can create reviewed campaigns and dispatch approved work through configured or guarded providers, but its core difference is the control plane before send volume: source evidence, approvals, suppression checks, channel entitlements, provider readiness, and audit evidence.",
+      "salesxgrowth can create reviewed campaigns and dispatch approved work through configured or guarded providers, but its core difference is the control plane before send volume: source evidence, approvals, suppression checks, channel entitlements, provider readiness, and audit evidence.",
   },
   {
-    question: "Is Winrate a sales agency?",
+    question: "Is salesxgrowth a sales agency?",
     answer:
-      "Winrate is software first with optional managed rollout support. Managed support helps with setup, review cadence, and operating discipline, but it does not bypass product gates or customer-owned decisions.",
+      "salesxgrowth is software first with optional managed rollout support. Managed support helps with setup, review cadence, and operating discipline, but it does not bypass product gates or customer-owned decisions.",
   },
   {
-    question: "Can Winrate run unattended sales across every channel?",
+    question: "Can salesxgrowth run unattended sales across every channel?",
     answer:
       "No. Current public truth is approval-gated and guarded. Broader autonomous execution remains roadmap work and must stay behind provider, compliance, audit, cost, and owner-approval controls.",
   },
@@ -225,7 +225,7 @@ export default function CompareSalesToolsPage() {
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
                 CRMs, outreach tools, lead lists, agencies, and AI agents each solve part of the
-                sales workflow. Winrate is built as the governed workspace between business
+                sales workflow. salesxgrowth is built as the governed workspace between business
                 context, lead evidence, approval-gated outreach, meetings, Telegram visibility,
                 plan controls, and audit evidence.
               </p>
@@ -252,7 +252,7 @@ export default function CompareSalesToolsPage() {
                   Buyer shortcut
                 </p>
                 <h2 className="mt-1 text-lg font-bold text-slate-950">
-                  When Winrate is the better fit
+                  When salesxgrowth is the better fit
                 </h2>
               </div>
               <div className="divide-y">
@@ -273,7 +273,7 @@ export default function CompareSalesToolsPage() {
               <div>
                 <p className="text-sm font-semibold text-teal-800">Comparison matrix</p>
                 <h2 className="mt-2 text-2xl font-bold tracking-normal text-slate-950 md:text-3xl">
-                  What each sales tool is good at, and where Winrate fits.
+                  What each sales tool is good at, and where salesxgrowth fits.
                 </h2>
               </div>
               <Link
@@ -290,7 +290,7 @@ export default function CompareSalesToolsPage() {
                 <span>Alternative</span>
                 <span>Best at</span>
                 <span className="hidden md:block">Common gap</span>
-                <span className="hidden md:block">Winrate difference</span>
+                <span className="hidden md:block">salesxgrowth difference</span>
                 <span className="hidden md:block">Fit</span>
               </div>
               <div className="divide-y">
@@ -308,7 +308,7 @@ export default function CompareSalesToolsPage() {
                       </div>
                       <p className="leading-6 text-slate-600">{row.bestAt}</p>
                       <p className="leading-6 text-slate-600">{row.gap}</p>
-                      <p className="leading-6 text-slate-600">{row.winrate}</p>
+                      <p className="leading-6 text-slate-600">{row.salesxgrowth}</p>
                       <StatusPill label={row.fit} />
                     </div>
                   );
@@ -396,7 +396,7 @@ export default function CompareSalesToolsPage() {
                   </h2>
                   <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
                     Bring your current CRM, outreach, lead-source, agency, and AI-agent context
-                    into Winrate. The next step is a reviewed setup path, not hidden live
+                    into salesxgrowth. The next step is a reviewed setup path, not hidden live
                     automation.
                   </p>
                 </div>

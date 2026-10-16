@@ -27,7 +27,7 @@ import {
 export const metadata: Metadata = {
   title: "AI sales meeting scheduler with manual calendar handoff",
   description:
-    "Evaluate Winrate for AI-assisted sales meeting scheduling and conversion follow-through with conversion work queues, manual Google, Outlook, Office 365, and ICS calendar handoff, meeting outcome capture, revenue forecast, CRM exports, and Telegram visibility.",
+    "Evaluate salesxgrowth for AI-assisted sales meeting scheduling and conversion follow-through with conversion work queues, manual Google, Outlook, Office 365, and ICS calendar handoff, meeting outcome capture, revenue forecast, CRM exports, and Telegram visibility.",
   keywords: [
     "AI sales meeting scheduler",
     "sales meeting scheduler software",
@@ -138,7 +138,7 @@ const meetingJsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "Winrate AI sales meeting scheduler",
+      name: "salesxgrowth AI sales meeting scheduler",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: absoluteUrl("/ai-sales-meeting-scheduler"),
@@ -196,7 +196,7 @@ export default function AiSalesMeetingSchedulerPage() {
                 Turn reviewed pipeline into meetings without hiding the handoff.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                Winrate helps operators move from contacted leads to scheduled meetings, manual
+                salesxgrowth helps operators move from contacted leads to scheduled meetings, manual
                 calendar handoff, outcome capture, forecast review, CRM export, and revenue
                 reconciliation while keeping risky conversion work visible and reviewable.
               </p>

@@ -16,7 +16,7 @@ describe("contact status view", () => {
       nextSteps: expect.arrayContaining([
         "Review company fit, sales goals, budget posture, and rollout blockers.",
         "Confirm plan, provider, approval, and managed-service boundaries before live work starts.",
-        "Follow up through hello@winrate.ai with the safest onboarding or rollout path.",
+        "Follow up through hello@salesxgrowth.com with the safest onboarding or rollout path.",
       ]),
     });
   });
@@ -28,12 +28,12 @@ describe("contact status view", () => {
       title: "Request was not captured",
       tone: "border-red-200 bg-red-50 text-red-800",
       nextSteps: expect.arrayContaining([
-        "Send the same details to hello@winrate.ai.",
+        "Send the same details to hello@salesxgrowth.com.",
         "Include company, goal, monthly lead target, timeline, budget posture, and channels.",
         "Avoid sending secrets, provider keys, or private customer data in the first email.",
       ]),
     });
-    expect(status?.message).toContain("hello@winrate.ai");
+    expect(status?.message).toContain("hello@salesxgrowth.com");
   });
 
   it("ignores unknown status values and stays claim-safe", () => {

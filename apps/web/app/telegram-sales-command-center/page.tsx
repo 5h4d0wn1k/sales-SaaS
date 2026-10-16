@@ -28,7 +28,7 @@ import {
 export const metadata: Metadata = {
   title: "Telegram sales command center for AI-assisted sales teams",
   description:
-    "Evaluate Winrate's Telegram sales command center for safe operator briefs, sequence readiness, revenue forecast checks, suppression and provider visibility, policy previews, approval-gated pause proposals, and audit evidence.",
+    "Evaluate salesxgrowth's Telegram sales command center for safe operator briefs, sequence readiness, revenue forecast checks, suppression and provider visibility, policy previews, approval-gated pause proposals, and audit evidence.",
   keywords: [
     "Telegram sales command center",
     "Telegram sales bot",
@@ -139,7 +139,7 @@ const telegramJsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "Winrate Telegram sales command center",
+      name: "salesxgrowth Telegram sales command center",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: absoluteUrl("/telegram-sales-command-center"),
@@ -197,7 +197,7 @@ export default function TelegramSalesCommandCenterPage() {
                 Control sales from Telegram without bypassing approval.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                Winrate gives operators a Telegram path for status, briefs, sequence readiness,
+                salesxgrowth gives operators a Telegram path for status, briefs, sequence readiness,
                 forecast checks, provider posture, suppression checks, and approval proposals while
                 keeping risky sales actions inside the workspace.
               </p>

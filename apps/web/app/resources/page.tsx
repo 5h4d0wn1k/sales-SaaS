@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "AI sales resources for safer lead generation and outbound operations",
   description:
-    "Read claim-safe Winrate guides on AI SDR software evaluation, approval-gated sales automation, Telegram sales command centers, Sales Blueprint planning, lead generation, and outbound workflow governance.",
+    "Read claim-safe salesxgrowth guides on AI SDR software evaluation, approval-gated sales automation, Telegram sales command centers, Sales Blueprint planning, lead generation, and outbound workflow governance.",
   alternates: {
     canonical: "/resources",
   },
@@ -199,7 +199,7 @@ export default async function ResourcesPage() {
               Turn the guide into a workspace plan.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Winrate can capture your business context, turn it into a Sales Blueprint, and show
+              salesxgrowth can capture your business context, turn it into a Sales Blueprint, and show
               where sourcing, outreach, meetings, and provider readiness need review.
             </p>
             <Link

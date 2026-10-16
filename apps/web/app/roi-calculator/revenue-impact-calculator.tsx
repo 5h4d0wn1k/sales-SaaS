@@ -288,7 +288,7 @@ export function RevenueImpactCalculator() {
                 Turn the model into a reviewed rollout plan.
               </h2>
               <p className="mt-2 text-sm leading-6 text-emerald-900">
-                Winrate can map this scenario to a Sales Blueprint, source evidence, approval
+                salesxgrowth can map this scenario to a Sales Blueprint, source evidence, approval
                 gates, provider readiness, and managed launch support without promising automatic
                 outcomes.
               </p>

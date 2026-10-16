@@ -49,7 +49,7 @@ export function HeroSection() {
                                     <Link
                                         href="/#features"
                                         className="hover:bg-background bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-black/5 transition-all duration-300">
-                                        <span className="text-foreground text-sm">Winrate: Reviewable outbound ops</span>
+                                        <span className="text-foreground text-sm">salesxgrowth: Reviewable outbound ops</span>
                                         <span className="block h-4 w-0.5 border-l bg-zinc-300"></span>
                                         <div className="bg-background group-hover:bg-muted size-6 overflow-hidden rounded-full duration-500">
                                             <div className="flex w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
@@ -67,7 +67,7 @@ export function HeroSection() {
                                         Build a repeatable sales system without losing <span className="bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent">control</span>.
                                     </h1>
                                     <p className="mx-auto mt-8 max-w-2xl text-balance text-lg text-muted-foreground">
-                                        Winrate brings onboarding, lead planning, approval-gated outreach, activity tracking, and billing into one workspace for teams building a modern outbound motion.
+                                        salesxgrowth brings onboarding, lead planning, approval-gated outreach, activity tracking, and billing into one workspace for teams building a modern outbound motion.
                                     </p>
                                     <p className="mx-auto mt-4 max-w-2xl text-balance text-sm font-semibold text-foreground">
                                         Human review stays in the loop where trust matters most.
@@ -263,7 +263,7 @@ export const HeroHeader = () => {
                                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 flex items-center justify-center">
                                         <Zap className="w-4 h-4 text-white" />
                                     </div>
-                                    <span className="text-lg font-bold tracking-tight">Winrate</span>
+                                    <span className="text-lg font-bold tracking-tight">salesxgrowth</span>
                                 </div>
                             </Link>
 

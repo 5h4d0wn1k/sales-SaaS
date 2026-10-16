@@ -29,14 +29,14 @@ import {
 export const metadata: Metadata = {
   title: "Trust center for AI-assisted sales operations",
   description:
-    "Review Winrate's trust posture for approval-gated sales automation, tenant-aware workspaces, provider readiness, suppression checks, billing controls, responsible disclosure contact metadata, and guarded AI workflows.",
+    "Review salesxgrowth's trust posture for approval-gated sales automation, tenant-aware workspaces, provider readiness, suppression checks, billing controls, responsible disclosure contact metadata, and guarded AI workflows.",
   alternates: {
     canonical: "/trust",
   },
   openGraph: {
     title: "Trust center for AI-assisted sales operations",
     description:
-      "See how Winrate keeps beta sales automation reviewable with approvals, usage boundaries, provider readiness, suppression controls, and honest roadmap limits.",
+      "See how salesxgrowth keeps beta sales automation reviewable with approvals, usage boundaries, provider readiness, suppression controls, and honest roadmap limits.",
     url: "/trust",
     siteName: siteConfig.name,
     type: "website",
@@ -111,7 +111,7 @@ const controlRows = [
 const disclosureRows = [
   {
     label: "Contact",
-    value: "hello@winrate.ai",
+    value: "hello@salesxgrowth.com",
     detail: "Use this address for security reports and include enough reproduction detail for review.",
   },
   {
@@ -165,12 +165,12 @@ const trustFaqs = [
   {
     question: "How should security issues be reported?",
     answer:
-      "Use the public security contact metadata at /.well-known/security.txt or email hello@winrate.ai with a concise report, affected route, reproduction steps, expected impact, and safe contact details. The current public beta does not claim a rewards program or mature vulnerability-response SLA.",
+      "Use the public security contact metadata at /.well-known/security.txt or email hello@salesxgrowth.com with a concise report, affected route, reproduction steps, expected impact, and safe contact details. The current public beta does not claim a rewards program or mature vulnerability-response SLA.",
   },
   {
-    question: "Does Winrate guarantee global outbound compliance?",
+    question: "Does salesxgrowth guarantee global outbound compliance?",
     answer:
-      "No. Winrate exposes guardrails, suppression checks, approval gates, and provider readiness, but legal compliance still depends on customer use case, jurisdiction, provider rules, and human review.",
+      "No. salesxgrowth exposes guardrails, suppression checks, approval gates, and provider readiness, but legal compliance still depends on customer use case, jurisdiction, provider rules, and human review.",
   },
   {
     question: "Can the Telegram command center approve or mutate outreach today?",
@@ -265,7 +265,7 @@ export default async function TrustPage() {
                 Sales automation buyers need proof of control before speed.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                Winrate is built around reviewable workflows: tenant-aware workspaces, role-aware
+                salesxgrowth is built around reviewable workflows: tenant-aware workspaces, role-aware
                 approvals, source evidence, suppression checks, billing limits, provider readiness,
                 and guarded AI command surfaces.
               </p>
@@ -389,7 +389,7 @@ export default async function TrustPage() {
               </h2>
               <p className="mt-4 text-sm leading-6 text-muted-foreground">
                 Security researchers and customers should not have to guess where to send a
-                report. Winrate publishes non-secret contact metadata while keeping stronger
+                report. salesxgrowth publishes non-secret contact metadata while keeping stronger
                 vulnerability-program claims out of the public beta.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -401,7 +401,7 @@ export default async function TrustPage() {
                   <ArrowRight className="size-4" />
                 </Link>
                 <a
-                  href="mailto:hello@winrate.ai"
+                  href="mailto:hello@salesxgrowth.com"
                   className="inline-flex items-center justify-center rounded-lg border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
                 >
                   Email security contact

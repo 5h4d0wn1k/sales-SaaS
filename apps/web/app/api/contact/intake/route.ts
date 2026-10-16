@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       return redirectToContact(
         request,
         "error",
-        err.error ?? "Your request could not be captured. Please email hello@winrate.ai.",
+        err.error ?? "Your request could not be captured. Please email hello@salesxgrowth.com.",
       );
     }
 
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     return redirectToContact(
       request,
       "error",
-      "Your request could not be captured. Please email hello@winrate.ai.",
+      "Your request could not be captured. Please email hello@salesxgrowth.com.",
     );
   }
 }

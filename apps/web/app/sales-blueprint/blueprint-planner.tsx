@@ -113,7 +113,7 @@ export function BlueprintPlanner() {
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
               Model the ICP, targets, source channels, outreach channels, and guardrails that a
-              governed Winrate workspace needs before scaling pipeline work.
+              governed salesxgrowth workspace needs before scaling pipeline work.
             </p>
           </div>
           <span

@@ -12,10 +12,10 @@ export function buildContactPageJsonLd() {
     "@graph": [
       {
         "@type": "ContactPage",
-        name: "Contact Winrate",
+        name: "Contact salesxgrowth",
         url: absoluteUrl("/contact"),
         description:
-          "Contact Winrate for beta onboarding, managed sales implementation, provider-readiness review, billing questions, or AI-assisted sales workflow planning.",
+          "Contact salesxgrowth for beta onboarding, managed sales implementation, provider-readiness review, billing questions, or AI-assisted sales workflow planning.",
         isPartOf: {
           "@type": "WebSite",
           name: siteConfig.name,
@@ -36,14 +36,14 @@ export function buildContactPageJsonLd() {
           {
             "@type": "ContactPoint",
             contactType: "sales",
-            email: "hello@winrate.ai",
+            email: "hello@salesxgrowth.com",
             availableLanguage: ["English"],
             areaServed: "Worldwide",
           },
           {
             "@type": "ContactPoint",
             contactType: "customer support",
-            email: "hello@winrate.ai",
+            email: "hello@salesxgrowth.com",
             availableLanguage: ["English"],
             areaServed: "Worldwide",
           },
@@ -51,7 +51,7 @@ export function buildContactPageJsonLd() {
       },
       {
         "@type": "Service",
-        name: "Winrate AI sales onboarding and managed rollout intake",
+        name: "salesxgrowth AI sales onboarding and managed rollout intake",
         url: absoluteUrl("/contact"),
         serviceType: "AI-assisted sales operations onboarding",
         provider: organization,
@@ -91,7 +91,7 @@ export function buildContactPageJsonLd() {
             "No. The contact form creates a reviewed intake request only. Live sourcing, outreach, provider work, Telegram actions, and billing-sensitive steps still require the normal workspace setup, provider readiness, role, and approval gates.",
         },
         {
-          question: "Can Winrate help with Telegram command-center setup?",
+          question: "Can salesxgrowth help with Telegram command-center setup?",
           answer:
             "Yes. Teams can request Telegram command-center rollout review, including deployment-side secret readiness, verified chat binding, allowlisted read-only commands, approval-gated pause proposals, replay protection, rate limits, and audit visibility.",
         },

@@ -122,7 +122,7 @@ const AI_WORKER_TASK_BUDGET_CENTS = 1500;
 export const metadata: Metadata = {
   title: "Dashboard",
   description:
-    "Review your active Winrate workspace, lead workflow, meetings, and billing state.",
+    "Review your active salesxgrowth workspace, lead workflow, meetings, and billing state.",
   robots: {
     index: false,
     follow: false,

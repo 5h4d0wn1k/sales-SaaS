@@ -64,7 +64,7 @@ describe("telegram notification readiness route", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatId: "-1001234567890",
         allowedCommands: [
           "status",
@@ -121,7 +121,7 @@ describe("telegram notification readiness route", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatId: "-1001234567891",
         allowedCommands: [
           "status",
@@ -164,7 +164,7 @@ describe("telegram notification readiness route", () => {
       provider: "telegram",
       chatIdMask: "-1***7891",
     });
-    expect(body.messagePreview).toContain("Winrate Operator brief digest");
+    expect(body.messagePreview).toContain("salesxgrowth Operator brief digest");
     expect(body.messagePreview).toContain("Guardrail: this notification did not approve");
     expect(body.detail).toContain("No network message was sent");
   }, APP_BOOT_TIMEOUT_MS);
@@ -185,7 +185,7 @@ describe("telegram notification readiness route", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatId: "-1001234567892",
         allowedCommands: ["status", "brief", "help"],
       }),
@@ -230,7 +230,7 @@ describe("telegram notification readiness route", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatId: "-1001234567893",
         allowedCommands: ["status", "brief", "help"],
       }),
@@ -326,7 +326,7 @@ describe("telegram notification readiness route", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatId: "-1001234567894",
         allowedCommands: ["status", "brief", "help"],
       }),
@@ -352,7 +352,7 @@ describe("telegram notification readiness route", () => {
     expect(response.status).toBe(200);
     expect(body.mode).toBe("preview");
     expect(body.chatIdMask).toBe("-1***7894");
-    expect(body.messagePreview).toContain("Winrate Operator brief digest");
+    expect(body.messagePreview).toContain("salesxgrowth Operator brief digest");
     expect(body.detail).toContain("No network message was sent");
   }, APP_BOOT_TIMEOUT_MS);
 
@@ -378,7 +378,7 @@ describe("telegram notification readiness route", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatId: "-1001234567895",
         allowedCommands: ["status", "brief", "help"],
       }),

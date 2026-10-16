@@ -12,7 +12,7 @@ import { parseGetStartedAcquisitionContext } from "@/lib/acquisition-context";
 export const metadata: Metadata = {
     title: "Get Started",
     description:
-        "Create a Winrate workspace, capture your business context, and start the beta onboarding flow.",
+        "Create a salesxgrowth workspace, capture your business context, and start the beta onboarding flow.",
     robots: {
         index: false,
         follow: true,

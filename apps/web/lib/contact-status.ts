@@ -16,11 +16,11 @@ export function buildContactStatusView(
       title: priority === "high" ? "Priority request captured" : "Request captured",
       message:
         message ??
-        "Your request is in the Winrate intake queue. We will review the fit and follow up with the right next step.",
+        "Your request is in the salesxgrowth intake queue. We will review the fit and follow up with the right next step.",
       nextSteps: [
         "Review company fit, sales goals, budget posture, and rollout blockers.",
         "Confirm plan, provider, approval, and managed-service boundaries before live work starts.",
-        "Follow up through hello@winrate.ai with the safest onboarding or rollout path.",
+        "Follow up through hello@salesxgrowth.com with the safest onboarding or rollout path.",
       ],
     };
   }
@@ -31,9 +31,9 @@ export function buildContactStatusView(
       title: "Request was not captured",
       message:
         message ??
-        "Please email hello@winrate.ai with your company, goal, timeline, and the workflow you want to launch.",
+        "Please email hello@salesxgrowth.com with your company, goal, timeline, and the workflow you want to launch.",
       nextSteps: [
-        "Send the same details to hello@winrate.ai.",
+        "Send the same details to hello@salesxgrowth.com.",
         "Include company, goal, monthly lead target, timeline, budget posture, and channels.",
         "Avoid sending secrets, provider keys, or private customer data in the first email.",
       ],

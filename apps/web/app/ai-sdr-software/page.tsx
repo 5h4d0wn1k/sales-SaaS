@@ -22,7 +22,7 @@ import {
 export const metadata: Metadata = {
   title: "AI SDR software for reviewable lead generation and outbound sales",
   description:
-    "Evaluate Winrate as AI SDR software for business context capture, lead evidence, approval-gated outreach, meetings, Telegram visibility, provider readiness, and audit-safe revenue operations.",
+    "Evaluate salesxgrowth as AI SDR software for business context capture, lead evidence, approval-gated outreach, meetings, Telegram visibility, provider readiness, and audit-safe revenue operations.",
   keywords: [
     "AI SDR software",
     "AI sales agent",
@@ -115,7 +115,7 @@ const aiSdrJsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "Winrate AI SDR software",
+      name: "salesxgrowth AI SDR software",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: absoluteUrl("/ai-sdr-software"),
@@ -173,7 +173,7 @@ export default function AiSdrSoftwarePage() {
                 AI sales agents need a control plane before they need more volume.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                Winrate helps teams move from business context to source evidence, reviewed
+                salesxgrowth helps teams move from business context to source evidence, reviewed
                 outreach, meeting follow-through, Telegram visibility, and audit evidence without
                 pretending every sales action should run unattended.
               </p>
@@ -316,7 +316,7 @@ export default function AiSdrSoftwarePage() {
                     strong.
                   </h2>
                   <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-                    Use Winrate to capture the Sales Blueprint, inspect lead quality, prepare
+                    Use salesxgrowth to capture the Sales Blueprint, inspect lead quality, prepare
                     reviewed outreach, track meetings, and decide whether self-serve software or a
                     managed rollout makes sense for the next stage.
                   </p>

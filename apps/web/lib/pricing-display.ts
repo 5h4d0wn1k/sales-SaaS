@@ -142,7 +142,7 @@ export function formatChannels(channels: readonly OutboundChannel[]) {
 }
 
 function formatPlanPrice(plan: PricingPlan) {
-  return plan.price.usd === 0 ? "Free" : `$${plan.price.usd}/mo`;
+  return plan.price.usd === 0 ? "7-Day Trial" : `$${plan.price.usd}/mo`;
 }
 
 function planByKey(plans: readonly PricingPlan[], key: string) {
@@ -248,7 +248,7 @@ export function buildPricingManagedServiceContactUrl(
 ) {
   const contactUrl = new URL(
     buildManagedServiceContactUrl(packageKey, "pricing_setup_review"),
-    "https://winrate.ai",
+    "https://salesxgrowth.com",
   );
 
   contactUrl.searchParams.set("utm_source", "pricing");

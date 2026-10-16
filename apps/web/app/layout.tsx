@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   applicationName: siteConfig.name,
   manifest: "/manifest.webmanifest",
   title: {
-    default: "Winrate | AI-assisted sales workspace",
+    default: "salesxgrowth | AI-assisted sales workspace",
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Winrate | AI-assisted sales workspace",
+    title: "salesxgrowth | AI-assisted sales workspace",
     description: siteConfig.description,
     url: "/",
     siteName: siteConfig.name,
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Winrate | AI-assisted sales workspace",
+    title: "salesxgrowth | AI-assisted sales workspace",
     description: siteConfig.description,
     images: [getDefaultTwitterImage()],
   },

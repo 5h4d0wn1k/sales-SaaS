@@ -36,7 +36,7 @@ export type ResourceContactContext = {
   channels: string[];
 };
 
-export const resourceArticleAuthorName = "Winrate Revenue Systems Team";
+export const resourceArticleAuthorName = "salesxgrowth Revenue Systems Team";
 
 export const resourceArticles: readonly ResourceArticle[] = [
   {
@@ -80,9 +80,9 @@ export const resourceArticles: readonly ResourceArticle[] = [
         ],
       },
       {
-        heading: "How Winrate approaches it",
+        heading: "How salesxgrowth approaches it",
         body:
-          "Winrate's current beta keeps high-risk work reviewable. The product can capture business context, prepare source runs, draft campaigns, expose approval proposals, and track meetings, while live execution remains bounded by role checks, verification, suppression posture, plan limits, and provider readiness.",
+          "salesxgrowth's current beta keeps high-risk work reviewable. The product can capture business context, prepare source runs, draft campaigns, expose approval proposals, and track meetings, while live execution remains bounded by role checks, verification, suppression posture, plan limits, and provider readiness.",
       },
     ],
     checklist: [
@@ -138,9 +138,9 @@ export const resourceArticles: readonly ResourceArticle[] = [
           "Natural-language commands are useful only when the system can map them to known, allowed intents. Before broader AI command parsing, use deterministic aliases that route through the same allowlist, replay protection, rate limits, and audit trail as slash commands.",
       },
       {
-        heading: "How Winrate approaches it",
+        heading: "How salesxgrowth approaches it",
         body:
-          "Winrate's current beta supports guarded Telegram command-center foundations: workspace chat binding, verified webhooks, replay protection, per-chat throttling, safe read-only commands such as brief, sequence, and forecast, deterministic aliases, command audit events, and a pause command that creates an Approval Inbox proposal instead of changing outreach state directly.",
+          "salesxgrowth's current beta supports guarded Telegram command-center foundations: workspace chat binding, verified webhooks, replay protection, per-chat throttling, safe read-only commands such as brief, sequence, and forecast, deterministic aliases, command audit events, and a pause command that creates an Approval Inbox proposal instead of changing outreach state directly.",
       },
     ],
     checklist: [
@@ -252,9 +252,9 @@ export const resourceArticles: readonly ResourceArticle[] = [
           "Multi-channel lead generation is not just a sourcing problem. Each channel can create different provider costs, consent requirements, brand risk, and follow-up work. A strong source plan maps which channels are available now, which need provider configuration, which require manual review, and which should stay roadmap until policy and consent controls are mature.",
       },
       {
-        heading: "How Winrate approaches source planning",
+        heading: "How salesxgrowth approaches source planning",
         body:
-          "Winrate's current beta captures the Sales Blueprint, generates source-run evidence, tracks quality score and rejection reasons, exposes usage and provider-cost posture, and routes risky outreach through approval gates. The near-term path is deeper provider-specific sourcing and enrichment while preserving operator review before live outreach.",
+          "salesxgrowth's current beta captures the Sales Blueprint, generates source-run evidence, tracks quality score and rejection reasons, exposes usage and provider-cost posture, and routes risky outreach through approval gates. The near-term path is deeper provider-specific sourcing and enrichment while preserving operator review before live outreach.",
       },
     ],
     checklist: [
@@ -383,9 +383,9 @@ export const resourceArticles: readonly ResourceArticle[] = [
         ],
       },
       {
-        heading: "How Winrate approaches AI SDR evaluation",
+        heading: "How salesxgrowth approaches AI SDR evaluation",
         body:
-          "Winrate's current beta is built as a governed sales workspace: Sales Blueprint context, source-run evidence, approval-aware outreach, meeting conversion tracking, plan and provider-cost controls, Telegram observability, AI-worker proposals, and audit evidence. Deeper provider integrations and broader live automation remain guarded maturity work, not a claim that every channel can run unattended today.",
+          "salesxgrowth's current beta is built as a governed sales workspace: Sales Blueprint context, source-run evidence, approval-aware outreach, meeting conversion tracking, plan and provider-cost controls, Telegram observability, AI-worker proposals, and audit evidence. Deeper provider integrations and broader live automation remain guarded maturity work, not a claim that every channel can run unattended today.",
       },
     ],
     checklist: [

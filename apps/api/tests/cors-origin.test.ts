@@ -32,18 +32,18 @@ afterEach(() => {
 
 describe("API CORS origin handling", () => {
   it("allows production preflight when FRONTEND_URL has a trailing slash", async () => {
-    const app = await loadAppWithFrontendUrl("https://app.winrate.ai/");
+    const app = await loadAppWithFrontendUrl("https://app.salesxgrowth.com/");
     const response = await app.request("/v1/dashboard", {
       method: "OPTIONS",
       headers: {
-        origin: "https://app.winrate.ai",
+        origin: "https://app.salesxgrowth.com",
         "access-control-request-method": "GET",
       },
     });
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
-      "https://app.winrate.ai",
+      "https://app.salesxgrowth.com",
     );
     expect(response.headers.get("Access-Control-Allow-Credentials")).toBe("true");
     expect(response.headers.get("Access-Control-Allow-Methods")).toContain("POST");
@@ -51,7 +51,7 @@ describe("API CORS origin handling", () => {
   });
 
   it("does not emit allow-origin headers for a mismatched origin", async () => {
-    const app = await loadAppWithFrontendUrl("https://app.winrate.ai/");
+    const app = await loadAppWithFrontendUrl("https://app.salesxgrowth.com/");
     const response = await app.request("/v1/dashboard", {
       method: "OPTIONS",
       headers: {

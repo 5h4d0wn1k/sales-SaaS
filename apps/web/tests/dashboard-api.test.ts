@@ -1682,8 +1682,8 @@ describe("dashboard api helpers", () => {
         planName: "Professional",
         description: "For teams managing active campaigns and review flows",
         price: {
-          usd: 99,
-          inr: 7999,
+          usd: 45,
+          inr: 3399,
         },
         usageLimit: 5000,
         outreachDispatchLimit: 1000,

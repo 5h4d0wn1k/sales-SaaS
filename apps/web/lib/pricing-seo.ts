@@ -12,7 +12,7 @@ export function buildPricingPageJsonLd(plans: readonly PricingPlan[] = PRICING_P
     "@graph": [
       {
         "@type": "WebPage",
-        name: "Winrate Pricing",
+        name: "salesxgrowth Pricing",
         url: absoluteUrl("/pricing"),
         description:
           "Compare current public beta plans for AI-assisted lead planning, approval-gated outreach, dashboard visibility, billing controls, and managed rollout support.",
@@ -24,13 +24,13 @@ export function buildPricingPageJsonLd(plans: readonly PricingPlan[] = PRICING_P
       },
       {
         "@type": "SoftwareApplication",
-        name: "Winrate",
+        name: "salesxgrowth",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description: siteConfig.description,
         offers: {
           "@type": "OfferCatalog",
-          name: "Winrate public beta plans",
+          name: "salesxgrowth public beta plans",
           itemListElement: plans.map((plan) => ({
             "@type": "Offer",
             name: `${plan.name} plan`,
@@ -40,7 +40,7 @@ export function buildPricingPageJsonLd(plans: readonly PricingPlan[] = PRICING_P
             category: "Software subscription",
             itemOffered: {
               "@type": "Service",
-              name: `Winrate ${plan.name}`,
+              name: `salesxgrowth ${plan.name}`,
               description: plan.description,
               additionalProperty: [
                 {

@@ -220,7 +220,7 @@ export default async function ResourceArticlePage({ params }: ResourceArticlePag
 
               <aside className="h-fit rounded-lg border bg-background p-5 lg:sticky lg:top-28">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Apply this in Winrate
+                  Apply this in salesxgrowth
                 </p>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   Turn this guide into a Sales Blueprint, source plan, approval workflow, and

@@ -68,7 +68,7 @@ const healthyPlan = {
   version: "2026-06-04.plan-growth-readiness",
   generatedAt: "2026-06-05T12:00:00.000Z",
   workspace: {
-    name: "Winrate Demo",
+    name: "salesxgrowth Demo",
     planKey: "pro",
   },
   posture: "healthy",
@@ -113,7 +113,7 @@ const clearConversion = {
   version: "2026-06-04.conversion-work-queue",
   generatedAt: "2026-06-05T12:00:00.000Z",
   workspace: {
-    name: "Winrate Demo",
+    name: "salesxgrowth Demo",
     planKey: "pro",
   },
   posture: "clear",

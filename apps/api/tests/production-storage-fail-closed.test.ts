@@ -30,7 +30,7 @@ function validContactIntake() {
 async function loadProductionAppWithUnavailablePostgres() {
   process.env.NODE_ENV = "production";
   process.env.AUTH_SECRET = productionSafeAuthSecret;
-  process.env.FRONTEND_URL = "https://app.winrate.ai";
+  process.env.FRONTEND_URL = "https://app.salesxgrowth.com";
   process.env.RATE_LIMIT_BACKEND = "edge";
   delete process.env.DATABASE_URL;
 

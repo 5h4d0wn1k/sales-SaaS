@@ -26,7 +26,7 @@ export function AuthenticatedAppNav({
             href="/"
             className="text-lg font-semibold tracking-tight text-slate-950 transition hover:text-slate-700"
           >
-            Winrate
+            salesxgrowth
           </Link>
           <nav aria-label="Authenticated navigation" className="flex flex-wrap gap-2">
             {NAV_ITEMS.map((item) => {

@@ -50,7 +50,7 @@ describe("telegram command readiness route", () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatId: "-1001234567890",
         allowedCommands: [
           "status",

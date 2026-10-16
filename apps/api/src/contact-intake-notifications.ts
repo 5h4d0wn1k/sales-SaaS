@@ -146,7 +146,7 @@ export async function notifyContactIntake(
 
   const summary = contactIntakeSummary(submission);
   const subject = [
-    `[Winrate ${submission.priority}]`,
+    `[salesxgrowth ${submission.priority}]`,
     safeHeaderText(submission.companyName),
     safeHeaderText(submission.intent.replace(/_/g, " ")),
   ].join(" ");

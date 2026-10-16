@@ -33,7 +33,7 @@ afterEach(() => {
 
 describe("pricing structured data", () => {
   it("builds plan offers from the shared billing catalog", async () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.winrate.ai");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.salesxgrowth.com");
     const { buildPricingPageJsonLd } = await loadPricingSeo();
     const jsonLd = buildPricingPageJsonLd();
     const appNode = jsonLd["@graph"].find(
@@ -50,7 +50,7 @@ describe("pricing structured data", () => {
       const offer = offers.find((entry) => entry.name === `${plan.name} plan`);
 
       expect(offer).toMatchObject({
-        url: `https://app.winrate.ai/get-started?plan=${plan.key}`,
+        url: `https://app.salesxgrowth.com/get-started?plan=${plan.key}`,
         price: String(plan.price.usd),
         priceCurrency: "USD",
       });

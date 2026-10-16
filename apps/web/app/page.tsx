@@ -9,7 +9,7 @@ import { absoluteUrl, getDefaultOpenGraphImage, jsonLd, siteConfig } from "@/lib
 export const metadata: Metadata = {
   title: "AI-assisted sales workspace for lead generation, outreach, and conversion",
   description:
-    "Winrate helps teams capture business context, plan leads, review outreach, track meetings, and manage billing in one approval-gated revenue workspace.",
+    "salesxgrowth helps teams capture business context, plan leads, review outreach, track meetings, and manage billing in one approval-gated revenue workspace.",
   alternates: {
     canonical: "/",
   },
@@ -34,7 +34,7 @@ const landingJsonLd = {
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer support",
-        email: "hello@winrate.ai",
+        email: "hello@salesxgrowth.com",
       },
     },
     {
@@ -77,7 +77,7 @@ export default async function LandingPage() {
             <strong className="text-foreground">You did not start a business to juggle spreadsheets, approvals, and payment links across five tools.</strong> You started it to build something customers actually want.
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-            Winrate gives you a single workspace for onboarding, lead planning, campaign review, activity tracking, and billing so your team can run outbound with more clarity and less chaos.
+            salesxgrowth gives you a single workspace for onboarding, lead planning, campaign review, activity tracking, and billing so your team can run outbound with more clarity and less chaos.
           </p>
           <p className="text-2xl font-bold tracking-tight">
             The goal is not hype. The goal is a system you can actually operate.
@@ -130,7 +130,7 @@ export default async function LandingPage() {
               Built for teams that need <span className="bg-gradient-to-r from-orange-500 to-purple-600 bg-clip-text text-transparent">control with momentum</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Winrate fits best when you want a sharper sales operating system without pretending every workflow is fully autonomous.
+              salesxgrowth fits best when you want a sharper sales operating system without pretending every workflow is fully autonomous.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

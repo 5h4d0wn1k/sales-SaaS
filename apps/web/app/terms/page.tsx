@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
     title: "Terms of Service",
     description:
-        "Terms for using the Winrate beta sales operations workspace and related provider-backed features.",
+        "Terms for using the salesxgrowth beta sales operations workspace and related provider-backed features.",
     alternates: {
         canonical: "/terms",
     },
@@ -31,12 +31,12 @@ export default async function TermsPage() {
                     <div className="prose prose-zinc dark:prose-invert max-w-none text-muted-foreground">
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">1. Acceptance of Terms</h2>
                         <p className="mb-6 leading-relaxed">
-                            By accessing and using Winrate, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.
+                            By accessing and using salesxgrowth, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.
                         </p>
 
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">2. Description of Service</h2>
                         <p className="mb-6 leading-relaxed">
-                            Winrate provides a sales operations workspace that may include onboarding flows, lead management, approval-gated campaign workflows, dashboard visibility, billing tools, and provider integrations. Some capabilities may still be in beta, mock mode, limited release, or only available when configured for a specific workspace.
+                            salesxgrowth provides a sales operations workspace that may include onboarding flows, lead management, approval-gated campaign workflows, dashboard visibility, billing tools, and provider integrations. Some capabilities may still be in beta, mock mode, limited release, or only available when configured for a specific workspace.
                         </p>
 
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">3. Registration Obligations</h2>

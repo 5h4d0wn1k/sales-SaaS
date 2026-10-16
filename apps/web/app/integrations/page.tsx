@@ -31,7 +31,7 @@ import {
 export const metadata: Metadata = {
   title: "AI sales integrations and channel readiness",
   description:
-    "Review Winrate integration readiness for lead sources, email, voice, billing, webhooks, Telegram, AI workers, CRM roadmap, and explicit outbound automation boundaries.",
+    "Review salesxgrowth integration readiness for lead sources, email, voice, billing, webhooks, Telegram, AI workers, CRM roadmap, and explicit outbound automation boundaries.",
   alternates: {
     canonical: "/integrations",
   },
@@ -172,7 +172,7 @@ export default async function IntegrationsPage() {
                 AI sales channels with the setup status and guardrails visible.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                Review what Winrate can configure, what is guarded in beta, what is still roadmap,
+                Review what salesxgrowth can configure, what is guarded in beta, what is still roadmap,
                 and what the product should not automate. The catalog covers lead sources, email,
                 voice, billing, webhooks, Telegram control, AI workers, and future CRM operations.
               </p>

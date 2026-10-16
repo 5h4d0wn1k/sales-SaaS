@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
     title: "Privacy Policy",
     description:
-        "How Winrate handles account, workspace, billing, and sales workflow data during the beta.",
+        "How salesxgrowth handles account, workspace, billing, and sales workflow data during the beta.",
     alternates: {
         canonical: "/privacy",
     },
@@ -51,7 +51,7 @@ export default async function PrivacyPage() {
 
                         <h2 className="text-2xl font-bold tracking-tight text-foreground mt-10 mb-4">5. Contact Us</h2>
                         <p className="mb-6 leading-relaxed">
-                            If you have privacy-related questions, please contact us at <a href="mailto:hello@winrate.ai?subject=Winrate%20privacy%20request" className="text-foreground font-medium underline">hello@winrate.ai</a>.
+                            If you have privacy-related questions, please contact us at <a href="mailto:hello@salesxgrowth.com?subject=salesxgrowth%20privacy%20request" className="text-foreground font-medium underline">hello@salesxgrowth.com</a>.
                         </p>
                     </div>
                 </div>

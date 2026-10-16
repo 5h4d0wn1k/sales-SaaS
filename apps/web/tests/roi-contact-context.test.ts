@@ -25,8 +25,8 @@ describe("ROI contact context", () => {
     const result = calculateRevenueImpact(defaultRevenueImpactInput);
     const contactUrl = buildRoiContactUrl(defaultRevenueImpactInput, result);
     const getStartedUrl = buildRoiGetStartedUrl(defaultRevenueImpactInput, result);
-    const url = new URL(contactUrl, "https://winrate.ai");
-    const getStarted = new URL(getStartedUrl, "https://winrate.ai");
+    const url = new URL(contactUrl, "https://salesxgrowth.com");
+    const getStarted = new URL(getStartedUrl, "https://salesxgrowth.com");
 
     expect(url.pathname).toBe("/contact");
     expect(getStarted.pathname).toBe("/get-started");

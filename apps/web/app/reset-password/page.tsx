@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Reset Password",
-  description: "Choose a new password for your Winrate account.",
+  description: "Choose a new password for your salesxgrowth account.",
   robots: {
     index: false,
     follow: false,

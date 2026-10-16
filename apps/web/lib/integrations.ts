@@ -169,7 +169,7 @@ export const publicIntegrationCategories = [
     id: "policy_boundaries",
     label: "Policy boundaries",
     description:
-      "Capabilities Winrate should not market or automate unless the product stance changes.",
+      "Capabilities salesxgrowth should not market or automate unless the product stance changes.",
   },
 ] as const satisfies readonly {
   id: PublicIntegrationCategory;
@@ -642,7 +642,7 @@ export const publicIntegrations = [
     status: "prohibited",
     channels: ["LinkedIn", "browser automation"],
     summary:
-      "Winrate should not market browser scraping, auto-connect, or auto-DM behavior as supported product functionality.",
+      "salesxgrowth should not market browser scraping, auto-connect, or auto-DM behavior as supported product functionality.",
     currentMode:
       "Current LinkedIn-style behavior is review-only and mock-backed; platform automation claims are prohibited.",
     requiredSetup: ["No production setup path"],

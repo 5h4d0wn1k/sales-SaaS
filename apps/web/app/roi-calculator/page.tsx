@@ -36,7 +36,7 @@ export default function RoiCalculatorPage() {
   const calculatorJsonLd = jsonLd({
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Winrate AI Sales ROI Calculator",
+    name: "salesxgrowth AI Sales ROI Calculator",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description:
@@ -66,7 +66,7 @@ export default function RoiCalculatorPage() {
                 "Booked-meeting promises, every-source scraping, hands-off outreach, or jurisdiction-wide compliance coverage.",
               ],
               [
-                "Where Winrate helps",
+                "Where salesxgrowth helps",
                 "Sales Blueprint planning, source evidence, approval gates, provider readiness, billing controls, and managed rollout support.",
               ],
             ].map(([title, detail]) => (

@@ -138,7 +138,7 @@ describe("provider integration readiness", () => {
     clearProviderEnv();
     process.env.RESEND_API_KEY = "secret-value";
     process.env.RESEND_FROM_EMAIL = "sales@example.com";
-    process.env.FRONTEND_URL = "https://app.winrate.ai";
+    process.env.FRONTEND_URL = "https://app.salesxgrowth.com";
     process.env.CONTACT_INTAKE_TO_EMAIL = "hello@example.com";
     process.env.RESEND_WEBHOOK_SECRET = "secret-value";
     process.env.TWILIO_ACCOUNT_SID = "secret-value";
@@ -206,7 +206,7 @@ describe("provider integration readiness", () => {
     process.env.SMTP_HOST = "smtp.example.com";
     process.env.RESEND_API_KEY = "secret-value";
     process.env.RESEND_FROM_EMAIL = "sales@example.com";
-    process.env.FRONTEND_URL = "https://app.winrate.ai";
+    process.env.FRONTEND_URL = "https://app.salesxgrowth.com";
     process.env.CONTACT_INTAKE_TO_EMAIL = "hello@example.com";
     process.env.RESEND_WEBHOOK_SECRET = "secret-value";
     process.env.TWILIO_ACCOUNT_SID = "secret-value";

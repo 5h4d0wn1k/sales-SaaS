@@ -28,7 +28,7 @@ import {
 export const metadata: Metadata = {
   title: "AI lead generation software with source evidence and approval gates",
   description:
-    "Evaluate Winrate as AI lead generation software for Sales Blueprint context, source-channel planning, lead evidence, dedupe review, approval-gated outreach, meetings, and revenue handoff.",
+    "Evaluate salesxgrowth as AI lead generation software for Sales Blueprint context, source-channel planning, lead evidence, dedupe review, approval-gated outreach, meetings, and revenue handoff.",
   keywords: [
     "AI lead generation software",
     "lead generation platform",
@@ -139,7 +139,7 @@ const leadGenerationJsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "Winrate AI lead generation software",
+      name: "salesxgrowth AI lead generation software",
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: absoluteUrl("/ai-lead-generation-software"),
@@ -197,7 +197,7 @@ export default function AiLeadGenerationSoftwarePage() {
                 Generate better pipeline by proving the source plan first.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                Winrate turns business context into source-channel plans, reviewable lead evidence,
+                salesxgrowth turns business context into source-channel plans, reviewable lead evidence,
                 approval-gated outreach handoff, meeting follow-through, and revenue feedback
                 without pretending every source or channel should run unattended.
               </p>

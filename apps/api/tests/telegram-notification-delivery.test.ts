@@ -27,7 +27,7 @@ function deliveryFixtures() {
       integration: {
         id: "tg_delivery_test",
         status: "active",
-        botUsername: "@winrate_ops_bot",
+        botUsername: "@salesxgrowth_ops_bot",
         chatIdMask: "-1***7896",
         allowedCommands: ["status", "brief", "help"],
         lastUpdateId: 123,
@@ -116,7 +116,7 @@ describe("telegram notification delivery", () => {
     expect(delivery.detail).toBe("Fake Telegram message sent.");
     expect(transport).toHaveBeenCalledTimes(1);
     expect(transportCalls[0]?.[0]).toBe("-1001234567896");
-    expect(transportCalls[0]?.[1]).toContain("Winrate Operator brief digest");
+    expect(transportCalls[0]?.[1]).toContain("salesxgrowth Operator brief digest");
     expect(transportCalls[0]?.[1]).toContain("Guardrail: this notification did not approve");
     expect(JSON.stringify(delivery)).not.toContain("-1001234567896");
     expect(JSON.stringify(delivery)).not.toContain("telegram-token-test");

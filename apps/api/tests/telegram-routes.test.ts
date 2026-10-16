@@ -72,7 +72,7 @@ async function configureTelegram(
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      botUsername: "@winrate_ops_bot",
+      botUsername: "@salesxgrowth_ops_bot",
       chatId,
       allowedCommands,
     }),
@@ -137,7 +137,7 @@ describe("Telegram command center integration", () => {
     expect(response.status).toBe(201);
     expect(body.integration).toMatchObject({
       status: "pending_verification",
-      botUsername: "@winrate_ops_bot",
+      botUsername: "@salesxgrowth_ops_bot",
       chatIdMask: "-1***7890",
     });
     expect(JSON.stringify(body)).not.toContain("-1001234567890");

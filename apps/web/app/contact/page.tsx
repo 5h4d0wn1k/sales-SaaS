@@ -91,24 +91,24 @@ import {
 } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Contact Winrate for AI sales onboarding and managed rollout",
+  title: "Contact salesxgrowth for AI sales onboarding and managed rollout",
   description:
-    "Contact Winrate for beta onboarding, managed sales implementation, provider readiness, billing questions, or AI-assisted sales workflow planning.",
+    "Contact salesxgrowth for beta onboarding, managed sales implementation, provider readiness, billing questions, or AI-assisted sales workflow planning.",
   alternates: {
     canonical: "/contact",
   },
   openGraph: {
-    title: "Contact Winrate for AI sales onboarding and managed rollout",
+    title: "Contact salesxgrowth for AI sales onboarding and managed rollout",
     description:
-      "Share your sales workflow context, rollout needs, provider readiness, and managed-service questions with Winrate.",
+      "Share your sales workflow context, rollout needs, provider readiness, and managed-service questions with salesxgrowth.",
     url: "/contact",
     siteName: siteConfig.name,
     type: "website",
     images: [getDefaultOpenGraphImage()],
   },
   twitter: getDefaultTwitterCard(
-    "Contact Winrate for AI sales onboarding and managed rollout",
-    "Share your sales workflow context, rollout needs, provider readiness, and managed-service questions with Winrate.",
+    "Contact salesxgrowth for AI sales onboarding and managed rollout",
+    "Share your sales workflow context, rollout needs, provider readiness, and managed-service questions with salesxgrowth.",
   ),
 };
 
@@ -412,11 +412,11 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 Contact and rollout intake
               </span>
               <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
-                Tell us what sales system you want Winrate to help launch.
+                Tell us what sales system you want salesxgrowth to help launch.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
                 Share your company context, target workflow, lead goals, timeline, and channels.
-                Winrate routes the request for beta onboarding, managed implementation, billing,
+                salesxgrowth routes the request for beta onboarding, managed implementation, billing,
                 support, or product feedback without claiming unsupported automation.
               </p>
 
@@ -447,8 +447,8 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                     <h2 className="text-sm font-semibold">Email fallback</h2>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
                       If the form is unavailable, send the same details directly to{" "}
-                      <a href="mailto:hello@winrate.ai" className="font-medium text-foreground underline">
-                        hello@winrate.ai
+                      <a href="mailto:hello@salesxgrowth.com" className="font-medium text-foreground underline">
+                        hello@salesxgrowth.com
                       </a>
                       .
                     </p>

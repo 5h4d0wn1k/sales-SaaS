@@ -47,7 +47,7 @@ afterEach(() => {
 
 describe("web readiness route", () => {
   it("returns ready when the API readiness endpoint is ready", async () => {
-    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://api.winrate.ai");
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "https://api.salesxgrowth.com");
     vi.stubEnv("AUTH_SECRET", "sales-web-production-safe-secret-2026-rotated-value");
     vi.stubEnv("RELEASE_COMMIT_SHA", "web-commit-123");
     vi.stubEnv("RELEASE_DEPLOYMENT_ID", "web-deploy-456");
@@ -102,7 +102,7 @@ describe("web readiness route", () => {
     });
     expect(body.checks.api.warningDetails).toEqual(["Provider configuration warning"]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.winrate.ai/ready",
+      "https://api.salesxgrowth.com/ready",
       expect.objectContaining({
         cache: "no-store",
       }),

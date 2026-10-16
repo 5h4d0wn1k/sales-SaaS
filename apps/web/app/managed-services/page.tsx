@@ -32,14 +32,14 @@ import {
 export const metadata: Metadata = {
   title: "Managed sales implementation for AI-assisted revenue teams",
   description:
-    "Winrate managed services help teams shape ICP, source strategy, approval operations, rollout planning, and reporting around the AI-assisted sales workspace.",
+    "salesxgrowth managed services help teams shape ICP, source strategy, approval operations, rollout planning, and reporting around the AI-assisted sales workspace.",
   alternates: {
     canonical: "/managed-services",
   },
   openGraph: {
     title: "Managed sales implementation for AI-assisted revenue teams",
     description:
-      "A claim-safe managed-service path for teams that want setup, review support, and operational guidance around the Winrate sales workspace.",
+      "A claim-safe managed-service path for teams that want setup, review support, and operational guidance around the salesxgrowth sales workspace.",
     url: "/managed-services",
     siteName: siteConfig.name,
     type: "website",
@@ -141,7 +141,7 @@ const managedServicesJsonLd = {
   "@graph": [
     {
       "@type": "Service",
-      name: "Winrate managed sales implementation",
+      name: "salesxgrowth managed sales implementation",
       serviceType: "Managed sales operations and AI-assisted sales workflow implementation",
       provider: {
         "@type": "Organization",
@@ -193,10 +193,10 @@ export default async function ManagedServicesPage() {
                 Managed sales implementation
               </span>
               <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
-                Add expert operating support around the Winrate workspace.
+                Add expert operating support around the salesxgrowth workspace.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                Some teams need more than software access. Winrate managed services help shape ICP,
+                Some teams need more than software access. salesxgrowth managed services help shape ICP,
                 lead-source strategy, approval operations, rollout planning, and reporting cadence
                 while the product remains honest about what is automated today.
               </p>
