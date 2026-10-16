@@ -16,8 +16,10 @@ coverage
 *.tsbuildinfo
 .tmp/
 .playwright/
+.playwright-cli/
 playwright-report/
 test-results/
+/output/
 supabase/.temp/
 .codex/reports/
 __pycache__/
