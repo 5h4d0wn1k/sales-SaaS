@@ -32,16 +32,37 @@ Keep these boundaries intact:
 
 These staging resources now exist:
 
-- Cloudflare account `e251f79bafcd5a50d2964251a5e53450`
-- `workers.dev` subdomain `sales-aaas-nikhil204.workers.dev`
+- Cloudflare account `07eae60a75b06661ea752a78cdf51565`
+- `workers.dev` subdomain `salesxgrowth.workers.dev`
+- Zone `salesxgrowth.com` (`efb771adc30d98e9f4ab171f65891b7c`)
 - Supabase project ref `gfvngovcyjoxkbzawqnm` in `ap-south-1`
-- Hyperdrive config `08eda5f0a1714b69b1abb3df8c3b897e`
+- Hyperdrive config `9c1c36b38d064425b8e7e3587c12635d`
 
 Current staging endpoints:
 
-- Web: `https://sales-web-staging.sales-aaas-nikhil204.workers.dev`
-- API: `https://sales-api-staging.sales-aaas-nikhil204.workers.dev`
-- Workflows: `https://sales-workflows-staging.sales-aaas-nikhil204.workers.dev`
+- Web: `https://sales-web-staging.salesxgrowth.workers.dev`
+- API: `https://sales-api-staging.salesxgrowth.workers.dev`
+- Workflows: `https://sales-workflows-staging.salesxgrowth.workers.dev`
+
+## Live production resources
+
+Production runs in the same account on the `salesxgrowth.com` zone:
+
+- Web: `https://salesxgrowth.com` and `https://www.salesxgrowth.com` (custom domains attached to `sales-web-production`), plus `https://sales-web-production.salesxgrowth.workers.dev`
+- API: `https://api.salesxgrowth.com` (custom domain attached to `sales-api-production`) and `https://sales-api-production.salesxgrowth.workers.dev`
+- Workflows: `https://sales-workflows-production.salesxgrowth.workers.dev` (internal, token-gated; not exposed on a public subdomain)
+
+Production workers use the same Supabase Postgres database via the Hyperdrive config above. Set `NEXT_PUBLIC_API_URL=https://api.salesxgrowth.com` at web build time (the value is inlined into the client bundle) and keep `FRONTEND_URL=https://salesxgrowth.com` on the API worker.
+
+## Zone-level edge configuration
+
+A few production controls live on the zone (edge), not in the worker bundles, so they are not managed by `wrangler deploy`. They are applied through the Cloudflare Rulesets API (`cf rulesets create -z salesxgrowth.com ...`):
+
+- `http_ratelimit` — one rule blocks more than 100 requests per 10 s per client IP for `api.salesxgrowth.com`. This backs the API `RATE_LIMIT_BACKEND=edge` declaration so `/ready` reports `rate-limits: ready`.
+- `http_request_cache_settings` — caches the `/opengraph-image` and `/twitter-image` responses at the edge.
+- `http_request_transform` — rewrites `/opengraph-image` and `/twitter-image` to the static `/og-image.png` asset.
+
+The rewrite exists because dynamic Open Graph rendering (`next/og` → Satori/resvg) exceeds the Workers free-plan 10 ms CPU limit intermittently, which surfaced as `error code: 1102` on those routes. `apps/web/public/og-image.png` holds the prerendered PNG (the same bytes the build produces at `apps/web/.next/server/app/opengraph-image.body`). If the social preview design changes, regenerate that PNG from a fresh build and redeploy the web worker. Upgrading the account to Workers Paid (30 s CPU) would let the dynamic routes render directly and the rewrite could be dropped.
 
 ## Local development
 

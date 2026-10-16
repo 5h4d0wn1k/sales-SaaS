@@ -55,7 +55,9 @@
       "vars": {
         "APP_ENV": "production",
         "NODE_ENV": "production",
-        "FRONTEND_URL": "https://salesxgrowth.com"
+        "FRONTEND_URL": "https://salesxgrowth.com",
+        "RATE_LIMIT_BACKEND": "edge",
+        "RATE_LIMIT_TRUST_PROXY_HEADERS": "true"
       }
     }
   }
