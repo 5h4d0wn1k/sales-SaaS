@@ -47,6 +47,16 @@
     },
     "production": {
       "workers_dev": true,
+      "routes": [
+        {
+          "pattern": "salesxgrowth.com",
+          "custom_domain": true
+        },
+        {
+          "pattern": "www.salesxgrowth.com",
+          "custom_domain": true
+        }
+      ],
       "secrets": {
         "required": [
           "AUTH_SECRET",

@@ -70,7 +70,7 @@ export function appendUpgradeSearchParams(pathname: string, upgrade: UpgradeReco
   url.searchParams.set("upgradeName", upgrade.planName);
   url.searchParams.set("upgradeDescription", upgrade.description);
   url.searchParams.set("upgradeCheckout", upgrade.checkoutPath);
-  return `${url.pathname}${url.search}`;
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 export function readUpgradeSearchParams(
