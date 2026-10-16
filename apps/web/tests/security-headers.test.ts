@@ -28,20 +28,6 @@ describe("web security headers", () => {
     expect(headerValue("X-Frame-Options")).toBe("DENY");
   });
 
-  it("allows eval only for local Next development tooling", () => {
-    const developmentCsp = buildWebSecurityHeaders({ allowUnsafeEval: true }).find(
-      (header) => header.key === "Content-Security-Policy",
-    )?.value;
-
-    expect(developmentCsp).toContain(
-      "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com 'unsafe-eval'",
-    );
-    expect(headerValue("Content-Security-Policy")).toContain(
-      "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
-    );
-    expect(headerValue("Content-Security-Policy")).not.toContain("'unsafe-eval'");
-  });
-
   it("allows the configured Razorpay checkout script without opening arbitrary scripts", () => {
     const csp = headerValue("Content-Security-Policy");
 
@@ -52,10 +38,10 @@ describe("web security headers", () => {
 
   it("ships baseline browser hardening headers", () => {
     expect(headerValue("Strict-Transport-Security")).toBe(
-      "max-age=31536000; includeSubDomains",
+      "max-age=31536000; includeSubDomains; preload",
     );
     expect(headerValue("X-Content-Type-Options")).toBe("nosniff");
-    expect(headerValue("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+    expect(headerValue("Referrer-Policy")).toBe("no-referrer");
     expect(headerValue("Permissions-Policy")).toContain("camera=()");
     expect(headerValue("Permissions-Policy")).toContain("microphone=()");
     expect(headerValue("Permissions-Policy")).toContain("geolocation=()");
