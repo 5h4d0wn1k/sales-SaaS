@@ -170,11 +170,15 @@ export function securityHeadersMiddleware(c: Context, next: Next) {
   // CSP - adjust based on your frontend needs
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self'",
+    "style-src 'self'",
     "img-src 'self' data: https:",
     "font-src 'self' data:",
     "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
   ].join("; ");
 
   c.res.headers.set("Content-Security-Policy", csp);

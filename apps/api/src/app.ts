@@ -795,7 +795,7 @@ export function createApp() {
         result: "success",
         detail: "Help command returned without changing outreach state.",
         reply:
-          "Winrate AI commands: /status, /brief, /sequence, /forecast, /approvals, /providers, /suppressions, /help. /pause is gated and requires owner approval in the app before outreach can change.",
+          "salesxgrowth AI commands: /status, /brief, /sequence, /forecast, /approvals, /providers, /suppressions, /help. /pause is gated and requires owner approval in the app before outreach can change.",
       };
     }
 
@@ -3231,7 +3231,7 @@ export function createApp() {
 
     if (!resolved) {
       const reply =
-        "This Telegram chat is not bound to a Winrate AI workspace. Configure it from Settings before using commands.";
+        "This Telegram chat is not bound to a salesxgrowth AI workspace. Configure it from Settings before using commands.";
       const delivery = await sendTelegramReply(message.chatId, reply);
 
       return c.json(
@@ -3265,7 +3265,7 @@ export function createApp() {
     if (integration.status === "disabled") {
       result = "denied";
       detail = "Telegram integration is disabled.";
-      reply = "This Telegram integration is disabled in Winrate AI settings.";
+      reply = "This Telegram integration is disabled in salesxgrowth AI settings.";
     } else if (!allowedCommands.includes(command)) {
       result = "denied";
       detail = `Telegram command /${command} is not allowlisted for this workspace.`;
@@ -3455,7 +3455,7 @@ export function createApp() {
     return c.json(await storage.getSourcePlan());
   });
 
-  app.post("/v1/leads/source-run", async (c) => {
+  app.post("/v1/leads/source-run", requireRole("owner", "admin"), async (c) => {
     const storage = await storageFor(c);
     const payload = await c.req.json();
     const input = sourceRunInputSchema.parse(payload);
@@ -3494,7 +3494,7 @@ export function createApp() {
     );
   });
 
-  app.post("/v1/leads/discover", async (c) => {
+  app.post("/v1/leads/discover", requireRole("owner", "admin"), async (c) => {
     const storage = await storageFor(c);
     const payload = await c.req.json();
     const input = discoverLeadsInputSchema.parse(payload);

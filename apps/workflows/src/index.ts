@@ -17,7 +17,6 @@ type CampaignDispatchWorkflowParams = {
   workspaceId?: string;
   initiatedBy?: string;
   approvalTimeout?: WorkflowDuration;
-  dispatchWebhookUrl?: string;
   metadata?: Metadata;
 };
 
@@ -71,6 +70,46 @@ function isConfigured(value: string | undefined) {
   return Boolean(value && value.trim().length > 0);
 }
 
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+    // Block private/internal IP ranges and localhost
+    const host = parsed.hostname.toLowerCase();
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1") {
+      return false;
+    }
+    // Block private IPv4 ranges
+    if (/^10\./.test(host) || // 10.0.0.0/8
+        /^192\.168\./.test(host) || // 192.168.0.0/16
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) { // 172.16.0.0/12
+      return false;
+    }
+    // Block link-local and multicast
+    if (/^169\.254\./.test(host)) { // 169.254.0.0/16 (link-local)
+      return false;
+    }
+    // Block private IPv6 ranges (simplified check)
+    if (/^fe80:/i.test(host) || // fe80::/10 (link-local)
+        /^fc00:/i.test(host) || // fc00::/7 (unique local)
+        /^fdcb:/i.test(host) || // fd00::/8 (unique local)
+        /^ff00:/i.test(host)) { // ff00::/8 (multicast)
+      return false;
+    }
+    // Block cloud metadata endpoints
+    if (host === "169.254.169.254" || // AWS/Azure/GCP metadata
+        host === "metadata.google.internal" ||
+        host === "metadata.azure.internal") {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function normalizeParams(input: CampaignDispatchWorkflowParams): Required<
   Pick<CampaignDispatchWorkflowParams, "campaignId" | "requestId" | "instanceId" | "approvalTimeout">
 > &
@@ -97,7 +136,7 @@ function requireConfiguredToken(request: Request, env: RuntimeEnv) {
   const expectedToken = env.WORKFLOWS_API_TOKEN;
 
   if (!isConfigured(expectedToken)) {
-    return null;
+    return unauthorized();
   }
 
   return getAccessToken(request) === expectedToken ? null : unauthorized();
@@ -136,12 +175,17 @@ async function dispatchApprovedCampaign(
   request: ReturnType<typeof normalizeParams>,
   approval: ApprovalDecision,
 ): Promise<DispatchWebhookResult | null> {
-  const template = request.dispatchWebhookUrl ?? env.CAMPAIGN_DISPATCH_WEBHOOK_URL_TEMPLATE;
+  const template = env.CAMPAIGN_DISPATCH_WEBHOOK_URL_TEMPLATE;
+
+  if (!template || !isConfigured(template)) {
+    return null;
+  }
+
   const url = template
-    ?.replaceAll("{campaignId}", encodeURIComponent(request.campaignId))
+    .replaceAll("{campaignId}", encodeURIComponent(request.campaignId))
     .replaceAll("{requestId}", encodeURIComponent(request.requestId));
 
-  if (!url || !isConfigured(url)) {
+  if (!isValidUrl(url)) {
     return null;
   }
 
