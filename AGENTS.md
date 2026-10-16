@@ -2,6 +2,10 @@
 
 This repository is the foundation for a public-facing multi-tenant sales SaaS and AI-assisted sales operations platform. Treat it like production software even when a workflow is still in beta.
 
+> **New here / picking this up in a fresh environment?** Start with
+> [`docs/deployment/emergent-quickstart.md`](docs/deployment/emergent-quickstart.md)
+> — boot steps, required env vars, and the prioritized remaining-work backlog.
+
 ## Repo Map
 
 - `apps/web`
